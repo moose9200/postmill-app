@@ -18,6 +18,7 @@ const mockUser = {
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
 };
 const mockAppRole = {
@@ -168,6 +169,43 @@ describe('OrganizationRepository', () => {
         email: 'new@example.com',
         role: 'editor',
       });
+    });
+
+    // POSTMILL-APP-X — a duplicate email used to 500 on a bare Prisma P2002.
+    it('409s when the email already exists, without creating anything', async () => {
+      appRoleModel.findFirst.mockResolvedValue({ id: 'role-member', key: 'member' });
+      userModel.findFirst.mockResolvedValue({ id: 'u-existing' });
+
+      await expect(
+        repository.createTeamUser('org-1', 'taken@example.com', 'secret123', 'member')
+      ).rejects.toMatchObject({ status: 409 });
+      expect(userModel.create).not.toHaveBeenCalled();
+      expect(userOrgModel.create).not.toHaveBeenCalled();
+    });
+
+    it('maps a duplicate that races the pre-check (P2002) to the same 409', async () => {
+      appRoleModel.findFirst.mockResolvedValue({ id: 'role-member', key: 'member' });
+      userModel.findFirst.mockResolvedValue(null);
+      userModel.create.mockRejectedValue(
+        Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      );
+
+      await expect(
+        repository.createTeamUser('org-1', 'taken@example.com', 'secret123', 'member')
+      ).rejects.toMatchObject({ status: 409 });
+    });
+
+    it('deletes the user row when the membership write fails', async () => {
+      appRoleModel.findFirst.mockResolvedValue({ id: 'role-member', key: 'member' });
+      userModel.findFirst.mockResolvedValue(null);
+      userModel.create.mockResolvedValue({ id: 'u-1', email: 'new@example.com' });
+      userModel.delete.mockResolvedValue({});
+      userOrgModel.create.mockRejectedValue(new Error('db gone'));
+
+      await expect(
+        repository.createTeamUser('org-1', 'new@example.com', 'secret123', 'member')
+      ).rejects.toThrow('db gone');
+      expect(userModel.delete).toHaveBeenCalledWith({ where: { id: 'u-1' } });
     });
   });
 

@@ -170,6 +170,16 @@ export class AuthService {
               )
             : false;
 
+        // A false here means the invite existed but the join was refused
+        // (replay / STARTER seat limit) — never let that fail silently; the
+        // invitee otherwise lands in their personal tenant with no trace.
+        if (addToOrg && typeof addToOrg !== 'boolean' && !addedOrg) {
+          Logger.warn(
+            `Invite join skipped at register: user=${create.users[0].user.id} org=${addToOrg.orgId}`,
+            AuthService.name
+          );
+        }
+
         user = create.users[0].user;
 
         // Set Gravatar avatar for local email signups.
@@ -214,6 +224,13 @@ export class AuthService {
             addToOrg.roleId,
           )
         : false;
+
+    if (addToOrg && typeof addToOrg !== 'boolean' && !addedOrg) {
+      Logger.warn(
+        `Invite join skipped at login: user=${user.id} org=${addToOrg.orgId}`,
+        AuthService.name
+      );
+    }
 
     const jwt = await this.jwt(user);
     const refreshToken = await this.createSession(user.id, ip, userAgent);

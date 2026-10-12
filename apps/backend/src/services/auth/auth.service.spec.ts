@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import * as crypto from 'crypto';
 import dayjs from 'dayjs';
 import { Provider } from '@prisma/client';
+import { Logger } from '@nestjs/common';
 
 vi.mock('@postmill-ai/nestjs-libraries/database/prisma/users/users.service', () => ({
   UsersService: class {},
@@ -535,6 +536,27 @@ describe('AuthService (backend)', () => {
         'user-1',
         expect.stringContaining('https://www.gravatar.com/avatar/')
       );
+    });
+
+    it('warns when an invite is present but the join is refused (addedOrg === false)', async () => {
+      const warnSpy = vi.spyOn(Logger, 'warn').mockImplementation(() => {});
+      usersService.getUserByEmail.mockResolvedValue(null);
+      organizationService.addUserToOrg.mockResolvedValue(false);
+
+      const result = await service.routeAuth(
+        Provider.LOCAL,
+        makeRegisterBody(),
+        'ip',
+        'ua',
+        { orgId: 'org-9', role: 'USER', id: 'invite-1', roleId: 'role-member' }
+      );
+
+      expect(result.addedOrg).toBe(false);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('org=org-9'),
+        expect.any(String)
+      );
+      warnSpy.mockRestore();
     });
   });
 

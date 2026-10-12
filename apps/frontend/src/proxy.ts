@@ -152,7 +152,10 @@ export async function proxy(request: NextRequest) {
               domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
             }
           : {}),
-        expires: new Date(Date.now() + 15 * 60 * 1000),
+        // Match the invite JWT's 1-hour timeLimit — a 15-minute cookie made
+        // slow registrations silently land the invitee in a fresh personal
+        // tenant instead of the inviter's org.
+        expires: new Date(Date.now() + 60 * 60 * 1000),
       });
       return redirect;
     }

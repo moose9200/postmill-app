@@ -1,6 +1,6 @@
 import { PrismaRepository } from '@postmill-ai/nestjs-libraries/database/prisma/prisma.service';
 import { ShortLinkPreference, SubscriptionTier, Provider, StorageProviderType } from '@prisma/client';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AuthService } from '@postmill-ai/helpers/auth/auth.service';
 import { CreateOrgUserDto } from '@postmill-ai/nestjs-libraries/dtos/auth/create.org.user.dto';
 import { makeId } from '@postmill-ai/nestjs-libraries/services/make.is';
@@ -228,6 +228,10 @@ export class OrganizationRepository {
     });
 
     if (checkIfInviteExists) {
+      Logger.warn(
+        `addUserToOrg: invite ${id} already consumed (user=${userId} org=${orgId})`,
+        OrganizationRepository.name
+      );
       return false;
     }
 
@@ -246,6 +250,10 @@ export class OrganizationRepository {
       checkForSubscription?.subscription?.subscriptionTier ===
         SubscriptionTier.STARTER
     ) {
+      Logger.warn(
+        `addUserToOrg: org=${orgId} is on STARTER — seat limit blocks invite join (user=${userId})`,
+        OrganizationRepository.name
+      );
       return false;
     }
 
@@ -374,24 +382,53 @@ export class OrganizationRepository {
           where: { organizationId: null, key: roleKey, isSystem: true },
         });
 
-    const user = await this._user.model.user.create({
-      data: {
-        email,
-        password: AuthService.hashPassword(password),
-        providerName: Provider.LOCAL,
-        activated: true,
-      },
-    });
+    // A duplicate email used to surface as a bare Prisma P2002 → 500
+    // (POSTMILL-APP-X). Answer with an actionable 409 instead.
+    const existing = await this._user.model.user.findFirst({ where: { email } });
+    if (existing) {
+      throw new HttpException(
+        'A user with this email already exists — use "Invite member" to add them to this team',
+        HttpStatus.CONFLICT
+      );
+    }
 
-    await this._userOrg.model.userOrganization.create({
-      data: {
-        userId: user.id,
-        organizationId: orgId,
-        roleId: appRole?.id,
-      },
-    });
+    let createdUserId: string | undefined;
+    try {
+      const user = await this._user.model.user.create({
+        data: {
+          email,
+          password: AuthService.hashPassword(password),
+          providerName: Provider.LOCAL,
+          activated: true,
+        },
+      });
+      createdUserId = user.id;
 
-    return { id: user.id, email: user.email, role: appRole?.key ?? roleKey };
+      await this._userOrg.model.userOrganization.create({
+        data: {
+          userId: user.id,
+          organizationId: orgId,
+          roleId: appRole?.id,
+        },
+      });
+
+      return { id: user.id, email: user.email, role: appRole?.key ?? roleKey };
+    } catch (err: any) {
+      // Never leave an orphaned user row when the membership write fails.
+      if (createdUserId) {
+        await this._user.model.user
+          .delete({ where: { id: createdUserId } })
+          .catch(() => {});
+      }
+      // A duplicate that raced the pre-check gets the same clean 409.
+      if (err?.code === 'P2002') {
+        throw new HttpException(
+          'A user with this email already exists — use "Invite member" to add them to this team',
+          HttpStatus.CONFLICT
+        );
+      }
+      throw err;
+    }
   }
 
   // Tenant-guarded member profile: returns null when the user is not a member of
