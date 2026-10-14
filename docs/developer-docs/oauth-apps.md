@@ -149,8 +149,13 @@ Endpoints under `/user/approved-apps` allow users to manage apps they have autho
 |--------|------|---------|
 | GET | `/user/approved-apps` | List apps the user has approved |
 | DELETE | `/user/approved-apps/:id` | Revoke an app authorization |
+| GET | `/user/approved-apps/federation` | List the user's Postmill ID sign-in grants |
+| DELETE | `/user/approved-apps/federation/:id` | Revoke a Postmill ID sign-in grant |
 
 Revoking deletes the `OAuthAuthorization` row and invalidates all tokens for that authorization.
+
+The `federation` routes manage Postmill ID ("Sign in with Postmill") grants, a separate first-party
+flow with no app registration — see [Postmill ID](./postmill-id.md). It does not change the OAuth-app flow above.
 
 ## Scopes
 
@@ -178,4 +183,4 @@ In the MCP server, token resolution works as follows:
 - Redirect URIs are matched exactly.
 - PKCE is required for authorizations.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -91,4 +91,4 @@ provider's credential entirely (Sora uses your OpenAI key, Pika uses your fal ke
 page notes where its credential lives.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

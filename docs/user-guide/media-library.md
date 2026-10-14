@@ -19,8 +19,12 @@ A typical workflow moves from `/media` to `/files` and back:
    [Stock Photos](./media/stock-photos.md)).
 2. Generate or pick an asset.
 3. The asset is saved into `/files`.
-4. From `/files`, you can **Create Post**, **Open in Designer**, or use the asset as a source
-   image/video/audio in another studio.
+4. From `/files`, you can **Open in Designer**, or use the asset as a source image/video/audio in
+   another studio.
+
+System artifacts are kept out of the library listing: the preview thumbnails saved with designs and
+templates, and the intermediate asset/reference files the AI Designer imports while working on a
+session, are hidden from `/files` (they stay reachable by the designs that use them).
 
 ## Folder tree navigation
 
@@ -56,9 +60,13 @@ Two view modes are available in the top-right toolbar:
 
 The selected view mode persists for your session.
 
-## File details panel
+## Preview and file details
 
-Click any file to open the details panel on the right side. This panel provides:
+Click any file to open a **preview** with **Details**, **Download**, and **Open in Designer**
+buttons. Right-click a file (or long-press on touch) for a context menu with **Preview**, **Open in
+Designer**, **Details**, **Rename**, **Download**, and **Delete**.
+
+**Details** opens the details panel on the right side. This panel provides:
 
 | Section | Content |
 |---------|---------|
@@ -66,12 +74,14 @@ Click any file to open the details panel on the right side. This panel provides:
 | **Name** | Editable in-place — click to rename, press Enter or click away to save. |
 | **Description** | Multi-line text field. Edits save on blur. |
 | **Tags** | Add tags by typing and pressing Enter, comma, or Tab. Remove tags by clicking the × icon. Tags persist to the file metadata. |
+| **Campaigns** | Tag the file to one or more campaigns. |
 | **Metadata** | Read-only display of file size (formatted as B/KB/MB), MIME type, and creation date. |
-| **Actions** | **Copy URL**, **Download**, **Create Post** (opens the composer with this file attached), **Open in Designer**, and **Delete** (soft-delete to trash). |
+| **Actions** | **Copy URL**, **Download**, **Open file**, and **Delete** (soft-delete to trash). |
 
 ## Drag to move between folders
 
-Drag any file thumbnail and drop it onto a folder in the left sidebar to move it. The target
+Drag any file thumbnail and drop it onto a folder in the left sidebar (or a folder tile in the grid)
+to move it. The target
 folder highlights in blue. A success notification confirms the move, and both the file grid and
 folder counts refresh.
 
@@ -114,12 +124,12 @@ Permanent deletion is only available from the trash view.
 ## Storage provider mounting
 
 Root folders in `/files` map to configured storage providers. Each `StorageProviderConfig` record
-represents a storage backend (S3, R2, B2, IDrive e2, or local disk). When a provider is mounted, it
+represents a storage backend (S3, R2, B2, IDrive e2, MediaLocker, or local disk). When a provider is mounted, it
 appears as a root-level folder. Different folders can route to different storage backends — for
 example, you might keep active campaign assets on fast local storage and archive older campaigns to
 cloud object storage.
 
-Configure storage providers in **Settings → Storage**. See
+Configure storage providers in **Settings → File Storage**. See
 [Storage Setup](../operations-guide/storage.md) for provider configuration and quota management.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

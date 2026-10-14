@@ -51,10 +51,12 @@ Without this, the analytics dashboard, comment inbox, media render queue, and wa
 | `missing-post-finder` | Hourly | Detect posts that should have published but are stuck |
 | `media-jobs-poll` | Every minute | Poll pending external media-generation jobs and re-enqueue stuck renders |
 | `campaign-tag-purge` | Daily at 03:00 UTC | Delete `CampaignItem` tags for campaigns whose `endDate` is older than `CAMPAIGN_PURGE_DAYS` |
+| `payments-expire-canceled` | Daily at 03:15 UTC | Tear down subscriptions whose scheduled end has passed for providers that cannot keep a cancelled subscription alive until period end (e.g. PayPal); warns about Stripe subscriptions past their end with no teardown webhook |
 | `retention-purge` | Daily at 03:30 UTC | Bounded retention sweep for errors, notifications, multipart uploads, mastra traces, soft-deleted posts/files, AI Designer sessions, and IP/agent columns |
 | `digest-email-daily` | Daily at 09:00 America/New_York | Fans out one `digest/send-one` event per target for daily digests |
 | `digest-email-weekly` | Mondays at 09:00 America/New_York | Fans out one `digest/send-one` event per target for weekly digests |
 | `agent-digest` | Mondays at 07:00 America/New_York | Fans out one `agent/digest-org` event per org (disabled unless `AGENT_DIGEST_ENABLED=true`) |
+| `comms-matrix-sync` | Every minute | Fans out one `comms/matrix.sync-one` event per enabled Matrix comms config (Matrix has no webhooks) |
 
 ### Event-triggered functions
 
@@ -68,11 +70,13 @@ Without this, the analytics dashboard, comment inbox, media render queue, and wa
 | `refresh-token` | `integration/refresh-token` | Refresh OAuth tokens before expiry; re-enqueues itself with a **unique** idempotency id per cycle (`refresh_<integrationId>_<uuid>`; a constant id would be dedup-dropped for 24h and black-hole the chain). Cancelled by `integration/refresh-token/cancel` (emitted on channel delete and before every (re)start). A chain terminates on channel deletion, when the integration is flagged `refreshNeeded`, or after 5 consecutive failed refresh cycles (5-minute sleep floor between retries) — bounding failure notifications per dead chain |
 | `streak-tracker` | `streak/start` | Update posting-streak gamification and send reminders |
 | `analytics-backfill` | `analytics/backfill` | On-demand historical backfill for one integration |
-| `send-email` | `email/send` | Transactional email delivery (global 1/sec rate limit) |
+| `send-email` | `email/send` | Transactional email delivery (no function-level rate limit; flood control is the 24h notification dedup at the source) |
 | `digest-send-one` | `digest/send-one` | Send a single daily/weekly digest email |
 | `agent-digest-org` | `agent/digest-org` | Generate and notify the weekly headless AI digest for one org |
 | `media-render` | `media/render` | Local video render (Designer timeline + clip-merge), capped at `VIDEO_RENDER_CONCURRENCY` |
 | `media-jobs-poll-job` | `media/poll-job` | Poll a single external media job |
+| `comms-inbound` | `comms/inbound.message` | Process one inbound chat message (connect-code claim or agent turn + reply); serialized per comms config |
+| `comms-matrix-sync-one` | `comms/matrix.sync-one` | One Matrix `/sync` round for one comms config |
 
 ## Retention and data lifecycle
 
@@ -137,12 +141,14 @@ In the Inngest dashboard (Cloud or local dev server) you should see scheduled ru
 - `missing-post-finder` — hourly
 - `media-jobs-poll` — every minute
 - `campaign-tag-purge` — daily
+- `payments-expire-canceled` — daily
 - `retention-purge` — daily
 - `digest-email-daily` — daily
 - `digest-email-weekly` — weekly
 - `agent-digest` — weekly (only when enabled)
+- `comms-matrix-sync` — every minute
 
-Event-triggered functions (`post-publish-*`, `autopost-process`, `refresh-token`, `streak-tracker`, `send-email`, `digest-send-one`, `analytics-backfill`, `media-render`, `media-jobs-poll-job`, `agent-digest-org`) appear as they are triggered.
+Event-triggered functions (`post-publish-*`, `autopost-process`, `refresh-token`, `streak-tracker`, `send-email`, `digest-send-one`, `analytics-backfill`, `media-render`, `media-jobs-poll-job`, `agent-digest-org`, `analytics-sync-org`, `analytics-sync-integration`, `comments-sync-org`, `comms-inbound`, `comms-matrix-sync-one`) appear as they are triggered.
 
 If scheduled functions are not running, check that `USE_INNGEST=true` is set and that the backend `/api/inngest` endpoint returns HTTP 200.
 
@@ -168,4 +174,4 @@ Enable in `.env`:
 AGENT_DIGEST_ENABLED=true
 ```
 
-> Verified against v1.0.0
+> Verified against v1.2.0

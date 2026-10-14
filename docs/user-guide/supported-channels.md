@@ -83,7 +83,7 @@ be cross-checked against the live app.
 
 **carousel** — 5 providers support carousel posts: LinkedIn, LinkedIn Page, Instagram, Instagram Standalone, and Threads.
 
-**altText** — 13 providers support alt text on images: Slack, Mastodon, Bluesky, Tumblr, Pixelfed, GoToSocial, Akkoma, Friendica, Misskey, Sharkey, Matrix, and Discourse.
+**altText** — 12 providers support alt text on images: Slack, Mastodon, Bluesky, Tumblr, Pixelfed, GoToSocial, Akkoma, Friendica, Misskey, Sharkey, Matrix, and Discourse.
 
 **analytics** — 23 providers support analytics data collection: X, LinkedIn, LinkedIn Page, Instagram, Instagram Standalone, Facebook, Threads, YouTube, Google My Business, TikTok, Pinterest, Dribbble, Reddit, Discord, Mastodon, Bluesky, Telegram, GoToSocial, Akkoma, Friendica, Misskey, Sharkey, and LINE.
 
@@ -155,4 +155,4 @@ the adapter classes in `libraries/providers/<id>/src/v1/`.
 - [Adding a Provider](../developer-docs/adding-a-provider.md) — How to register capability flags when adding a new channel provider.
 - [Short-link Providers](#short-link-providers) — Short-link provider capability matrix (above).
 
-> Verified against v1.0.0
+> Verified against v1.2.0

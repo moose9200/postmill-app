@@ -27,4 +27,4 @@ Image generations complete synchronously via bounded internal polling, so the re
 - Wan does not support audio or avatar generation.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

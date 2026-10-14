@@ -2,7 +2,7 @@
 
 The **Dashboard** (`/dashboard`) is the post-login landing page. It is designed as a command center that answers "what needs my attention now?" first and shows performance second.
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 ## Layout
 
@@ -13,11 +13,13 @@ The page is a single responsive column of cards:
 3. **Needs Attention** — priority feed of issues across your org.
 4. **Next 7 Days** — a scrollable day-by-day schedule with gap-fill shortcuts.
 5. **At a Glance** — KPI tiles (published, scheduled, engagement, unread replies, channels).
-6. **7-Day Engagement** — a sparkline of your primary engagement metric.
+6. **7-Day Engagement** — a chart of your primary engagement metric over the last 7 days.
 7. **Inbox** — unread comments that need replies.
 8. **Active Campaigns** — running campaigns with post-state counts and goal progress.
 9. **Media Queue** — in-flight and recently failed AI-media jobs.
-10. **Usage & Budget** — plan limits for posts, channels, and members, plus AI spend.
+10. **Usage & Budget** — plan usage for posts, channels, team members, competitors, webhooks, and
+    brand kits (when billing is enabled), plus AI spend: monthly and daily totals with the
+    remaining budget, and spend by provider.
 11. **Recommendations** — top analytics-driven actions from the Insights engine.
 
 On desktop the cards sit in a 12-column grid; on mobile they stack in the same priority order.

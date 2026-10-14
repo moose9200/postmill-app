@@ -84,7 +84,7 @@ pnpm run prisma-schema-diff > dev/schema-changes/[short-description].sql
 
 # 4. Guard the diff — blocks DROP TABLE / DROP COLUMN / DROP CONSTRAINT and
 #    ADD COLUMN ... NOT NULL without DEFAULT.
-pnpm run prisma-schema-check --file dev/schema-changes/[short-description].sql
+node tools/db/schema-destructive-guard.mjs --file dev/schema-changes/[short-description].sql
 
 # 5. Apply on shared/production DBs via the committed migrations.
 pnpm run prisma-migrate-deploy
@@ -92,11 +92,11 @@ pnpm run prisma-migrate-deploy
 
 - **`prisma-migrate-dev`** authors and applies the migration locally; the committed migration is the source of truth for what every other environment applies via `prisma-migrate-deploy`.
 - **`prisma-schema-diff`** = `prisma migrate diff --from-url $DATABASE_URL --to-schema-datamodel [schema] --script` — the forward SQL only (no rollback); used to feed the destructive guard.
-- **`prisma-schema-check`** runs `tools/db/schema-destructive-guard.mjs` (Node, no deps). It reads SQL from `--file [path]` (or stdin) and **exits 1** if it finds `DROP TABLE`/`DROP COLUMN`/`DROP CONSTRAINT` or `ADD COLUMN ... NOT NULL` without a `DEFAULT`.
+- **`prisma-schema-check`** pipes the live `prisma-schema-diff` output into `tools/db/schema-destructive-guard.mjs` (Node, no deps). The guard reads SQL from `--file [path]` (or stdin) and **exits 1** if it finds `DROP TABLE`/`DROP COLUMN`/`DROP CONSTRAINT` or `ADD COLUMN ... NOT NULL` without a `DEFAULT`.
 - **Destructive changes** (drops, in-place renames, a new required column) must follow an **expand/contract** plan — add the new shape, backfill, switch reads/writes, then drop the old shape in a follow-up migration — and the guard must be explicitly overridden with `ALLOW_DESTRUCTIVE_SCHEMA=true` to acknowledge the data-loss risk:
 
   ```bash
-  ALLOW_DESTRUCTIVE_SCHEMA=true pnpm run prisma-schema-check --file dev/schema-changes/[drop].sql
+  ALLOW_DESTRUCTIVE_SCHEMA=true node tools/db/schema-destructive-guard.mjs --file dev/schema-changes/[drop].sql
   ```
 
   The full forward-only [Schema rollback](../operations-guide/schema-rollback.md) playbook covers the expand → migrate → contract sequence and how to recover a half-applied migration.
@@ -157,8 +157,10 @@ See [Backend Conventions](./backend-conventions.md) for the full layering rules 
 | `campaigns/` | Campaign CRUD + post association |
 | `emails/` | Email send-log lifecycle |
 | `featured-providers/` | Curated featured-provider list |
+| `federation/` | Postmill ID signing key and grants (`InstanceIdentity`, `FederationGrant`) |
+| `file/` | Media file CRUD and folder operations |
 | `integrations/` | Integration/plug/webhook management |
-| `media/` | Media CRUD, folder operations, multipart uploads |
+| `media/` | Multipart uploads |
 | `media-providers/` | Per-org media provider config (`MediaProviderConfig`) |
 | `notifications/` | Notification delivery |
 | `oauth/` | OAuth app and authorization management |
@@ -171,7 +173,7 @@ See [Backend Conventions](./backend-conventions.md) for the full layering rules 
 | `signatures/` | Signature management |
 | `social-comments/` | Social comment sync, read-state tracking |
 | `storage/` | Storage provider config (S3, R2, B2, etc.) |
-| `subscriptions/` | Billing subscriptions |
+| `subscriptions/` | Billing subscriptions, payment-webhook ledger (`PaymentEvent`) |
 | `users/` | User CRUD, profiles (`UserProfile`), sessions |
 | `watchlist/` | Competitor account and metric tracking |
 | `webhooks/` | Webhook CRUD + integration-webhook linking |
@@ -196,6 +198,7 @@ Models with encrypted fields:
 - `AuthProviderConfig` — `clientId`, `clientSecret`
 - `OAuthApp` — `clientSecret`
 - `OAuthAuthorization` — `accessToken`, `refreshToken`
+- `InstanceIdentity` — `privateKeyEnc` (the Postmill ID signing key)
 
 Refresh tokens for login sessions are **hashed**, not encrypted — `Session.tokenHash` stores `sha256(refreshToken)`; the token itself is never persisted.
 
@@ -226,4 +229,4 @@ total_connections ≈ (backend_replicas + inngest_workers) × DATABASE_CONNECTIO
 
 A reasonable start for a small/medium deployment: `DATABASE_CONNECTION_LIMIT=10`, `DATABASE_POOL_TIMEOUT=20`. Raise the limit only after confirming Postgres `max_connections` (or the pgBouncer pool) has room across **all** backend replicas plus the Inngest worker. When fronted by pgBouncer in transaction mode, set a low per-process limit and let the bouncer pool.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

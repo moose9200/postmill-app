@@ -235,7 +235,7 @@ there is no API-key path.
 
 ## Self-hosted default
 
-If `STRIPE_PUBLISHABLE_KEY` is not set:
+If no payment provider is configured (no `STRIPE_PUBLISHABLE_KEY`, `PAYPAL_CLIENT_ID`, `APPLE_IAP_BUNDLE_ID` or `GOOGLE_PLAY_PACKAGE_NAME`):
 
 - All billing checks short-circuit to "allowed."
 - Every organization is treated as `AGENCY`.
@@ -287,7 +287,7 @@ org with a link to `/billing`. Channels and features remain usable during the gr
 ### Terminal cancellation
 
 `customer.subscription.deleted` downgrades the org to `STARTER` and prunes excess channels/team
-members. The `Subscription` row is **hard-deleted** (`subscription.repository.ts:59-67`, via
+members. The `Subscription` row is **hard-deleted** (`subscription.repository.ts:66-72`, via
 `deleteMany`); the `deletedAt` column exists but is not used for cancellation.
 
 ### Plan changes
@@ -318,7 +318,7 @@ This path is intended for special deals, migration credits, or operator-granted 
   subscription page for app-store providers). Providers without one answer 400
   `PAYMENTS_UNSUPPORTED` and the button is hidden.
 
-Most billing-management routes require the `billing:manage` RBAC permission, but not all — `GET /billing/portal` and `POST /billing/finish-trial` are org-scoped without the `billing:manage` decorator (`billing.controller.ts:55,106`; the `@RequirePermission('billing','manage')` gate begins at line 123).
+Most billing-management routes require the `billing:manage` RBAC permission, but not all — `GET /billing/portal` and `POST /billing/finish-trial` are org-scoped without the `billing:manage` decorator (`billing.controller.ts:70,123`; the `@RequirePermission('billing','manage')` gate begins at line 134).
 
 ## Related
 
@@ -328,4 +328,4 @@ Most billing-management routes require the `billing:manage` RBAC permission, but
 - [Settings](../user-guide/settings.md) — the Team & Roles tab where the `billing:manage` permission is granted
 - [Subscription & Billing](../user-guide/subscription-and-billing.md) — end-user guide to plans, add-ons, and the `/billing` UI
 
-> Verified against v1.0.0 (2026-07-25)
+> Verified against v1.2.0 (2026-10-14)

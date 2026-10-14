@@ -377,7 +377,6 @@ approved for fewer scopes than its section lists will connect for no one.
 | Mastodon (`mastodon`) | per-instance (see below) | `MASTODON_CLIENT_ID` / `MASTODON_CLIENT_SECRET` | `/integrations/social/mastodon` |
 | Wrapcast / Farcaster (`wrapcast`) | [dev.neynar.com](https://dev.neynar.com) | `NEYNAR_CLIENT_ID` / `NEYNAR_SECRET_KEY` | none — client-side "Sign in with Farcaster" (Neynar) |
 | LINE (`line`) | [developers.line.biz/console](https://developers.line.biz/console/) | `LINE_CHANNEL_ACCESS_TOKEN` (token only) | none — token-only (see the LINE section above) |
-| Custom OAuth (`oauth_custom`) | your own OIDC provider | `POSTMILL_OAUTH_CLIENT_ID` / `POSTMILL_OAUTH_CLIENT_SECRET` | see note below |
 
 ## TikTok
 
@@ -700,17 +699,6 @@ NEYNAR_SECRET_KEY: '<your-neynar-api-key>'
 **Tenant flow:** the tenant clicks "Sign in with Farcaster" in the composer
 connect flow; publishing uses the app's API key server-side.
 
-## Custom OAuth
-
-Custom OAuth channels reuse the generic-OIDC variables; there is no
-dedicated provider adapter in this repo — check the provider's current docs
-for the callback to register.
-
-```yaml
-POSTMILL_OAUTH_CLIENT_ID: '<your-oidc-client-id>'
-POSTMILL_OAUTH_CLIENT_SECRET: '<your-oidc-client-secret>'
-```
-
 ## SSO dual-use (login with the same app)
 
 Three channel apps can double as **login providers** on the auth page. The gate
@@ -777,4 +765,4 @@ steps), **PeerTube**, **Skool**, **Hashnode**, **Medium**, **WordPress**,
 - [Configuration](./configuration.md#channel-oauth-apps-platform-click-connect) — the full env var table
 - [OAuth / SSO](./oauth-sso.md) — login providers, callback routing, registration policy
 
-> Verified against v1.0.0
+> Verified against v1.2.0

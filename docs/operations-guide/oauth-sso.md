@@ -362,7 +362,16 @@ renders inside the popup). Operational notes:
   so the opener keeps listening for up to 10 minutes rather than treating a "closed" handle as
   the end of the flow.
 - If the browser blocks the popup, the button falls back to the classic full-page redirect.
-- Nothing changes on the provider side: register the same callback paths listed below.
+- Nothing changes on the provider side: register the same callback paths listed above.
+
+## Postmill ID (this instance as an identity provider)
+
+The reverse direction — first-party apps such as the template store signing users in **with**
+this Postmill instance ("Sign in with Postmill") — needs no setup: there is no client
+registration, and the instance generates its own signing key on first use. `FRONTEND_URL` must be
+set, and `FEDERATION_TRUSTED_REDIRECT_URIS` / `FEDERATION_ISSUER` override the defaults (see
+[Configuration → Postmill ID federation](./configuration.md#postmill-id-federation)). Users review
+and revoke these sign-ins on the approved-apps page.
 
 ## Disable registration
 
@@ -379,4 +388,4 @@ Existing users can still log in. Create new users through the Teams settings pag
 - [Platform Channel Apps](./platform-channel-apps.md) — the shared channel-OAuth apps the Facebook/X/LinkedIn/Google logins dual-use
 - [Security](./security.md) — OAuth 2.0 / PKCE hardening, open-redirect allowlisting
 
-> Verified against v1.0.0
+> Verified against v1.2.0

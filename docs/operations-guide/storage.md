@@ -1,11 +1,12 @@
 # Storage Setup
 
 Postmill supports multiple storage backends for uploaded media: local disk, Cloudflare R2, AWS S3,
-Backblaze B2, and IDrive e2. Each organization can mount its own storage provider independently,
+Backblaze B2, IDrive e2, Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr, Linode, any
+other S3-compatible service, and MediaLocker. Each organization can mount its own storage provider independently,
 configured from the in-app Settings -> Storage page.
 
 **LOCAL** is the always-on base storage that every org has. Other providers
-(S3/R2/B2/IDriveE2) mount onto this base — there is no default provider. New uploads always land
+(S3, R2, B2, IDrive e2, and the other cloud providers) mount onto this base — there is no default provider. New uploads always land
 on LOCAL first. Cloud providers are configured per-organization in-app; the old global-env
 `STORAGE_PROVIDER`/`CLOUDFLARE_*` path has been removed.
 
@@ -22,7 +23,7 @@ Each storage provider mount is a row in the `StorageProviderConfig` table:
 
 | Field | Description |
 |-------|-------------|
-| `type` | One of `LOCAL`, `S3`, `CLOUDFLARE_R2`, `BACKBLAZE_B2`, `IDRIVE_E2` |
+| `type` | One of `LOCAL`, `S3`, `CLOUDFLARE_R2`, `BACKBLAZE_B2`, `IDRIVE_E2`, `WASABI`, `DIGITALOCEAN_SPACES`, `HETZNER`, `STORJ`, `SCALEWAY`, `VULTR`, `LINODE`, `S3_COMPATIBLE`, `MEDIALOCKER` |
 | `name` | User-facing label |
 | `mounted` | Whether this provider is actively serving files |
 | `credentials` | Encrypted JSON: `accessKeyId`, `secretAccessKey`, `endpoint`, `region` |
@@ -62,7 +63,10 @@ MEDIA_UPLOAD_MAX_BYTES: '1073741824'
 
 ### Cloudflare R2 (per-tenant)
 
-S3-compatible object storage with no egress fees. Configure per-org in Settings → Storage.
+S3-compatible object storage with no egress fees. Configure per-org in Settings → Storage with an
+R2 API token's access key ID and secret, the bucket, and the bucket's S3 **endpoint**
+(`https://<accountId>.r2.cloudflarestorage.com`). The endpoint is **required** for R2 — it cannot
+be derived — and a config saved without one is rejected with HTTP 400 and not stored.
 
 ### AWS S3 (per-tenant)
 
@@ -141,6 +145,14 @@ scoped/bucket-level keys.
 - Endpoint: `https://[region].idrivee2.com` (region is shown in the bucket details, e.g.
   `https://ewr1.idrivee2.com` for us-east-1)
 
+### Other S3-compatible providers (per-tenant)
+
+Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr, Linode, and the generic
+**S3-compatible** type use the same access key + secret, bucket, and endpoint fields as the
+providers above. MediaLocker has its own credential form. All are configured per-org in Settings →
+Storage. If a provider's adapter rejects the submitted config, the save is rolled back and answers
+HTTP 400 with the provider's message.
+
 ## Per-org storage management
 
 Operators do not need to manage storage for individual orgs — org admins self-serve via Settings
@@ -209,4 +221,4 @@ size-capped. `LOCAL` storage is same-origin and needs no CORS.
 - [Requirements](./requirements.md) — object storage options
 - [Designer](../developer-docs/designer.md) — editor architecture & endpoints
 
-> Verified against v1.0.0
+> Verified against v1.2.0

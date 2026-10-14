@@ -33,8 +33,8 @@ whichever suits your environment.
 | Docker Hub | `postmillai/postmill-app` | The same image. Anonymous pulls are subject to Docker Hub's rate limits |
 
 ```bash
-docker pull ghcr.io/postmill-ai/postmill-app:v1.0.0   # GitHub Container Registry
-docker pull postmillai/postmill-app:v1.0.0            # Docker Hub
+docker pull ghcr.io/postmill-ai/postmill-app:v1.2.0   # GitHub Container Registry
+docker pull postmillai/postmill-app:v1.2.0            # Docker Hub
 ```
 
 Every release is published to both as `:vX.Y.Z` and `:latest`, built for `linux/amd64` only.
@@ -88,7 +88,7 @@ API_LIMIT: 600
 | `postmill-uploads`   | `/uploads/`               | Uploaded media (always local) |
 
 The `:latest` tag shown above is suitable for quick-start only. In production, pin a specific
-version tag (for example, `ghcr.io/postmill-ai/postmill-app:v1.0.0`, or `postmillai/postmill-app:v1.0.0`
+version tag (for example, `ghcr.io/postmill-ai/postmill-app:v1.2.0`, or `postmillai/postmill-app:v1.2.0`
 on Docker Hub) to get a known rollback target.
 
 ## Background jobs
@@ -181,4 +181,4 @@ docker exec postmill npx --yes prisma@6.5.0 migrate deploy \
 For local prototyping or reset only, `pnpm run prisma-db-push` is available; never use it against a
 shared or production database.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

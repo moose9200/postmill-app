@@ -34,7 +34,7 @@ This applies to:
 - Public API v1 (`/public/v1/*`)
 - MCP (`/mcp`, `/mcp/:id`, `/sse/:id`, `/media-mcp`)
 
-The middleware resolves the key to the owning user and organization. On hosted instances with Stripe configured, the org must have an active subscription; otherwise the request returns `401`.
+The middleware resolves the key to the owning user and organization. When billing is enabled (at least one payment provider configured), the org must have an active subscription; otherwise the request returns `401`.
 
 ## Management endpoints
 
@@ -121,9 +121,9 @@ Response:
 
 When an API key is used with the MCP server, the resolved scopes depend on the user's org role:
 
-- `owner`, `admin`, or a **super-admin with no membership in the target org** (resolved to `owner`, `start.mcp.ts:323-329`): `mcp:read`, `mcp:posts:write`
+- `owner`, `admin`, or a **super-admin with no membership in the target org** (resolved to `owner`, `start.mcp.ts:334-336`): `mcp:read`, `mcp:posts:write`
 - `editor`, `member`, `viewer`: `mcp:read`
 
-These scopes are intersected with `mcpsettings.allowedScopes` if configured.
+Admin-configured `mcpsettings.allowedScopes` are merged with the defaults into the scope set each request must hold.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

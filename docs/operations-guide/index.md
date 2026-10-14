@@ -6,13 +6,13 @@ deployment, configuration, backup, and ongoing maintenance.
 ## What's involved in running Postmill
 
 Postmill is a multi-service application that schedules and publishes social media and chat posts
-across 36 channels. Running your own instance means operating:
+across 45+ channels. Running your own instance means operating:
 
 - The **Postmill** application container (Node.js backend + Next.js frontend combined)
 - A **PostgreSQL 17** database (application data)
 - A **Redis 7** cache and message broker
 - **Inngest** for durable background jobs (dev server locally, Cloud in production)
-- Optional **object storage** for uploaded media (local disk, S3, R2, B2, or IDrive e2)
+- Optional **object storage** for uploaded media (local disk, S3, R2, B2, IDrive e2, or another S3-compatible service)
 
 The operational surface is moderate: most state lives in Postgres, background work is durable
 through Inngest, and media can live on local disk or cloud object storage.
@@ -25,7 +25,7 @@ through Inngest, and media can live on local disk or cloud object storage.
 | Primary database   | PostgreSQL 17                       | Users, orgs, posts, integrations, config |
 | Cache / queue      | Redis 7                             | Session cache, throttle store, analytics cache |
 | Background jobs    | Inngest                             | Analytics, comments, publish, token refresh |
-| Media storage      | Local disk or S3/R2/B2/IDrive e2   | Uploaded images, video, audio       |
+| Media storage      | Local disk or S3-compatible storage | Uploaded images, video, audio       |
 | Monitoring (opt)   | Sentry + Spotlight                  | Error tracking, debug proxy         |
 
 ## Guide pages
@@ -35,6 +35,8 @@ through Inngest, and media can live on local disk or cloud object storage.
 | [Requirements](./requirements.md) | Hardware, software, and network prerequisites |
 | [Docker Deployment](./docker.md) | Running the full stack with Docker Compose |
 | [Configuration](./configuration.md) | Every environment variable, organised by category |
+| [Platform Channel Apps](./platform-channel-apps.md) | Operator-level OAuth apps that give every org one-click channel connect |
+| [Platform Comms Apps](./platform-comms-apps.md) | Operator-level chat apps (Slack, Telegram, Discord, Matrix, LINE) for the agent and notifications |
 | [Inngest & Cron](./inngest-and-cron.md) | Background job inventory and scheduling |
 | [Video Rendering](./video-rendering.md) | Local media render queue and optional Podman workers |
 | [Storage Setup](./storage.md) | Local and cloud storage providers, quotas, per-org routing |
@@ -46,4 +48,4 @@ through Inngest, and media can live on local disk or cloud object storage.
 | [OAuth / SSO](./oauth-sso.md) | Generic OIDC provider setup (Authentik, Keycloak, etc.) |
 | [Subscriptions & payment providers](./subscriptions.md) | Payment provider config (Stripe and others), plans, metered caps, add-ons, and self-host defaults |
 
-> Verified against v1.0.0
+> Verified against v1.2.0

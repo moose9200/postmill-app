@@ -1,6 +1,6 @@
 # First-run setup
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 When a brand-new organization is created, Postmill shows a one-time onboarding wizard at **`/setup`**. The wizard walks the first user through the minimum configuration needed before the app is usable:
 
@@ -13,6 +13,8 @@ When a brand-new organization is created, Postmill shows a one-time onboarding w
 7. **VPN / proxy** — optional outbound proxy configuration.
 
 The wizard reuses the same [Settings](./settings.md) panels you will see later, so anything skipped can be configured afterward from **Settings**.
+
+Setup configures organization-level providers, so only an owner or admin can complete it. A member who opens `/setup` is sent to `/dashboard` instead.
 
 ## Finishing setup
 

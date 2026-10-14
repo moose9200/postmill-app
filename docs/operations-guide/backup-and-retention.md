@@ -1,6 +1,6 @@
 # Backup & Retention
 
-Postmill keeps all application state in PostgreSQL and uploaded media on local disk or object storage. Schema changes are applied through committed Prisma migrations (`pnpm run prisma-migrate-deploy`), which is the path used by CI and the production boot sequence. Backups are still essential: rollback is forward-only, and a failed or destructive migration is only recoverable from a snapshot.
+Postmill keeps all application state in PostgreSQL and uploaded media on local disk or object storage. Schema changes are applied through committed Prisma migrations (`pnpm run prisma-migrate-deploy`, or `prisma migrate deploy` inside the container — the container does not migrate on boot; see [Upgrading](./upgrading.md#_5-apply-migrations)). Backups are still essential: rollback is forward-only, and a failed or destructive migration is only recoverable from a snapshot.
 
 ## What to back up
 
@@ -20,14 +20,14 @@ Schedule this daily. Keep at least 7 days of backups.
 
 ### 2. Upload directory or object storage
 
-All uploaded media (images, videos, audio). If using local storage, back up the volume:
+All uploaded media (images, videos, audio). If using local storage, back up the volume. Docker Compose prefixes volume names with the project name (the directory holding `docker-compose.yaml`, `postmill-app` for a default clone) — confirm yours with `docker volume ls` and adjust the commands below:
 
 ```bash
 # From the Docker host
-docker run --rm -v postmill-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads_$(date +%Y%m%d).tar.gz -C /data .
+docker run --rm -v postmill-app_postmill-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads_$(date +%Y%m%d).tar.gz -C /data .
 ```
 
-If using cloud object storage (R2, S3, B2, IDrive e2), enable versioning and/or cross-region replication on the bucket.
+If using cloud object storage (R2, S3, B2, IDrive e2, or another S3-compatible provider), enable versioning and/or cross-region replication on the bucket.
 
 ### 3. JWT_SECRET and ENCRYPTION_KEY
 
@@ -82,7 +82,7 @@ Postmill's schema is managed with committed Prisma migrations:
    ```
 3. **Restore uploads**:
    ```bash
-   docker run --rm -v postmill-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads_20260609.tar.gz -C /data
+   docker run --rm -v postmill-app_postmill-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads_20260609.tar.gz -C /data
    ```
 4. **Verify `JWT_SECRET` and `ENCRYPTION_KEY`** match the values from the backup:
    - If you changed `JWT_SECRET` since the backup, all encrypted tokens will fail to decrypt.
@@ -105,11 +105,11 @@ DATE=$(date +%Y%m%d-%H%M)
 mkdir -p "$BACKUP_DIR"
 
 docker exec postmill-postgres pg_dump -U postmill-user postmill-db-local > "$BACKUP_DIR/db_$DATE.sql"
-docker run --rm -v postmill-uploads:/data -v "$BACKUP_DIR":/backup alpine tar czf "/backup/uploads_$DATE.tar.gz" -C /data .
+docker run --rm -v postmill-app_postmill-uploads:/data -v "$BACKUP_DIR":/backup alpine tar czf "/backup/uploads_$DATE.tar.gz" -C /data .
 
 # Keep 7 days
 find "$BACKUP_DIR" -name '*.sql' -mtime +7 -delete
 find "$BACKUP_DIR" -name '*.tar.gz' -mtime +7 -delete
 ```
 
-> Verified against v1.0.0
+> Verified against v1.2.0

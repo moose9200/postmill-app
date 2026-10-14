@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 ```
 
-The `integrations` array scopes which channels the webhook listens to. For `post.published`, only webhooks whose integration list is empty or contains the published channel receive the event. For **all other event types** (comment and analytics), the dispatcher only delivers to webhooks whose integration list is **empty** — an integration-scoped webhook does **not** receive comment or analytics events (`WebhooksService.dispatchEvent`, `webhooks.service.ts:42-44`).
+The `integrations` array scopes which channels the webhook listens to. For `post.published`, only webhooks whose integration list is empty or contains the published channel receive the event. For **all other event types** (comment and analytics), the dispatcher only delivers to webhooks whose integration list is **empty** — an integration-scoped webhook does **not** receive comment or analytics events (`WebhooksService.dispatchEvent`, `webhooks.service.ts:55-57`).
 
 ### Updating a webhook
 
@@ -98,7 +98,7 @@ The raw Prisma row is never shipped. **The envelope shape differs by delivery pa
 
 - **`post.published`** wraps its fields in a `{ event, timestamp, data: {...} }` envelope.
 - **The comment and analytics events** are emitted **flat** — `{ event, ...fields }`, with the event
-  fields spread at the top level and **no `data` wrapper** (`webhooks.service.ts:54`). The comment
+  fields spread at the top level and **no `data` wrapper** (`webhooks.service.ts:67`). The comment
   events also carry **no `timestamp`** field.
 
 `post.published` (enveloped):
@@ -133,7 +133,7 @@ The raw Prisma row is never shipped. **The envelope shape differs by delivery pa
 }
 ```
 
-The batched digest path emits a different flat shape — `{ "event": "comment.new", "batchSize": 12, "timeframe": "..." }` (`comments.activity.ts:86-89`).
+The batched digest path emits a different flat shape — `{ "event": "comment.new", "batchSize": 12, "timeframe": "..." }` (`comments.activity.ts:96-99`).
 
 `comment.reply` (flat, no `timestamp`):
 
@@ -186,7 +186,7 @@ The batched digest path emits a different flat shape — `{ "event": "comment.ne
 
 ### HMAC signing
 
-**Signing is not universal.** Only three deliveries are signed with an HMAC-SHA256 `X-Postmill-Signature` header (formatted `sha256=<hex>`): **`post.published`** (`post.activity.ts:684,698`), the **test-ping**, and **`/webhooks/send`**. The comment and analytics events dispatched through `WebhooksService.dispatchEvent` are sent with **only** a `Content-Type` header and carry **no signature** (`webhooks.service.ts:51-55`) — receivers of those events cannot verify a signature.
+**Signing is not universal.** Only three deliveries are signed with an HMAC-SHA256 `X-Postmill-Signature` header (formatted `sha256=<hex>`): **`post.published`** (`post.activity.ts:716,730`), the **test-ping**, and **`/webhooks/send`**. The comment and analytics events dispatched through `WebhooksService.dispatchEvent` are sent with **only** a `Content-Type` header and carry **no signature** (`webhooks.service.ts:64-68`) — receivers of those events cannot verify a signature.
 
 For the signed deliveries, the signature is computed over the **exact serialized JSON body** using a **deployment-wide secret** — `WEBHOOK_SIGNING_SECRET`. When that env var is unset, the secret falls back to `JWT_SECRET`, so signing is always available for the paths that use it.
 
@@ -215,4 +215,4 @@ The secret is deployment-wide, not per-webhook.
 | `OUTBOUND_HTTP_TIMEOUT_MS` | `30000` | Default `safeFetch` timeout |
 | `SSRF_ALLOWED_PRIVATE_CIDRS` | — | Opt-in allowlist of private CIDRs for self-hosted internal targets |
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -58,10 +58,12 @@ the user to Settings → AI.
 
 ### Provider Enablement Safety
 
-Channel provider credentials live exclusively in `OrgProviderConfiguration`, encrypted at rest
-through `EncryptionService`. There is no env-var fallback for any channel credential. Each
-provider receives credentials through `clientInformation` or via `getOrgCredential(orgId,
-identifier, key)`. Never read `process.env` for channel credentials.
+Channel provider credentials live in `OrgProviderConfiguration`, encrypted at rest through
+`EncryptionService`; a per-org configuration always wins. The only env fallback is the platform
+OAuth app a deployment may supply for a channel — resolved live per request in
+`IntegrationManager.getClientInformation`, never persisted, and for channels only. Each provider
+receives credentials through `clientInformation` or via `getOrgCredential(orgId,
+identifier, key)`. Never read `process.env` for channel credentials inside a provider.
 
 ### safeFetch for All Outbound HTTP
 
@@ -74,7 +76,7 @@ every redirect hop.
 
 `helmet()` is applied in `main.ts` after CORS. It sets HSTS, `noSniff`, `referrerPolicy:
 strict-origin-when-cross-origin`, `frameguard: deny`, and a CSP. The `NOT_SECURED` env var skips
-helmet entirely for dev/local use.
+helmet only when `NODE_ENV=development` (local use); a stray `NOT_SECURED` in production keeps it.
 
 ### Schema-Change Safety
 
@@ -96,7 +98,7 @@ Renames/drops are destructive — provide an expand-contract plan.
 1. Create a branch from `main`
 2. Make your changes, following the conventions in this directory
 3. Run `pnpm run test` to verify your package's tests pass
-4. Run `npx eslint .` from the repo root to check lint
+4. Run `pnpm exec eslint .` from the repo root to check lint
 5. If you changed the schema, run `pnpm run prisma-generate`
 
 ### Commit Messages
@@ -121,7 +123,7 @@ When reviewing a PR, verify:
 - [ ] No npm UI library installed
 - [ ] Each SWR hook is its own function (not nested in a returned object)
 - [ ] No eslint-disable for rules-of-hooks
-- [ ] No `OPENAI_API_KEY` or channel credential env-var fallback introduced
+- [ ] No `OPENAI_API_KEY` (or other AI-key) env-var fallback introduced
 - [ ] All outbound HTTP on user URLs uses `safeFetch`
 - [ ] New DTO fields are declared (required for `whitelist` + `forbidNonWhitelisted`)
 - [ ] Schema changes follow safety rules (nullable/defaulted)
@@ -135,14 +137,14 @@ When reviewing a PR, verify:
 ## Documentation
 
 Keep `docs/` in sync with code. Any new feature, endpoint, env var, schema model, or security
-invariant must be reflected in the relevant page. Bump the "Verified against v1.0.0" footer on
+invariant must be reflected in the relevant page. Bump the "Verified against vX.Y.Z" (the current `version.txt`) footer on
 every page you change.
 
 ---
 
 ## CLA
 
-Contributors must sign the Contributor License Agreement before a PR can be merged. The CLA bot
-will prompt you on your first PR.
+Contributors must sign the Contributor License Agreement before a PR can be merged: email your
+acceptance to legal@postmill.ai (`ICLA.md` for individuals, `CCLA.md` for entities).
 
-> Verified against v1.0.0
+> Verified against v1.2.0

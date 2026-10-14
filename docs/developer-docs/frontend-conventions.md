@@ -1,6 +1,6 @@
 # Frontend Conventions
 
-Postmill's frontend runs on **Next.js (App Router) + React** with **Tailwind 3** for styling and **SWR** for data fetching. It listens on port `4200`.
+Postmill's frontend runs on **Next.js (App Router) + React** with **Tailwind 4** for styling and **SWR** for data fetching. It listens on port `4200`.
 
 ---
 
@@ -10,7 +10,7 @@ Source: `apps/frontend/src/app/`
 
 | Route group | Path | Purpose |
 |---|---|---|
-| `(app)/(site)/` | `/posts`, `/agents`, `/comments`, `/analytics`, `/media`, `/campaigns`, `/billing`, `/settings` | Main application pages |
+| `(app)/(site)/` | `/dashboard`, `/posts`, `/agents`, `/replies`, `/comments`, `/analytics`, `/files`, `/media`, `/campaigns`, `/notifications`, `/billing`, `/settings` | Main application pages |
 | `(app)/(site)/analytics/v2/` | `/analytics/v2` | Legacy redirect to `/analytics` (bookmark back-compat) |
 | `(app)/(site)/agents/[id]/` | `/agents/[id]` | Individual agent detail |
 | `(app)/auth/` | `/auth/login`, `/auth/forgot`, `/auth/activate` | Authentication flows |
@@ -19,6 +19,7 @@ Source: `apps/frontend/src/app/`
 | `(app)/(extension)/` | Extension pages | Browser extension UI |
 | `(app)/(provider)/` | Provider pages | Provider bridge UI |
 | `(app)/oauth/` | `/oauth/authorize` | OAuth authorization grant page |
+| `(app)/setup/` | `/setup` | First-run setup wizard |
 
 ### Shared layout
 
@@ -64,9 +65,9 @@ function useCommunities() {
 
 ---
 
-## Styling — Tailwind 3
+## Styling — Tailwind 4
 
-Class-based dark mode. Utility classes only — no inline styles, no CSS modules for new components.
+Class-based dark mode (the `dark` custom variant in `apps/frontend/src/app/tailwind.css`, which bridges the JS config via `@config`). Utility classes only — no inline styles, no CSS modules for new components.
 
 ### Design tokens
 
@@ -138,7 +139,7 @@ Feature-specific components live in `apps/frontend/src/components/`:
 
 ## Capability-aware UI
 
-The frontend reads provider capabilities from `provider-capabilities.ts` (`libraries/nestjs-libraries/src/integrations/social/`). The matrix gates UI controls consistently. The same matrix is exposed to end users in the [Supported Channels](../user-guide/supported-channels.md) user guide and via the `GET /provider-capabilities` API endpoint.
+The frontend reads provider capabilities from the `PROVIDER_CAPABILITIES` matrix in `@postmill-ai/provider-kernel/domains/social-capabilities` (`libraries/providers/kernel/src/domains/social-capabilities.ts`, re-exported by `libraries/nestjs-libraries/src/integrations/social/provider-capabilities.ts`). The matrix gates UI controls consistently. The same matrix is summarized for end users in the [Supported Channels](../user-guide/supported-channels.md) user guide.
 
 | Capability | Gating effect |
 |---|---|
@@ -153,6 +154,7 @@ The frontend reads provider capabilities from `provider-capabilities.ts` (`libra
 | `linkPreview` | Shows link preview toggle |
 | `refreshToken` | Shows refresh-token health indicators |
 | `watchlist` | Enables competitor tracking UI |
+| `richText` | Optional (absent = supported); `false` hides rich-text links/bullets/headings in the composer editor |
 
 **Do not add ad-hoc capability gating** — read the `PROVIDER_CAPABILITIES` map.
 
@@ -162,17 +164,17 @@ The frontend reads provider capabilities from `provider-capabilities.ts` (`libra
 
 `apps/frontend/src/components/layout/top.menu.tsx` defines two menu groups:
 
-**Group 1 — Core features:** Schedule, Agent, Comments, Analytics, Media, Plugs, Campaigns, Integrations
+**Group 1 — Core features:** Home (`/dashboard`), Posts, Agent, Replies, Analytics, Files, Media, Campaigns
 
-**Group 2 — Account:** UGC, Affiliate, Billing, Profile, Settings
+**Group 2 — Account:** Billing, Settings
 
-Menu items are role-gated and billing-gated. The `isGeneral` flag (self-hosted mode) hides billing and UGC items.
+Menu items are permission-gated (`hide` from `usePermissions()`) and billing-gated (`requireBilling` items are hidden when billing is not enabled). The `isGeneral` flag only relabels the scheduling entry ("Posts" instead of "Launches").
 
 ---
 
 ## Error boundaries
 
-- App Router segment boundaries: each main route group ships `error.tsx` + `not-found.tsx` (`(app)`, `(app)/(site)`, `(app)/(site)/media`, `(provider)`), rendering the shared `RouteError` / `RouteNotFound` (`components/errors/`). `error.tsx` is a `'use client'` component receiving `{ error, reset }`.
+- App Router segment boundaries: each main route group ships `error.tsx` + `not-found.tsx` (`(app)`, `(app)/(site)`, `(app)/(site)/media`, `(provider)`; `(app)/setup` has its own `error.tsx`), rendering the shared `RouteError` / `RouteNotFound` (`components/errors/`). `error.tsx` is a `'use client'` component receiving `{ error, reset }`.
 - The `/media/*` canvas studios (Designer, HeyGen, Replicate, Deepgram, and every Studio Kit `StudioShell`) are wrapped at the media layout level in `StudioErrorBoundary` (`components/media-tools/studio-error-boundary.tsx`) so a studio crash shows a themed fallback with a reset instead of a blank screen.
 
 Reuse the `StudioErrorBoundary` pattern for new canvas tools rather than adding ad-hoc try/catch.
@@ -184,8 +186,8 @@ Reuse the `StudioErrorBoundary` pattern for new canvas tools rather than adding 
 - All components are functional components with hooks.
 - Use `useT()` for translatable strings (provided by the React shared libraries).
 - Use `useUser()` for the current user/org/role (in `apps/frontend/src/components/layout/user.context`).
-- Use `useVariables()` for feature flags (provided by the helpers package).
+- Use `useVariables()` for feature flags and deployment variables (provided by the React shared libraries).
 - Modals use `useModals()` (in `apps/frontend/src/components/layout/new-modal`).
 - **No `dangerouslySetInnerHTML` without DOMPurify sanitization.**
 
-> Verified against v1.0.0
+> Verified against v1.2.0

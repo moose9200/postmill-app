@@ -30,10 +30,13 @@ Technical documentation for developers working on the Postmill codebase. This di
 | [Local Development](./local-development.md) | Get the stack running locally with minimal resources: Docker profiles, feature flags, memory guidance. |
 | [Architecture](./architecture.md) | High-level monorepo architecture, app/library layout, data flow. |
 | [AI Architecture](./ai-architecture.md) | Pluggable multi-provider AI layer: `AIModelProvider`, categories, surfaces, adapters, governance services. |
+| [Agent Architecture](./agent-architecture.md) | The `/agents` chat agent (Mastra + CopilotKit): specialists, tools, human-in-the-loop confirmation. |
+| [Dashboard](./dashboard.md) | The `/dashboard` command center: endpoints, attention probes, caching, daily brief. |
+| [Designer](./designer.md) | The native canvas Designer, the `DesignerDoc` contract, and the AI Designer pipeline. |
 | [Database](./database.md) | Prisma schema management, migrate-deploy workflow, repository-only access, encryption at rest. |
 | [Data Model](./data-model.md) | Prisma models grouped by domain with keys and relationships. |
 | [Backend Conventions](./backend-conventions.md) | NestJS layering (Controller → Service → Repository), DTO validation, CSRF, security invariants. |
-| [Frontend Conventions](./frontend-conventions.md) | Next.js App Router structure, SWR data fetching, Tailwind 3 styling, capability-aware UI. |
+| [Frontend Conventions](./frontend-conventions.md) | Next.js App Router structure, SWR data fetching, Tailwind 4 styling, capability-aware UI. |
 | [Provider Framework](./provider-framework.md) | Kernel, identity triple, versions, catalog/health APIs. |
 | [Provider Versions](./provider-versions.md) | Live provider catalog grouped by domain. |
 | [Integrations](./integrations.md) | The channel-integration model: `IntegrationManager`, credential resolution, capability matrix, per-channel VPN egress. |
@@ -41,6 +44,9 @@ Technical documentation for developers working on the Postmill codebase. This di
 | [Analytics API](./analytics-api.md) | Unified multi-channel analytics API under `/public/v1/analytics/*` with snapshot-based data. |
 | [MCP](./mcp.md) | Model Context Protocol server entrypoints, auth, rate limiting. |
 | [OAuth Apps](./oauth-apps.md) | OAuth application registration and management. |
+| [Postmill ID](./postmill-id.md) | "Sign in with Postmill" — the first-party SSO federation relying-party contract. |
+| [API Keys](./api-keys.md) | Per-user, per-organization API keys (`pm_live_…`) for the Public API and MCP. |
+| [Payment Providers](./payment-providers.md) | Writing a payment provider for the `payments` kernel domain. |
 | [Plugs](./plugs.md) | Automation hooks (auto plugs and post plugs) for social channel providers. |
 | [SDK](./sdk.md) | Official `@postmill-ai/postmill-sdk` Node.js SDK for the Public API. |
 | [Webhooks](./webhooks.md) | Webhook configuration, dispatch, and SSRF-safe delivery. |
@@ -95,4 +101,4 @@ openapi.yml          Generated from the controllers — never hand-edited
 Root `scripts/` is maintainer-local and gitignored; a fresh clone does not have it. Anything CI or a
 documented workflow needs lives in `tools/`.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

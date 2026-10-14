@@ -42,8 +42,8 @@ The heavy pieces:
 
 ### Object storage
 
-All media is stored locally by default (`UPLOAD_DIRECTORY`). Cloud providers (S3, R2, B2, IDrive e2)
-are configured per-organization via Settings → Storage. Avatars and app-internal writes always use
+All media is stored locally by default (`UPLOAD_DIRECTORY`). Cloud providers (S3, R2, B2, IDrive e2,
+and other S3-compatible services — see [Storage Setup](./storage.md)) are configured per-organization via Settings → Storage. Avatars and app-internal writes always use
 local storage.
 
 | Provider            | Notes |
@@ -53,6 +53,7 @@ local storage.
 | AWS S3              | S3-native API (per-tenant, Settings → Storage) |
 | Backblaze B2        | S3-compatible, low storage cost (per-tenant, Settings → Storage) |
 | IDrive e2           | S3-compatible (per-tenant, Settings → Storage) |
+| Others              | Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr, Linode, generic S3-compatible, MediaLocker (per-tenant, Settings → Storage) |
 
 Storage providers are configured **per-organization** via the Settings UI, not environment
 variables. See [Storage Setup](./storage.md) and [Configuration](./configuration.md).
@@ -85,7 +86,7 @@ npx nestjs-command config:check
 npx nestjs-command refresh
 
 # Run the AI agent
-npx nestjs-command run:agent
+npx nestjs-command run:agent <org>
 ```
 
 Run these inside the application container or with the same environment variables as the backend.
@@ -107,4 +108,4 @@ This is a benign, macOS-only conflict between the native modules `sharp` and `ca
 packages register the same macOS notification-delegate class independently; the warning does not
 affect Linux production images or runtime correctness. No operator action is required.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

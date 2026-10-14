@@ -6,8 +6,8 @@ Postmill uses role-based access control (RBAC) for every organisation. The **Set
 
 The Team page is available when your subscription tier includes team members. From here you can:
 
-- **Invite by email** (`POST /settings/team`) — sends a registration link. You can also choose to copy the link instead of emailing it.
-- **Create a user directly** (`POST /settings/team/create-user`) — creates an activated local account with a password and assigns a role immediately.
+- **Invite by email** (`POST /settings/team`) — sends a registration link. You can also choose to copy the link instead of emailing it. The invitation link is valid for one hour and can be used once.
+- **Create a user directly** (`POST /settings/team/create-user`) — creates an activated local account with a password and assigns a role immediately. If an account with that email already exists, the request is refused (HTTP 409) — invite the existing user instead.
 - **Remove a member** (`DELETE /settings/team/:id`) — disables the membership; bulk remove is available from the data table selection.
 - **Change a member's role** via the per-row selector or `PUT /settings/roles/team/:userId/role`.
 
@@ -67,4 +67,4 @@ Role creates/updates/deletes and member role assignments are written to the orga
 
 > See also [Settings](./settings.md) for the settings layout, [Subscription & Billing](./subscription-and-billing.md) for team-member limits, and [Operations Guide → Security](../operations-guide/security.md) for access-control invariants.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

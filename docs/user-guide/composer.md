@@ -71,9 +71,10 @@ organisation's default brand.
 
 ### Scheduling Options
 
-- **Publish Now**: Sends the post immediately.
-- **Schedule**: Queues the post for the selected date/time.
-- **Save as Draft**: Saves the post without scheduling it.
+- **Post now**: Sends the post immediately.
+- **Add to Calendar**: Queues the post for the selected date/time (the button reads **Schedule**
+  for an existing draft and **Update** for an already-scheduled post).
+- **Save as draft**: Saves the post without scheduling it.
 
 ## Per-Channel Overrides
 
@@ -192,9 +193,8 @@ For the full capability matrix, see [Supported Channels](./supported-channels.md
 
 ## Bulk Import
 
-You can import multiple posts at once via CSV. The bulk import flow uses the same preflight
-validation as the composer — each row is validated individually, and per-row successes, warnings,
-and errors are reported. Failed rows do not block successful rows. See [Bulk Import](./bulk-import.md)
+You can import multiple posts at once via CSV. Each row is validated and created individually,
+and per-row successes, warnings, and errors are reported. Failed rows do not block successful rows. See [Bulk Import](./bulk-import.md)
 for details.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

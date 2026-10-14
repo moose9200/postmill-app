@@ -4,7 +4,7 @@ Based on the
 
 ## Entity Contributor License Agreement (CCLA)
 
-Thank you for your interest in contributing to Postmill, operated by REAA Technologies Inc., a Nevada corporation located in Las Vegas, Nevada, doing business as Postmill ("We" or "Us").
+Thank you for your interest in contributing to Postmill, operated by Postmill AI Inc., a Nevada corporation located in Las Vegas, Nevada ("We" or "Us").
 
 The purpose of this contributor agreement ("Agreement") is to clarify and document the rights granted by contributors to Us. To make this document effective, please review its terms and send Your written acceptance by email to legal@postmill.ai, referencing this Agreement (CCLA.md).
 

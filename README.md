@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License: AGPL-3.0">
   </a>
   <a href="https://postmill.ai">
-    <img src="https://img.shields.io/badge/version-v1.0.0-2B5CD3.svg" alt="Version v1.0.0">
+    <img src="https://img.shields.io/badge/version-v1.2.0-2B5CD3.svg" alt="Version v1.2.0">
   </a>
   <a href="https://docs.postmill.ai">
     <img src="https://img.shields.io/badge/docs-docs.postmill.ai-2B5CD3.svg" alt="Documentation">
@@ -190,9 +190,19 @@ See [Contributing](CONTRIBUTING.md) for development and pull requests, and the [
 
 Postmill began as a fork of [Postiz](https://github.com/gitroomhq/postiz-app), the open-source social scheduling tool created by Nevo David and the Gitroom team. Huge thanks to them for the foundation this project is built on. Postmill has since grown into its own standalone, AI-native platform, but the original work made it possible.
 
+Postmill's agentic foundations are built on open-source [@reaatech](https://www.npmjs.com/~reaatech) packages from [REAA Technologies](https://reaatech.com), Postmill's original creator — including `@reaatech/agent-mesh`, `@reaatech/guardrail-chain`, `@reaatech/hybrid-rag`, `@reaatech/agent-budget-*`, and the `@reaatech/media-pipeline-mcp-*` suite. Our sincere thanks to REAA Technologies for building and open-sourcing them, and for bringing Postmill to life.
+
 ## About
 
-Postmill is created and maintained by [REAA Technologies](https://reaatech.com), a leader in open-source AI solutions, and is built on official [@reaatech](https://www.npmjs.com/~reaatech) packages for its agentic foundations — including `@reaatech/agent-mesh`, `@reaatech/guardrail-chain`, `@reaatech/hybrid-rag`, `@reaatech/agent-budget-*`, and the `@reaatech/media-pipeline-mcp-*` suite.
+Postmill AI Inc. is a Nevada-based software company founded on a simple belief: powerful digital marketing tools shouldn't be a luxury reserved for businesses with big budgets.
+
+Millions of small businesses, independent professionals, and creators lack the resources to hire designers, manage multiple software subscriptions, or invest in expensive AI services. Yet they face the same challenges as larger organizations when it comes to building their brands, reaching customers, and competing online.
+
+We founded Postmill to change that.
+
+Our mission is to make professional content creation, social media management, and AI-powered marketing accessible and affordable to everyone, regardless of technical expertise, location, or budget.
+
+We believe in open-source software, freedom of choice, and empowering people with the tools to succeed on their own terms. Rather than adding another subscription to an already fragmented market, we're building a unified platform that removes barriers, reduces costs, and puts powerful capabilities within everyone's reach.
 
 ## License
 

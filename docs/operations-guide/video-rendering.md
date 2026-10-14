@@ -37,8 +37,9 @@ local compute; without bounds a backlog can starve the host.
    VIDEO_RENDER_MEMORY=8g
    VIDEO_RENDER_CONCURRENCY=3
    ```
-3. `NEXT_PUBLIC_BACKEND_URL` must be reachable from the container (the pod uses
-   `--network host`, so a localhost backend URL works).
+3. `NEXT_PUBLIC_BACKEND_URL` must be reachable from the container. The pod uses an isolated
+   `bridge` network by default, so a `localhost` backend URL does **not** resolve to the host;
+   use an address the container can reach, or opt into `VIDEO_RENDER_NETWORK=host`.
 
 ## Requirements & notes
 
@@ -46,9 +47,11 @@ local compute; without bounds a backlog can starve the host.
   rootless needs `--cgroup-manager systemd` + cgroup delegation. If the pod can't be created and
   `VIDEO_RENDER_SPLIT_FALLBACK=true` (default), the service degrades to per-container even-split
   caps (`CPUS/CONCURRENCY`, `MEMORY/CONCURRENCY` each) and logs a warning.
-- `--network host` lets the design-render container reach the backend's `render-frame` route and
-  fetch assets. The pod owns networking, so per-container network can't differ; the merge worker
-  shares it but doesn't use the network.
+- The design-render container reaches the backend's `render-frame` route and fetches assets over
+  `VIDEO_RENDER_NETWORK` (default `bridge`). `host` is opt-in and defeats the isolation: the
+  container's Chromium could then reach localhost, internal services, and cloud metadata. The pod
+  owns networking, so per-container network can't differ; the merge worker shares it but doesn't
+  use the network.
 - The render image is the app build + distro Chromium/FFmpeg + the `media-render-worker` CLI as
   ENTRYPOINT. It reads `/work/job.json` and writes the artifact to `/work/out`.
 
@@ -60,9 +63,9 @@ local compute; without bounds a backlog can starve the host.
 | `VIDEO_RENDER_POD` | `postmill-render` | Shared pod (aggregate cgroup) |
 | `VIDEO_RENDER_CPUS` | `4` | Total CPU across all render containers |
 | `VIDEO_RENDER_MEMORY` | `8g` | Total RAM across all render containers |
-| `VIDEO_RENDER_NETWORK` | `host` | Pod network |
+| `VIDEO_RENDER_NETWORK` | `bridge` | Pod network (`host` is opt-in and removes network isolation) |
 | `VIDEO_RENDER_PODMAN_BIN` | `podman` | CLI path |
 | `VIDEO_RENDER_TIMEOUT_MS` | `120000` | Per-container hard timeout |
 | `VIDEO_RENDER_SPLIT_FALLBACK` | `true` | Even-split caps if the pod can't be created |
 
-> Verified against v1.0.0
+> Verified against v1.2.0

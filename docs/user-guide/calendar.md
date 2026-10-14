@@ -10,7 +10,7 @@ The schedule supports three view modes, toggled from the view selector in the to
 ### Month View
 
 A traditional month grid. Each day cell shows up to 3 post cards with the channel icon and a
-content preview. Days with more posts display a "+N more" indicator. Navigate between months with
+content preview. Days with more posts display a "+ Show more (N)" link. Navigate between months with
 the arrow buttons or jump to a specific month via the date picker.
 
 ### Week View
@@ -120,8 +120,8 @@ details on the unified comments inbox.
 
 ## Timezone Handling
 
-All dates and times in the schedule respect the timezone configured in your **Settings →
-Profile**. The `timezones-list` library provides the list of available timezones, and the Day.js
+All dates and times in the schedule respect the timezone configured in your **Profile**
+(`/user/me`, from the avatar menu). The `timezones-list` library provides the list of available timezones, and the Day.js
 timezone plugin handles all conversions. When you schedule a post for "9:00 AM," it means 9:00 AM
 in your configured timezone.
 
@@ -130,4 +130,4 @@ indicator (a red line in week/day views) also follows your timezone. Clicking an
 slot opens the create-post page (`/posts/post`) with the slot's date and time prefilled in
 your timezone; the post is saved in UTC.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -14,7 +14,7 @@ Visit your Postmill instance and complete the signup form. You will need:
 
 After registration, check your email for the activation link. Click it to verify your account and
 log in. The first user of an organization becomes its **Owner** (full access including billing —
-see [team roles](./settings.md#teams-tab)). Depending on how your instance is configured, you may
+see [team roles](./team-and-roles.md)). Depending on how your instance is configured, you may
 also be able to sign in with Google, GitHub, or your company's OIDC identity provider.
 
 ## 2. Connect Your First Channel
@@ -89,7 +89,7 @@ active Skool session.
 5. Optionally attach media by dragging files into the upload area or selecting from your media
    library.
 6. Choose a publish date and time using the date/time picker.
-7. Click **Schedule** to add the post to your queue, or **Publish Now** to send it immediately.
+7. Click **Add to Calendar** to add the post to your queue, or **Post now** to send it immediately.
 
 Your post appears on the calendar grid at the scheduled time. When the scheduled time arrives, the
 Postmill workflow engine publishes it to the selected channels.
@@ -100,21 +100,24 @@ Postmill is organized into these sections, accessible from the left sidebar:
 
 | Page            | Route           | Purpose                                                |
 |-----------------|-----------------|--------------------------------------------------------|
+| Home            | `/dashboard`    | Command-center dashboard                               |
 | Posts           | `/posts`        | Post schedule (calendar) view for scheduling and managing content|
-| Agents          | `/agents`       | AI agent for content generation and automation         |
-| Comments        | `/comments`     | Unified inbox for social comments across all channels  |
+| Agent           | `/agents`       | AI agent for content generation and automation         |
+| Replies         | `/replies`      | Unified inbox for social comments across all channels  |
 | Analytics       | `/analytics`    | Dashboard with overview, channel, post, and best-time metrics |
-| Media           | `/media`        | Media library (upload, organize, search)               |
+| Files           | `/files`        | Media library (upload, organize, search)               |
+| Media           | `/media`        | Media studios (Designer, AI Designer, provider studios, stock) |
 | Campaigns       | `/campaigns`    | Campaign folders for grouping posts and analytics      |
-| Settings        | `/settings`     | Org settings: profile, channels, team, AI, billing     |
+| Billing         | `/billing`      | Plans and payment (only when billing is enabled)       |
+| Settings        | `/settings`     | Org settings: channels, team, AI, storage, subscription, and more |
 
 ## 5. Next Steps
 
-- Customize your timezone in **Settings** → **Profile** — all calendar dates and scheduling times
-  respect your selected timezone.
+- Customize your timezone in the avatar menu → **Profile** (`/user/me`) — all calendar dates and
+  scheduling times respect your selected timezone.
 - Invite team members from **Settings** → **Team**.
 - Configure AI providers in **Settings** → **AI** to enable AI-powered content generation.
 - Set up campaigns to organize posts into themed folders: [Campaigns](./campaigns.md).
 - Explore the full composer capabilities: [Composer](./composer.md).
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -8,7 +8,7 @@ This page covers the conversational agent at `/agents`. For the canvas AI
 Designer assistant in `/media/ai-designer`, see [AI Designer](./media/ai-designer.md);
 for the manual Konva Designer, see [Designer](./media/designer.md).
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 ---
 
@@ -122,8 +122,8 @@ last week's performance, your recommendations, and your comment backlog, then dr
 proposed plan for the coming week and saves it as a **new agent thread** so you can open
 it and keep the conversation going.
 
-* **Opt-in and off by default.** Turn it on under **Settings → Notifications → Agent
-  briefs** (per channel: email, push, in-app). If no one in your organization enables it,
+* **Opt-in and off by default.** Turn it on under your profile's **Notifications** tab
+  (`/user/me/notifications`) → **Agent briefs** (per channel: email, push, in-app). If no one in your organization enables it,
   the weekly run is skipped entirely.
 * **Read-only.** The proactive run can *analyze and draft* but never schedules, replies,
   deletes, or spends on media on its own — you review its suggestions and act on them
@@ -145,6 +145,6 @@ see the operations guide.
 * Mention the channel by name ("X", "LinkedIn page", "Instagram") if you did not
   pre-select channels.
 * For media generation, you can ask "use Runway" or "use Luma" if you have those
-  providers configured in **Settings → Media**.
+  providers configured in **Settings → Content → AI Media**.
 * The agent cannot act without an active AI provider. If AI is off, the page will
   prompt you to configure one in **Settings → AI**.

@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: "Calendar & Scheduling"
-    details: "Add posts to a calendar; they enter a durable Inngest function and publish at the scheduled time across 36 channels."
+    details: "Add posts to a calendar; they enter a durable Inngest function and publish at the scheduled time across 45+ channels."
     link: /user-guide/calendar
   - title: "Persisted Analytics"
     details: "A multi-channel dashboard built from daily snapshots — period-over-period comparisons, best-time heatmap, and recommendations."
@@ -30,7 +30,7 @@ features:
     details: "Content generation, hashtags, brand compliance, RAG memory, image/video/TTS — through pluggable AI providers with governance."
     link: /user-guide/ai-tools
   - title: "Media Library & Studios"
-    details: "Folder tree, tags, multi-cloud storage, and 46 generative media studios for image, video, audio, avatar, and stock content."
+    details: "Folder tree, tags, multi-cloud storage, and 46 media tools — the Designer, AI Designer, generative studios, and stock browsers for image, video, audio, avatar, and stock content."
     link: /user-guide/media-library
   - title: "Team Management"
     details: "Invite team members, assign RBAC roles, and configure channels, AI providers, storage, webhooks, and OAuth apps."
@@ -44,4 +44,4 @@ features:
 - [Operations Guide](/operations-guide/) — self-host, configure, and operate
 :::
 
-> Verified against v1.0.0
+> Verified against v1.2.0

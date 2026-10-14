@@ -1,8 +1,8 @@
 # Adding a social channel provider
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
-Social channel providers are now package-per-provider like every other domain. This guide walks through adding a new social provider to Postmill. The system currently supports 36 social providers. Recent reference implementations include **Tumblr**, **Pixelfed**, and **PeerTube**.
+Social channel providers are now package-per-provider like every other domain. This guide walks through adding a new social provider to Postmill. The system currently supports 45 social providers. Recent reference implementations include **Tumblr**, **Pixelfed**, and **PeerTube**.
 
 ## Step 1: Create a provider package
 
@@ -315,6 +315,8 @@ export const providerModules: ProviderModule<any, any>[] = [
 ];
 ```
 
+Also add the `@postmill-ai/provider-yourprovider` path mapping (and its `/*` twin) to `tsconfig.base.json` and the `"workspace:*"` dependency to `apps/backend/package.json`.
+
 `providers.generated.ts` is hand-maintained despite its name (the one-shot scaffold that originally produced it was removed after the kernel migration); keep the imports and spreads in alphabetical order.
 
 ## Step 7: Optional — implement social comments
@@ -367,7 +369,7 @@ Use `vitest run --root libraries/providers/yourprovider` to run the package test
 3. [ ] Export a `ProviderModule` through `SocialProviderKernelAdapter`.
 4. [ ] Add `src/v1/metadata.ts`.
 5. [ ] Add an entry to `PROVIDER_CAPABILITIES` in the kernel.
-6. [ ] Register the package in `apps/backend/src/providers.generated.ts`.
+6. [ ] Register the package in `apps/backend/src/providers.generated.ts`, `tsconfig.base.json` and `apps/backend/package.json`.
 7. [ ] Optional: implement `ISocialMediaComments` for comment support.
 8. [ ] Add frontend composer component and icon.
 9. [ ] Use `this.fetch()` or `safeFetch` for all outbound HTTP.

@@ -1,6 +1,6 @@
 # Subscription and Billing
 
-The billing system at `/billing` manages subscription plans, payment methods, and invoicing when a payment provider (Stripe by default) is configured. Billing is entirely optional — Postmill works with all features available without one.
+The billing system at `/billing` manages subscription plans, payment methods, and invoicing when a payment provider is configured — Stripe, PayPal, or, for the mobile app, the Apple App Store and Google Play. Billing is entirely optional — Postmill works with all features available without one.
 
 ## When no payment provider is configured
 
@@ -23,7 +23,7 @@ Postmill uses four fixed plans. Prices and limits are defined in `libraries/nest
 | **Team** | $99 | $990 | 30 | Unlimited | 10 | 200 | 20 GB | ✓ | ✓ | ✓ | 20 | 20 | 18 months |
 | **Agency** | $249 | $2,490 | 100 | Unlimited | 25 | 600 | 100 GB | ✓ | ✓ | ✓ | Unlimited | 50 | 18 months |
 
-**Unlimited AI** — AI is bring-your-own-key across 25+ providers. There are no per-request AI credits or token quotas; usage is governed only by your own provider keys and any org-level spend caps you configure in Settings → AI.
+**Unlimited AI** — AI is bring-your-own-key across 30 providers. There are no per-request AI credits or token quotas; usage is governed only by your own provider keys and any spend caps you configure in **Settings → AI → LLM Providers** (an organisation-wide budget plus optional per-provider caps).
 
 **30-day free trial** — new organizations start with a 30-day trial on the plan they select. The trial can be ended early from `/billing`.
 
@@ -52,7 +52,8 @@ always buy more or upgrade your plan:
 - **Extra webhooks** — +10 webhooks per pack for $9/mo.
 - **Extra competitors** — +10 competitors per pack for $9/mo.
 
-Add-ons are managed from Settings → Subscription. Pack sizes are configured server-side and
+Add-ons are managed from Settings → Subscription and are available only when your organisation is
+billed through Stripe (PayPal and the app stores have no add-on packs). Pack sizes are configured server-side and
 mirrored to the frontend via `NEXT_PUBLIC_*` variables. Add-ons survive a plan downgrade — if you
 move to a lower plan, excess channels and seats are only pruned down to what your new plan plus
 your active add-on packs allow. Add-ons are not available to organizations on lifetime plans.
@@ -67,31 +68,30 @@ The billing interface (`/billing`) lets you:
 
 - View your current plan and its features.
 - Upgrade or downgrade between available plans.
-- Manage add-ons.
-- Manage your payment method (add, update, or remove cards).
-- View invoice history with download links.
+- Cancel your subscription.
+- Open your payment provider's customer portal (**Update Payment Method / Invoices History**) to
+  manage payment methods and invoices, when the provider has one.
+
+Add-ons are managed from Settings → Subscription. Controls a provider does not support are hidden.
 
 ### Plan changes
 
-- **Upgrade** — takes effect immediately. You are charged the prorated difference for the remainder of the billing period.
-- **Downgrade** — takes effect at the end of the current billing period. You retain current-tier features until then and the UI shows the pending tier.
-- **Cancel** — your subscription remains active until the end of the current billing period, then reverts to the free self-host behavior. No data is lost on cancellation — your posts, channels, and settings are preserved.
+- **Upgrade** — takes effect immediately. With Stripe you are charged the prorated difference for the remainder of the billing period (PayPal prorates plan revisions itself).
+- **Downgrade** — takes effect at the end of the current billing period. You retain current-tier features until then and the UI shows the pending tier, which you can undo.
+- **Cancel** — your subscription remains active until the end of the current billing period, then ends. With Stripe you can resume a cancelled subscription before it expires; a cancelled PayPal subscription cannot be resumed — subscribe again once the period ends. No data is lost on cancellation — your posts, channels, and settings are preserved.
 
-### Payment methods
+### Payment providers
 
-Add and manage credit/debit cards through Stripe's hosted payment form. Card details are tokenised by Stripe and never touch Postmill's servers. You can:
+How you pay depends on the payment provider your organisation is billed through:
 
-- Add a new payment method.
-- Set a default payment method for recurring charges.
-- Remove saved payment methods.
+- **Stripe** — an embedded card form on the `/billing` page; supports proration, coupons, add-ons, and a customer portal for payment methods and invoices.
+- **PayPal** — **Continue with PayPal** redirects you to PayPal to approve the subscription, then back to Postmill. You manage the agreement itself at paypal.com.
+- **App Store / Google Play** — subscriptions bought in the mobile app are managed in the app store; the web billing pages show **Manage subscription**, which links to the store. When the deployment sells plans only through the mobile app, the web pages ask you to subscribe in the app.
 
-### Invoice history
+An organisation stays **locked to the provider it first subscribed through**, even after its subscription lapses — a workspace that once paid with Stripe cannot later buy through PayPal or an app store, and vice versa.
 
-A list of past invoices with:
+### Payment methods and invoices
 
-- Invoice date and number.
-- Amount charged.
-- Payment status (paid, pending, failed).
-- Downloadable PDF receipt.
+Card details are entered in the provider's own payment form (Stripe's embedded form, or PayPal's or the app store's checkout) and never touch Postmill's servers. With Stripe, the **Update Payment Method / Invoices History** button opens Stripe's customer portal, where you can add, update, or remove cards, set the default payment method, and download past invoices.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

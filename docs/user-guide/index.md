@@ -1,6 +1,6 @@
 # User Guide
 
-Postmill is a social media and chat post scheduling platform. Schedule posts to 36 channels,
+Postmill is a social media and chat post scheduling platform. Schedule posts to 45+ channels,
 view your content on a calendar, track performance with persisted analytics, manage your team,
 organise media assets, and use AI to generate and optimise your content.
 
@@ -9,7 +9,8 @@ organise media assets, and use AI to generate and optimise your content.
 X (Twitter), LinkedIn (profile and page), Reddit, Instagram (Business and Standalone), Facebook,
 Threads, YouTube, Google My Business, TikTok, Pinterest, Dribbble, Discord, Slack, Kick, Twitch,
 Mastodon, Bluesky, Lemmy, Farcaster, Telegram, Nostr, VK, Medium, Dev.to, Hashnode, WordPress,
-ListMonk, Moltbook, Whop, Skool, MeWe, Tumblr, Pixelfed, PeerTube.
+ListMonk, Moltbook, Whop, Skool, MeWe, Tumblr, Pixelfed, PeerTube, GoToSocial, Akkoma, Friendica,
+Misskey, Sharkey, LINE, Matrix, Discourse, Odysee.
 
 ## How it works
 
@@ -33,13 +34,13 @@ ListMonk, Moltbook, Whop, Skool, MeWe, Tumblr, Pixelfed, PeerTube.
 | [Campaigns](./campaigns.md) | Group posts into campaigns for unified analytics, media organisation, Discussion threads, and share reports. |
 | [Media Library](./media-library.md) | The `/files` asset library and the `/files`-vs-`/media` split: folders, tags, uploads, and storage backends. |
 | [Media Studios](./media/index.md) | Generation flow, platform studios, provider studios, and stock browsers. |
-| [AI Tools](./ai-tools.md) | Text generation, hashtags, comment replies, content compliance, brand voice, RAG search, image/video/TTS/STT, and spending dashboard. |
+| [AI Tools](./ai-tools.md) | Text generation, hashtags, comment replies, content compliance, brand voice, RAG search, image/video/TTS/STT, and AI spend. |
 | [AI Agent](./agent.md) | Conversational agent versus AI Designer; routing when AI is off. |
 | [Notifications](./notifications.md) | Per-category notification preferences across email, push, and in-app channels. |
-| [Settings](./settings.md) | Profile, channels, team & roles, sessions, notifications, AI, brands, media, storage, shortlinks, VPN, content packs, webhooks, auto post, developers, and approved apps. |
+| [Settings](./settings.md) | Profile, subscription, channels, comms, team & roles, sessions, notifications, AI, brands, media, storage, shortlinks, VPN, content packs, webhooks, auto post, developers, and approved apps. |
 | [Team & Roles](./team-and-roles.md) | RBAC system, system roles, custom roles, and permissions. |
 | [Sessions & Devices](./sessions.md) | Active session list, per-session revoke, and log-out-all-other-sessions. |
-| [Subscription & Billing](./subscription-and-billing.md) | Plans, trials, metered caps, add-ons, payment methods, and invoices. |
+| [Subscription & Billing](./subscription-and-billing.md) | Plans, trials, metered caps, add-ons, payment providers, payment methods, and invoices. |
 | [Supported Channels](./supported-channels.md) | Capability matrix for every provider — analytics, comments, first comment, polls, video, carousel, alt text, and more. |
 
-> Verified against v1.0.0
+> Verified against v1.2.0

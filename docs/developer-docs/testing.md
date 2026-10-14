@@ -1,8 +1,8 @@
 # Testing
 
-Postmill uses **Vitest** for all tests. The root `jest.config.ts` is vestigial and should not be extended.
+Postmill uses **Vitest** for all tests. The old root `jest.config.ts` has been deleted — do not add Jest-style configuration.
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 ---
 
@@ -56,7 +56,7 @@ Repository/data-layer tests that need a real database live in `*.int-spec.ts` fi
 pnpm run test:int
 ```
 
-Requires the dev Postgres to be up (`docker compose -f ./docker/docker-compose.dev.yaml up -d`). The harness reads `TEST_DATABASE_ADMIN_URL` (see `.env.example`; defaults to the dev container's `postgres` admin DB) and creates/drops a throwaway `postmill_test_<pid>` database per run, pushing the current schema into it via `pnpm exec prisma db push`. The `*.int-spec.ts` suffix is excluded from the normal unit run.
+Requires the dev Postgres to be up (`docker compose -f ./docker/docker-compose.dev.yaml up -d`). The harness reads `TEST_DATABASE_ADMIN_URL` (see `.env.example`; defaults to the dev container's `postgres` admin DB) and creates/drops a throwaway `postmill_test_<pid>` database per run, pushing the current schema into it via `pnpm exec prisma db push`. The `*.int-spec.ts` suffix is not matched by the normal unit run; `test:int` uses `libraries/nestjs-libraries/vitest-integration.config.ts`.
 
 ---
 
@@ -88,6 +88,7 @@ Coverage is measured per controller file with **ratchet floors** at measured lev
 | `copilot.controller.ts` | 55 | 45 | 50 | 55 |
 | `auth.controller.ts` | 35 | 15 | 20 | 35 |
 | `stripe.controller.ts` | 90 | 80 | 90 | 90 |
+| `payments.webhooks.controller.ts` | 90 | 80 | 90 | 90 |
 
 ### NestJS Libraries (`libraries/nestjs-libraries/vitest.config.ts`)
 
@@ -117,20 +118,10 @@ Coverage is measured across integrations, analytics, AI, RAG, governance, and ag
 {
   include: [
     'src/components/analytics/**/*.spec.{ts,tsx}',
-    'src/components/launches/**/*.spec.{ts,tsx}',
     'src/components/dashboard/**/*.spec.{ts,tsx}',
-    'src/components/settings/**/*.spec.{ts,tsx}',
-    'src/components/shared/**/*.spec.{ts,tsx}',
-    'src/components/ai/**/*.spec.{ts,tsx}',
-    'src/components/media-tools/**/*.spec.{ts,tsx}',
-    'src/components/composer/**/*.spec.{ts,tsx}',
-    'src/components/campaigns/**/*.spec.{ts,tsx}',
-    'src/components/agent/**/*.spec.{ts,tsx}',
-    'src/components/agents/**/*.spec.{ts,tsx}',
-    'src/components/setup/**/*.spec.{ts,tsx}',
-    'src/components/new-layout/**/*.spec.{ts,tsx}',
-    'src/components/layout/**/*.spec.{ts,tsx}',
-    'src/redirects.config.spec.ts',
+    'src/components/settings/ai/**/*.spec.{ts,tsx}',
+    'src/components/media-tools/designer/*.spec.{ts,tsx}',
+    // … ~60 explicit entries in total
     'src/app/**/*.spec.{ts,tsx}',
   ],
   environment: 'jsdom',
@@ -138,6 +129,10 @@ Coverage is measured across integrations, analytics, AI, RAG, governance, and ag
   plugins: [react()],
 }
 ```
+
+The frontend `include` is an **explicit whitelist** of directories and individual spec files, not a
+catch-all glob. A spec in a directory that is not listed never runs — add its path to
+`apps/frontend/vitest.config.ts` when you create one.
 
 Coverage is measured on `src/components/analytics/**/*.{ts,tsx}` (charts excluded) with ratchet floors:
 
@@ -152,7 +147,7 @@ Coverage is measured on `src/components/analytics/**/*.{ts,tsx}` (charts exclude
 
 ## Single-Threaded Execution
 
-Every vitest config sets `maxWorkers: 1`. This is intentional — tests that interact with the database, Redis, or shared state must run serially. Do not increase `maxWorkers` without verifying that all shared-state tests are properly isolated.
+The backend and nestjs-libraries configs set `maxWorkers: 1` (and `isolate: true`). This is intentional — tests that interact with the database, Redis, or shared state must run serially. Do not increase `maxWorkers` without verifying that all shared-state tests are properly isolated.
 
 ---
 
@@ -160,7 +155,7 @@ Every vitest config sets `maxWorkers: 1`. This is intentional — tests that int
 
 Integration tests for channel providers mock outbound HTTP calls. The established pattern is to mock the `safeFetch` wrapper or the provider's `fetch` method rather than mocking `undici` directly.
 
-AI adapter tests mock the underlying AI SDK (`@ai-sdk/provider-v5`) rather than making real API calls. Each adapter has a `*.spec.ts` file alongside it inside its provider package.
+AI adapter tests mock the underlying SDK package (e.g. `@ai-sdk/openai`, `@langchain/openai`) rather than making real API calls. Each adapter's specs live in its provider package (`libraries/providers/<id>/src/v1/__tests__/`).
 
 ---
 
@@ -193,6 +188,6 @@ pnpm exec eslint .
 Common test patterns:
 
 - **Backend unit tests:** Use NestJS `Test.createTestingModule` with mocked providers.
-- **Repository tests:** Use an in-process test database; reset between tests.
+- **Repository tests:** Use `*.int-spec.ts` against the throwaway real-Postgres database (`pnpm run test:int`, see above).
 - **AI governance tests:** Unit-test each governance service in isolation with mocked dependencies.
 - **Frontend component tests:** Use `@testing-library/react` with the `jsdom` environment.

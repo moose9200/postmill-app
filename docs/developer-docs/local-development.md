@@ -2,7 +2,7 @@
 
 This guide gets the Postmill stack running on a normal developer machine without swapping or crashing. The repo ships with opt-in subsystems and lightweight commands so you only pay for what you use.
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 ---
 
@@ -124,7 +124,8 @@ Set any of these environment variables before `pnpm run dev:minimal`. All flags 
 | `DEV_DISABLE_CRON` | `ScheduleModule.forRoot()` (used by session cleanup) |
 | `DEV_DISABLE_SENTRY` | Sentry initialization |
 | `DEV_DISABLE_OPENTELEMETRY` | OpenTelemetry exporter setup |
-| `AI_PROVIDER_BUDGET_ENFORCE` | Per-provider AI budget hard-enforcement (set `=false` to disable hard caps; alerts and usage still record) |
+| `DEV_DISABLE_COMMS` | Comms-provider (chat-app agent/notification) module registration |
+| `AI_PROVIDER_BUDGET_ENFORCE` | AI budget hard-enforcement — both the organization-wide ceiling and the per-provider caps (set `=false` to disable hard caps; alerts and usage still record) |
 
 Example for a machine with limited RAM:
 
@@ -150,7 +151,7 @@ When a subsystem is disabled, the related API routes may return `503` or skip ca
 | Full (`pnpm run dev`) | ~3 GB+ RSS | 5–6.5 GB native |
 | Minimal with flags above | **~1–1.5 GB RSS** | **~2–3 GB** (Turbopack capped) |
 
-The backend dev script caps the V8 heap at 2 GB via `--max-old-space-size=2048`. If you still hit the cap, disable more flags or lower it further.
+The backend dev script caps the V8 heap at 6 GB via `--max-old-space-size=6144`. If you hit the cap, disable more flags.
 
 ### Frontend profiling and Sentry
 
@@ -177,7 +178,7 @@ pnpm run test:int         # real-Postgres integration tests
 vitest run --root apps/backend            # one package
 ```
 
-Tests run with Vitest. The root `jest.config.ts` is vestigial — do not add Jest-style configuration.
+Tests run with Vitest. The old root `jest.config.ts` has been deleted — do not add Jest-style configuration.
 
 ---
 

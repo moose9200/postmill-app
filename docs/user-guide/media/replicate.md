@@ -32,6 +32,11 @@ speech-to-text mode and two native editors (mask painting, video merge) and a ca
 Every run uses the org's own Replicate token, configured in **Settings → Media**. The category and
 model allowlist is curated server-side — Replicate hosts far more models than are exposed here.
 
+When Replicate is your workspace's **image-to-image** model default, [AI Designer](./ai-designer)
+can also condition its generated imagery on a reference image — supported for
+`black-forest-labs/flux-kontext-pro` and `black-forest-labs/flux-dev`; other models fall back to
+text-to-image.
+
 ---
 
 ## Warm vs community models and cost badges
@@ -120,4 +125,4 @@ The meme editor is a native canvas tool:
 - [Settings](../settings) — configuring the Replicate media provider.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

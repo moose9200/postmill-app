@@ -40,12 +40,12 @@ Two credential types are accepted:
 
 | Type | Prefix | Where to create |
 |------|--------|-----------------|
-| API key | `pm_live_` | Settings → API Keys |
+| API key | `pm_live_` | Settings → Developers |
 | OAuth access token | `pos_` | OAuth app authorization flow |
 
 API keys are per-user, per-org. The resolved org and user's role are attached to the request, so RBAC and billing gates still apply. OAuth tokens are constrained to the scopes the user approved (`mcp:read`, `mcp:posts:write`).
 
-On hosted instances with Stripe configured, the org must have an active subscription; otherwise the request returns `401`.
+When billing is enabled (`billingEnabled()` — at least one payment provider configured), the org must have an active subscription; otherwise the request returns `401`.
 
 ## Rate limiting
 
@@ -120,7 +120,7 @@ Base: `/public/v1`
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/public/v1/integrations` | List connected integrations (filterable by `?group=`) |
+| GET | `/public/v1/integrations` | List connected integrations |
 | DELETE | `/public/v1/integrations/:id` | Delete a channel integration |
 | GET | `/public/v1/integration-settings/:id` | Get integration rules, max length, settings schema, tools |
 | GET | `/public/v1/social/:integration` | Get OAuth authorization URL for a provider |
@@ -247,8 +247,8 @@ fetched from any origin (without credentials). Throttled at 120 requests/minute 
   CI when a registered provider has no file).
 - Deliberately **not** included: provider versions, status, credential fields, setup notes and
   sunset dates — anything that fingerprints the deployment's exact release. That detail stays on
-  the authenticated `GET /providers/catalog`. The `auth`, `email` and `contentpack` domains are
-  deployment plumbing and are not listed.
+  the authenticated `GET /providers/catalog`. The `auth`, `email`, `contentpack` and `payments` domains
+  are deployment plumbing and are not listed.
 
 ## Internal integrations API
 
@@ -315,4 +315,4 @@ Common status codes:
 - `410` — Requested provider version has been retired.
 - `429` — Rate limit exceeded.
 
-> Verified against v1.0.0
+> Verified against v1.2.0
