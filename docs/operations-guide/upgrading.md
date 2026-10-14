@@ -31,8 +31,8 @@ docker exec postmill-postgres pg_dump -U postmill-user postmill-db-local > pre_u
 # docker-compose.yaml or your deployment config
 services:
   postmill:
-    image: ghcr.io/postmill-ai/postmill-app:v1.0.0  # pin a specific tag, not :latest
-    # image: postmillai/postmill-app:v1.0.0         # the same image on Docker Hub
+    image: ghcr.io/postmill-ai/postmill-app:v1.2.0  # pin a specific tag, not :latest
+    # image: postmillai/postmill-app:v1.2.0         # the same image on Docker Hub
 ```
 
 Pinning specific tags gives you a known rollback target. Using `:latest` means every restart may
@@ -52,16 +52,16 @@ docker compose up -d postmill
 
 ### 5. Apply migrations
 
-The container runs `prisma-generate` on boot (via `postinstall`), regenerating the Prisma client to
-match the schema baked into the new image. It does **not** apply committed migrations automatically.
+The Prisma client is generated at image build time to match the schema baked into the new image;
+the container does **not** apply committed migrations automatically.
 
 Postmill ships committed Prisma migrations under
 `libraries/nestjs-libraries/src/database/prisma/migrations/`. The canonical apply path is
 `prisma migrate deploy`:
 
 ```bash
-# Run inside the running container
-docker exec postmill pnpm dlx prisma@6.5.0 migrate deploy \
+# Run inside the running container (pnpm is not installed in the runtime image, so use npx)
+docker exec postmill npx --yes prisma@6.5.0 migrate deploy \
   --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma
 ```
 
@@ -76,6 +76,25 @@ CHANGELOG carefully, take a backup, and follow the expand-contract path document
 
 Check the CHANGELOG for any new env vars required by the release. Add them to your `.env` file,
 Docker Compose environment, or deployment config, then redeploy if needed.
+
+## v1.2.0
+
+v1.2.0 has no schema migrations and no new required env vars. Pull the new tag and redeploy.
+
+- **AI Designer needs a text-to-image default.** A run is blocked unless a `media/text-to-image`
+  model default is set under **Settings → AI → Model Defaults**. For reference images to guide
+  generation, also set a `media/image-to-image` default.
+- **R2 storage requires an endpoint.** Saving an R2 storage configuration without one now returns
+  HTTP 400 instead of storing a broken configuration.
+
+## v1.1.0
+
+v1.1.0 adds four non-destructive migrations: `20260921130000_add_org_ai_budget_columns`,
+`20260921160000_payments_provider_domain`, `20260921190000_payments_manual_provider_backfill` and
+`20260923094158_postmill_id_federation`. None of them need `ALLOW_DESTRUCTIVE_SCHEMA`. The payment
+provider of existing organizations and subscriptions is backfilled automatically. Payment
+providers other than Stripe (`PAYPAL_*`, `APPLE_IAP_*`, `GOOGLE_PLAY_*`, `PAYMENTS_PROVIDER`) and
+Postmill ID (`FEDERATION_TRUSTED_REDIRECT_URIS`) are opt-in. See the CHANGELOG for details.
 
 ## v1.0.0
 
@@ -112,7 +131,7 @@ If you need an in-place schema sync outside the normal migration flow, use the h
 Or run directly in the container:
 
 ```bash
-docker exec postmill pnpm dlx prisma@6.5.0 db push \
+docker exec postmill npx --yes prisma@6.5.0 db push \
   --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma
 ```
 
@@ -146,7 +165,7 @@ Migrations are forward-only. To roll back a destructive change, restore the pre-
 
 ```bash
 # Stop the app first so nothing writes during the restore
-cat pre_push_YYYYMMDD_HHMMSS.sql | docker exec -i postmill-postgres \
+cat pre_upgrade_YYYYMMDD.sql | docker exec -i postmill-postgres \
   psql -U postmill-user -d postmill-db-local
 ```
 
@@ -196,4 +215,4 @@ If an upgrade causes issues:
 - [Backup & Retention](./backup-and-retention.md) — backup before upgrade
 - [Developer Docs: Database](../developer-docs/database.md) — schema management and safety
 
-> Verified against v1.0.0
+> Verified against v1.2.0

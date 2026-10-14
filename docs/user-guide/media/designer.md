@@ -8,7 +8,7 @@ rail, and it's the target every other studio's **Edit in Designer** button hands
 
 | Mode | Use | Output |
 |---|---|---|
-| **Static canvas** | Images, text, shapes on a single frame. | PNG / JPEG / WebP / transparent PNG / PDF. |
+| **Static canvas** | Images, text, shapes on a single frame. | PNG / JPEG / WebP / transparent PNG / PDF / SVG. |
 | **Video timeline** | Multi-track video composition. | MP4 / WebM / GIF / animated WebP. |
 
 Animated **GIF and animated WebP export only exist in video mode** — static mode flattens the
@@ -20,7 +20,8 @@ one or more channel-preset sizes (or a custom size).
 
 ## Video timeline tracks
 
-The video timeline supports six track types: **video, image, text, caption, audio, and sticker**.
+The video timeline supports eight track types: **video, image, text, shape, paint, caption, audio,
+and sticker**.
 Audio waveforms are decoded client-side (canvas) so you can see levels while trimming. Rendering
 runs server-side via headless Chromium + FFmpeg.
 
@@ -50,13 +51,15 @@ menus plus a `☰` overflow.
 
 The **Export** dialog offers different formats per mode:
 
-- **Static canvas**: PNG, JPEG, transparent PNG, WebP, PDF.
+- **Static canvas**: PNG, JPEG, transparent PNG, WebP, PDF, SVG.
 - **Video timeline**: MP4, WebM, GIF, animated WebP.
 
 GIF and animated WebP are deliberately excluded from the static-canvas format list — a single-frame
 Konva snapshot can't produce real animation, so those two only exist as video-mode exports.
 
 Exports can save back into `/files` (with folder selection) or post directly into the composer.
+After a static-canvas export, the done step also lists each exported file as a download link so you
+can save a copy to your computer.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

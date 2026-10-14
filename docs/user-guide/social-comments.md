@@ -19,19 +19,23 @@ For operational setup details, see [Inngest and Cron](../operations-guide/innges
 
 ## Unified Inbox (`/comments`)
 
-The comments page provides a single view of all incoming comments across channels.
+The comments page provides a single view of all incoming comments across channels. The inbox is a
+Pro, Team, and Agency feature; on other plans it shows an upgrade prompt. A **Sync now** button
+(with a "Last synced" time) triggers an immediate sync.
 
 ### Filters
 
 Use the filter bar at the top of the inbox to narrow the view:
 
+- **Search**: Search the comment text.
 - **Status**: Filter by comment status (`needs_reply`, `handled`, `ignored`).
+- **Channels** and **Campaigns**: Restrict to one or more channels or campaigns.
 - **Assignee**: Show comments assigned to a specific team member.
 - **Unread Only**: Show only comments you have not yet read.
 - **Sentiment**: Filter by AI-classified sentiment (`positive`, `neutral`, `negative`).
 - **Priority**: Filter by AI-classified priority (`high`, `medium`, `low`).
-- **High-priority sort**: When sorting unresolved comments by priority, high-priority items appear first.
-- **Cursor Pagination**: Navigate through comment history with ISO 8601 cursor-based pagination.
+- **High priority first**: A checkbox that sorts high-priority items first.
+- **Load more**: Older comments load with ISO 8601 cursor-based pagination.
 
 ### Comment Cards
 
@@ -41,14 +45,15 @@ Each comment card displays:
 - **Platform Icon**: The source channel (e.g., X, Facebook, LinkedIn).
 - **Comment Text**: The full comment body.
 - **Timestamp**: When the comment was posted (in your local timezone).
-- **Status Badge**: Color-coded status indicator (open, in progress, resolved, closed, spam).
+- **Status Dot**: Color-coded status indicator (yellow = needs reply, green = handled, grey =
+  ignored). Click it to cycle the status.
 - **Sentiment/Priority Badge**: When AI sentiment analysis is enabled.
 - **Unread Indicator**: A highlight for comments you haven't viewed.
 
-### Bulk Mark-Read
+### Mark Handled
 
-Select multiple comments and click **Mark as Read** to clear them from your unread queue. The bulk
-operation accepts up to 1,000 comment IDs per request.
+Click **Mark handled** on a comment card to mark it handled and clear it from the unread queue. The
+underlying `POST /posts/inbox/bulk-read` endpoint accepts up to 1,000 comment IDs per request.
 
 ### Quick Replies
 
@@ -82,11 +87,12 @@ When viewing a post detail modal (from the schedule), the comments section is **
 - **Unread count** is available per post.
 
 Providers with `comments: true`: X, LinkedIn, LinkedIn Page, Reddit, Instagram, Instagram
-Standalone, Facebook Page, Threads, YouTube, TikTok, Discord, Slack, Mastodon, Bluesky, Telegram,
-Medium, Dev.to, Hashnode, WordPress.
+Standalone, Facebook Page, Threads, YouTube, TikTok, Discord, Slack, Mastodon, GoToSocial, Akkoma,
+Friendica, Misskey, Sharkey, Bluesky, Telegram, Discourse, Medium, Dev.to, Hashnode, WordPress.
 
 Providers **without** comments: Google My Business, Pinterest, Dribbble, Kick, Twitch, Lemmy,
-Farcaster, Nostr, VK, ListMonk, Moltbook, Whop, Skool, MeWe, Tumblr, Pixelfed, PeerTube.
+Farcaster, Nostr, VK, ListMonk, Moltbook, Whop, Skool, MeWe, Tumblr, Pixelfed, PeerTube, LINE,
+Matrix, Odysee.
 
 ## First-Comment Auto-Post
 
@@ -101,7 +107,7 @@ post publishes successfully. This behavior is part of the publish workflow:
 4. **Non-fatal**: If the first comment fails, the main post remains published. You receive an
    in-app notification explaining the failure (e.g., "First comment could not be posted on X").
 
-24 providers support first comments. See [Composer](./composer.md) for the full list and capability
+30 providers support first comments. See [Composer](./composer.md) for the full list and capability
 gating details.
 
 ## AI Classification
@@ -130,4 +136,4 @@ the post detail modal with the comments section.
 
 See [Schedule](./calendar.md) for details on post cards and the post detail modal.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

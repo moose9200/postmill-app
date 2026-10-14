@@ -47,7 +47,7 @@ Admin-configured `mcpsettings.allowedScopes` are merged with the defaults.
 
 ## Subscription gating
 
-Every MCP request checks `SubscriptionService` for the org's tier. If Stripe is configured (`STRIPE_PUBLISHABLE_KEY` is set) and the org's plan does not include MCP (`plan.mcp: false`), the request returns `402 PaymentRequired`. Self-hosted instances without Stripe configured allow MCP for all orgs.
+Every MCP request checks `SubscriptionService` for the org's tier. If billing is enabled (`billingEnabled()` — at least one payment provider is configured) and the org's plan does not include MCP (`plan.mcp: false`), the request returns `402 PaymentRequired`. Self-hosted instances without a payment provider configured allow MCP for all orgs.
 
 ## Rate limiting
 
@@ -117,4 +117,4 @@ Common MCP error responses:
 - `409 idempotency_conflict` — duplicate idempotency key.
 - `403 mcp_disabled` — MCP or agent surface is disabled by feature flag.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

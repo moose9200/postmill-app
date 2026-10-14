@@ -27,4 +27,4 @@ Completed artifacts land in `/files` via the **Render Queue**. Images finish syn
 - Qwen-Image handles long prompts (up to roughly 1,000 tokens), so detailed scene descriptions are supported.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

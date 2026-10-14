@@ -1,6 +1,6 @@
 # SDK
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 The `@postmill-ai/postmill-sdk` is the official Node.js SDK for the Postmill Public API. It provides typed methods for creating posts, uploading media, listing integrations, and more.
 
@@ -10,7 +10,7 @@ The `@postmill-ai/postmill-sdk` is the official Node.js SDK for the Postmill Pub
 npm install @postmill-ai/postmill-sdk
 ```
 
-The SDK depends on `@postmill-ai/nestjs-libraries` for DTO types and uses the global `fetch` implementation (Node 18+, or a polyfill in older environments).
+The SDK has no runtime dependencies: its request/response types are local mirrors of the public API DTOs (`apps/sdk/src/types.ts`), and it uses the global `fetch` implementation. The package declares `engines.node` `>=24.0.0 <25.0.0`.
 
 ## Quick start
 
@@ -24,13 +24,18 @@ const client = new Postmill('your-api-key');
 
 // Create a post
 const post = await client.post({
-  integrations: [{ id: 'integration-id' }],
-  value: [{ message: 'Hello from the SDK!' }],
-  scheduledAt: new Date(),
+  type: 'schedule',
+  date: '2027-01-01T10:00:00Z',
+  shortLink: false,
+  tags: [],
+  posts: [/* one entry per channel — see Public API v1 */],
 });
 
-// List posts
-const posts = await client.postList({ page: 1 });
+// List posts (always paged as { posts, cursor })
+const { posts, cursor } = await client.postList({
+  startDate: '2027-01-01T00:00:00Z',
+  endDate: '2027-01-31T23:59:59Z',
+});
 
 // List integrations
 const integrations = await client.integrations();
@@ -62,11 +67,11 @@ new Postmill(apiKey: string, path?: string)
 Create one or more posts.
 
 ```typescript
-post(posts: CreatePostDto): Promise<any>
+post(posts: CreatePostDto): Promise<unknown>
 ```
 
 - **Endpoint**: `POST /public/v1/posts`
-- **Body**: `CreatePostDto` (`integrations`, `value`, `scheduledAt`, etc.)
+- **Body**: `CreatePostDto` (`type`, `date`, `shortLink`, `tags`, `posts`, optional `campaignId`/`brandId`, etc.)
 - **Returns**: Created post data
 
 #### `postList(filters)`
@@ -74,24 +79,24 @@ post(posts: CreatePostDto): Promise<any>
 List posts with optional filters.
 
 ```typescript
-postList(filters: GetPostsDto): Promise<any>
+postList(filters: GetPostsDto): Promise<PostListResponse>
 ```
 
 - **Endpoint**: `GET /public/v1/posts`
-- **Query**: `GetPostsDto` (`page`, `filters`, etc.)
-- **Returns**: Paginated post list
+- **Query**: `GetPostsDto` (`startDate`, `endDate`, optional `limit`, `cursor`, `display`)
+- **Returns**: `{ posts, cursor }` — `cursor` is the offset of the next page, `null` on the last page
 
 #### `upload(file, extension)`
 
 Upload a media file for use in posts.
 
 ```typescript
-upload(file: BlobPart | Buffer, extension: string): Promise<any>
+upload(file: BlobPart | Buffer, extension: string): Promise<unknown>
 ```
 
 - **Endpoint**: `POST /public/v1/upload`
 - **Content-Type**: `multipart/form-data`
-- **Supported extensions**: `png`, `jpg`, `jpeg`, `gif`
+- **Extensions**: `png`, `jpg`/`jpeg`, `gif` set the matching MIME type; anything else is sent as `image/jpeg`
 - **Returns**: Saved media metadata
 
 #### `integrations()`
@@ -99,7 +104,7 @@ upload(file: BlobPart | Buffer, extension: string): Promise<any>
 List all connected channel integrations.
 
 ```typescript
-integrations(): Promise<any>
+integrations(): Promise<unknown>
 ```
 
 - **Endpoint**: `GET /public/v1/integrations`
@@ -116,6 +121,26 @@ deletePost(id: string): Promise<Response>
 - **Endpoint**: `DELETE /public/v1/posts/:id`
 - **Returns**: Raw `Response` object
 
+#### Other methods
+
+| Method | Endpoint |
+|---|---|
+| `uploadFromUrl(url)` | `POST /public/v1/upload-from-url` |
+| `findSlot(integrationId?)` | `GET /public/v1/find-slot/:id` |
+| `deletePostGroup(group)` | `DELETE /public/v1/posts/group/:group` |
+| `changePostStatus(id, { status })` | `PUT /public/v1/posts/:id/status` |
+| `updateReleaseId(id, { releaseId })` | `PUT /public/v1/posts/:id/release-id` |
+| `postMissingContent(id)` | `GET /public/v1/posts/:id/missing` |
+| `isConnected()` | `GET /public/v1/is-connected` |
+| `connectChannel(integration, opts?)` | `GET /public/v1/social/:integration` — requires an explicit version (`"x@v1"` or `opts.version`); throws before any request otherwise |
+| `deleteChannel(id)` | `DELETE /public/v1/integrations/:id` |
+| `integrationSettings(id)` | `GET /public/v1/integration-settings/:id` |
+| `triggerIntegrationTool(id, body)` | `POST /public/v1/integration-trigger/:id` |
+| `notifications(page?)` | `GET /public/v1/notifications` |
+| `generateVideo(body)` / `getVideoJob(id)` | `POST /public/v1/generate-video`, `GET /public/v1/generate-video/:id` |
+| `generateVideoAndWait(body, opts?)` | Starts a video job and polls until `completed`/`failed` (defaults: 3 s interval, 5 min timeout) |
+| `loadVoices(identifier)` | `POST /public/v1/video/function` |
+
 ## API key setup
 
 1. Go to **Settings → Developers** in the Postmill app.
@@ -128,7 +153,7 @@ deletePost(id: string): Promise<Response>
 - **Version**: 2.0.1
 - **License**: AGPL-3.0
 - **Build**: Uses `tsup` for bundling.
-- **Workspace dependency**: `@postmill-ai/nestjs-libraries`
+- **Dependencies**: none at runtime (types are local to `apps/sdk/src/types.ts`)
 
 ## Analytics access
 

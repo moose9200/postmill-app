@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-14
+
+### Added
+
+- **AI Designer reference images now condition generation (img2img).** Reference images attached to a session are passed to the organization's `media/image-to-image` default for the background and hero image slots instead of being reduced to prose cues. The fallback order is image-to-image → text-to-image → stock, and every fallback is disclosed in the delivery note. The OpenRouter (gemini-image family) and Replicate (flux-kontext / flux-dev) media adapters accept a source image; a model that cannot take a reference now refuses rather than silently dropping it. Variant compose, quality-pass and format-expansion stages run three variants concurrently, and a failed generation is retried only when the failure is transient.
+- AI Designer: "change the background" revisions now replace the background image (the request was previously dropped silently), and a revision that changes nothing is reported as unsupported instead of re-delivering the same design.
+
+### Changed
+
+- **Postmill is now owned and maintained by Postmill AI Inc.**, which succeeds REAA Technologies, Inc. The contributor license agreements (`ICLA.md`, `CCLA.md`), the documentation footer, the SDK package author and the security-policy scope name the new owner. The `@reaatech/*` packages Postmill builds on are unchanged and are credited in the README Acknowledgements.
+- AI Designer: a run now requires a `media/text-to-image` model default. With no default configured, the run is blocked and points to **Settings → AI → Model Defaults**. A default that is configured but can't be resolved, such as a disabled provider, only adds a warning; the run continues with disclosed stock fallbacks. Stock stand-ins are disclosed whenever stock was not the deliberate choice.
+- Design and template preview thumbnails and AI Designer intermediate files no longer appear in the **Files** library. `POST /files/upload-simple` accepts an optional `internal: 'design-preview'` marker.
+- The root `package.json` version, and with it the OpenAPI `info.version`, now tracks the release version.
+
+### Fixed
+
+- AI: the LangChain generator workflow (the agent's "generate post" tool and autopost utility calls) failed with "Missing credentials" for every provider, because the deprecated `openAIApiKey` field is ignored by `@langchain/openai` 1.4.x. All construction sites now pass `apiKey`.
+- Designer:
+  - A crash when transforming nodes after a commit (stale Transformer nodes).
+  - Text editing: doubled text, font reverting, size entry, gradient fill and justify alignment.
+  - The label text of CTA symbols is now editable.
+  - Layer effects (outer glow, drop shadow) now render.
+  - Image aspect ratio is preserved on insert.
+  - The resize popover no longer overflows the screen.
+  - Exports download as expected.
+  - Video clips added to the timeline get their real dimensions.
+- Media: the Designer no longer uploads an orphan preview file every few seconds while editing.
+- Team: invited users whose invite cookie had expired (15 minutes) while the 1-hour invite token was still valid were placed in a new personal workspace. The cookie now lasts as long as the token. Refused invite joins are logged, and creating a duplicate user returns 409.
+- Storage: saving an R2 configuration without an endpoint returned a 500 and left a broken configuration row. It now returns 400 and rolls back, and the R2 endpoint is required.
+- Instagram: common OAuth token-exchange failures now show a specific error instead of "Unknown Error".
+- Sentry: requests the client aborted are no longer reported as errors.
+
+### Security
+
+- Closed 14 high/critical dependency advisories (#109).
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

@@ -19,8 +19,8 @@ Jobs follow the standard [Media Studios flow](./index.md): submit the form, trac
 ## Caveats
 
 - **Portrait is required.** The source image (`start_keyframe`) is resolved server-side to a provider-reachable URL before generation starts.
-- **Asynchronous.** Completion is delivered by webhook when available; the `media-jobs-poll` cron acts as a fallback.
+- **Asynchronous.** Hedra provides no completion webhook; jobs complete via the `media-jobs-poll` cron.
 - Only one tab/operation is exposed: character video from a keyframe.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

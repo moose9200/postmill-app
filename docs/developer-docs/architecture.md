@@ -27,7 +27,7 @@ postmill-app/
 | App | Stack | Purpose |
 |-----|-------|---------|
 | `backend` | NestJS REST API | Thin controllers + module wiring. Real logic lives in `nestjs-libraries`. Serves the Inngest handler at `/api/inngest`. |
-| `frontend` | Next.js App Router, React, Tailwind 3 | User-facing web app on port `4200`. |
+| `frontend` | Next.js App Router, React, Tailwind 4 | User-facing web app on port `4200`. |
 | `extension` | Browser extension | Chrome extension for cross-platform posting. |
 | `commands` | CLI | Command-line operations. |
 | `sdk` | Node.js (published) | `@postmill-ai/postmill-sdk` for third-party integrations. |
@@ -65,7 +65,7 @@ All provider domains resolve through a single **`ProviderKernel`** (`libraries/p
 
 ### Domains
 
-The kernel supports nine provider domains:
+The kernel supports eleven provider domains:
 
 | Domain | Examples | Stored config |
 |--------|----------|---------------|
@@ -78,6 +78,8 @@ The kernel supports nine provider domains:
 | `contentpack` | Magnific, Vecteezy, Adobe Stock | `ContentPackConfig` |
 | `email` | Resend, SendGrid, Mailgun | `EmailLog` + env bootstrap |
 | `auth` | LOCAL, Google, GitHub, OIDC | `AuthProviderConfig` |
+| `comms` | Slack, Discord, Telegram, Matrix | `CommsProviderConfig` |
+| `payments` | Stripe, PayPal, App Store, Google Play | env-configured; `Organization.paymentProvider` / `Subscription.provider` |
 
 ### Version lifecycle
 
@@ -105,7 +107,7 @@ See [Provider Framework](./provider-framework.md) and [Provider Versions](./prov
 
 - **Next.js App Router**: Pages in `apps/frontend/src/app/(app)/(site)/`.
 - **Data fetching**: Every API call uses **SWR** through the `useFetch` hook from `libraries/helpers/src/utils/custom.fetch.tsx`. Each SWR call must be its **own hook** per `react-hooks/rules-of-hooks`.
-- **Styling**: Tailwind 3 with CSS variables defined in `apps/frontend/src/app/colors.scss`. All `--color-custom*` variables are deprecated. Always check existing components before building new ones.
+- **Styling**: Tailwind 4 with CSS variables defined in `apps/frontend/src/app/colors.scss`. All `--color-custom*` variables are deprecated. Always check existing components before building new ones.
 - **Components**: UI primitives in `apps/frontend/src/components/ui/`; feature components in `apps/frontend/src/components/`. Use the shared bespoke primitives first, then Mantine for the few primitives where bespoke would be wasteful.
 - **Error boundaries**: App Router segment boundaries ship `error.tsx` + `not-found.tsx`; the `/media/*` canvas studios are wrapped in `StudioErrorBoundary`.
 
@@ -156,6 +158,7 @@ All scheduled and async work runs on Inngest. The backend serves the handler at 
 | `campaign-tag-purge` | Cron | Purge tagged campaign items for ended campaigns. |
 | `retention-purge` | Cron | Prune analytics, email logs, and other retention-bound data. |
 | `refresh-token` | Cron | Bulk token refresh sweep. |
+| `payments-expire-canceled` | Cron | Daily teardown of cancelled subscriptions past their scheduled end (non-Stripe providers). |
 
 Events are only sent when `USE_INNGEST=true`. Locally, run the Inngest dev server with `INNGEST_DEV=1`; in production, set `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY`.
 
@@ -227,4 +230,4 @@ The AI, Media, Storage, and Shortlinks settings surfaces share one foundation:
 
 The post composer lives on dedicated routes: `/posts/post` (create — accepts `date`/`channel`/`content` query params) and `/posts/post/:id` (edit). Both render the shared `PostComposer` component; the time picker displays in the user's IANA timezone and saves UTC.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -126,11 +126,12 @@ Kubernetes `terminationGracePeriodSeconds: 30`) so in-flight requests finish.
 In production the backend refuses to start on a fatal misconfiguration instead of serving
 broken traffic. Fatal (boot-blocking) issues:
 
-- `JWT_SECRET` missing or shorter than 32 characters
+- `JWT_SECRET` missing (shorter than 32 characters is only a warning — lengthening it rotates
+  the derived encryption key)
 - `DATABASE_URL` missing
 - neither `FRONTEND_URL` nor `MAIN_URL` set
-- Inngest keys (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`) missing when `INNGEST_DEV` is
-  not `1`
+- Inngest keys (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`) missing when `USE_INNGEST=true` and
+  `INNGEST_DEV` is not `1`
 
 The exit fires when `NODE_ENV=production` (and `NOT_SECURED` is unset), or anywhere
 `CONFIG_CHECK_STRICT` is set. In local development without `CONFIG_CHECK_STRICT`, these are
@@ -156,4 +157,4 @@ When enabled, Node auto-instrumentations (HTTP, Express/Nest, Postgres, Redis, u
 are registered and traces are shut down cleanly on `SIGTERM`/`SIGINT` alongside the
 graceful-shutdown path.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

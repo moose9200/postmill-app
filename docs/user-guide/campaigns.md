@@ -8,6 +8,7 @@ Campaigns are org-scoped command centers for organising, planning, and reporting
 2. Click **New Campaign**.
 3. Fill in the details:
    - **Name** — a descriptive name (e.g. "Summer Product Launch").
+   - **Description** (optional) — a short summary.
    - **Date Range** (optional) — start and end dates.
    - **Color** — tints campaign cards in the schedule and the report header.
    - **Auto-append UTM tags** — when enabled, links in campaign posts receive `utm_campaign`, `utm_source`, and `utm_medium` before short-linking.
@@ -81,8 +82,8 @@ Drafts created inside a campaign start with approval status **Pending**. A draft
 Use **Copy** on the dashboard header or campaign card to clone a campaign:
 
 - Choose a name for the clone.
-- **Shift dates by +1 month** optionally moves the campaign dates and cloned draft publish dates.
-- **Reset schedule** drafts the clones for "now" instead of shifting.
+- **Shift dates by 1 month** optionally moves the campaign dates and cloned draft publish dates.
+- **Reset schedule to now** drafts the clones for "now" instead of shifting.
 - The clone re-tags all non-post items and copies only **draft** posts; published or scheduled posts are not duplicated.
 
 ## Reports and Public Share
@@ -105,4 +106,4 @@ Campaign-aware filters derive through the post's `campaignId`: the [Media Librar
 
 A daily cron (`campaign-tag-purge`) deletes a finished campaign's tagged items `CAMPAIGN_PURGE_DAYS` (default 30) after its `endDate`. Ongoing campaigns with no end date are never purged.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

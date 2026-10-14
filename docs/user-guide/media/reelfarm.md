@@ -27,4 +27,4 @@ The studio follows the standard Studio Kit flow: fill the form, click **Generate
 - Reel.Farm is video-only — it does not generate images or audio.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

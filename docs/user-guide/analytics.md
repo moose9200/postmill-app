@@ -62,7 +62,7 @@ A sortable, filterable table of individual posts:
   shares, clicks).
 - **Time-Series Charts**: Toggle a chart view for any post to see its metrics over time.
 - **Sorting**: Sort by any metric column or by publish date, ascending or descending.
-- **Pagination**: 20 posts per page (configurable, up to 100).
+- **Pagination**: 25 posts per page on the dashboard (the API defaults to 20, up to 100).
 
 ### 4. Insights
 
@@ -103,7 +103,7 @@ time-series per shortened link. Empty when no short-link provider is configured 
 ### 6. Watchlist
 
 Competitor tracking, integrated into the dashboard as a tab. Watched accounts are probed during the
-daily sweep and their public metrics appear alongside your own channels. See
+daily sweep; the tab lists them and charts each one's follower growth against your own. See
 [Watchlist](watchlist.md) for setup and configuration.
 
 ## Filters
@@ -131,7 +131,7 @@ surfaced in two places:
 - The **Insights → Alerts** section (the full list; each alert can be dismissed).
 
 Anomalies also generate notifications under the **Analytics alerts** category. You can toggle this
-category per channel (email / push / in-app) at **Settings → Notifications** — email and in-app are
+category per channel (email / push / in-app) at avatar menu → **Profile** → **Notifications** — email and in-app are
 on by default. Notifications are cooldown-deduped and capped at three per organization per day so a
 noisy day cannot flood your inbox.
 
@@ -157,9 +157,7 @@ current available data.
 ## Watchlist
 
 Competitor tracking integrates with the analytics dashboard. Watched accounts are probed during
-the analytics collection sweep, and their metrics appear in the analytics views alongside your own
-channel data. Watched-account metrics also appear in the **Insights → Recommendations** section,
-compared against channel performance for competitive insights. See [Watchlist](watchlist.md) for
-setup and configuration.
+the analytics collection sweep, and their follower metrics appear on the **Watchlist** tab, charted
+against your own. See [Watchlist](watchlist.md) for setup and configuration.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

@@ -1,8 +1,8 @@
 # Provider framework
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
-Postmill integrates with external services across AI, media generation, social channels, short-links, VPN egress, storage, email, auth, and content packs. The **unified provider framework** replaces the previous collection of bespoke registries with a single `ProviderKernel` and a consistent package-per-provider model.
+Postmill integrates with external services across AI, media generation, social channels, short-links, VPN egress, storage, email, auth, content packs, chat comms, and payments. The **unified provider framework** replaces the previous collection of bespoke registries with a single `ProviderKernel` and a consistent package-per-provider model.
 
 ## Goals
 
@@ -34,7 +34,7 @@ Postmill integrates with external services across AI, media generation, social c
 - **`libraries/providers/<provider>/`** — one workspace package per provider. Each version is an internal module that exports one or more `ProviderModule` objects.
 - **`libraries/nestjs-libraries/src/providers/provider-resolution.service.ts`** — the bridge every domain service uses. It resolves from the kernel, which is the sole resolution path.
 - **`apps/backend/src/providers.bootstrap.ts`** — registers every generated provider module into the kernel at boot, gated by feature flags (`DEV_DISABLE_AI`, `DEV_DISABLE_MEDIA`, etc.).
-- **`apps/backend/src/providers.generated.ts`** — the generated import list that collects all provider packages into the `providerModules` array.
+- **`apps/backend/src/providers.generated.ts`** — the hand-maintained import list that collects all provider packages into the `providerModules` array.
 
 ## Identity triple
 
@@ -67,7 +67,7 @@ See [Adding a Provider](./adding-a-provider.md) for the social-channel recipe. T
 3. Add a `src/v1/metadata.ts` with the static `ProviderMetadata` the defaults resolver and catalog read.
 4. Add the package import + spread to `apps/backend/src/providers.generated.ts` (hand-maintained, alphabetical order), the path mapping in `tsconfig.base.json`, and the dependency in `apps/backend/package.json`.
 5. Add a conformance test under `libraries/providers/<id>/src/__tests__/`.
-6. Update [Provider Versions](./provider-versions.md) and bump the "Verified against v1.0.0" note.
+6. Update [Provider Versions](./provider-versions.md) and bump the "Verified against vX.Y.Z" (the current `version.txt`) note.
 
 ## Provider metadata (`src/v1/metadata.ts`)
 
@@ -117,7 +117,7 @@ The kernel is the **sole** resolution path for every domain — there is no fall
 - `GET /admin/providers/health?domain=` (super-admin) returns per-version health counters.
 - `GET /public/integrations/list?domain=` is the **anonymous** counterpart for the seven product-facing domains (`social`, `comms`, `ai`, `media`, `storage`, `shortlink`, `vpn`): names, descriptions, capability flags, icons and the beta/featured flags — but no version, status, credential fields or sunset data. See [Public API → Integrations catalogue](./public-api.md#integrations-catalogue).
 
-Catalog entries include `domain`, `providerId`, `version`, `displayName`, `status`, `verified` (whether the provider was built with a live key), `authType`, `defaultDomain`, `setupNotes`, `credentialFields`, `capabilities`, `deprecatedAt`, `sunsetAt`, `description`, `website`, `mediaCategories`, and super-admin-curated `featured`/`featuredSortOrder` flags.
+Catalog entries include `domain`, `providerId`, `version`, `displayName`, `status`, `verified` (whether the provider was built with a live key), `authType`, `defaultDomain`, `setupNotes`, `credentialFields`, `capabilities`, `deprecatedAt`, `sunsetAt`, `description`, `website`, `mediaCategories`, `kind` (metadata kind, or `null`), and super-admin-curated `featured`/`featuredSortOrder` flags.
 
 Health entries include `domain`, `providerId`, `version`, `status`, and a `health` object with `successCount`, `errorCount`, `consecutiveErrors`, `lastSuccessAt`, and `lastErrorAt`.
 
@@ -144,7 +144,7 @@ Super-admins curate a per-domain **featured** set, stored in the `FeaturedProvid
 | `vpn/custom` | 2 | Custom VPN / Proxy |
 | `vpn/nordvpn` | 3 | NordVPN |
 
-The seeder is chained into the `RBAC_SEED_ON_INIT` on-init factory in `database.module.ts` (`RbacSeeder` → `BackfillService` → `FeaturedProviderSeeder`) and runs on **every boot, in every environment**, upserting each row idempotently. The featured set is therefore **re-asserted on every boot**: removals or reorders made through the admin API are transient and self-heal on the next deploy/restart.
+The seeder is chained into the `RBAC_SEED_ON_INIT` on-init factory in `database.module.ts` (`RbacSeeder` → `BackfillService` → `FeaturedProviderSeeder` → `DesignTemplateSeeder`) and runs on **every boot, in every environment**, upserting each row idempotently. The featured set is therefore **re-asserted on every boot**: removals or reorders made through the admin API are transient and self-heal on the next deploy/restart.
 
 The seeder writes through `FeaturedProviderRepository`, deliberately bypassing `FeaturedProviderService` validation — the service rejects rows for providers that are not registered, and the seeder races provider registration at boot. Rows are written unconditionally; the catalog only tags *registered* manifests, so a featured row for an unregistered provider is inert.
 

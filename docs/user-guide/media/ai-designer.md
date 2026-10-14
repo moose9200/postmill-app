@@ -28,6 +28,14 @@ agents, not a free-form chat model choosing its own tools. The pipeline agents a
 The conductor runs these steps per session, can pause for your input (an interactive form or plan
 approval), and supports cancelling an in-flight run.
 
+## Before you start
+
+AI Designer needs model defaults set under **Settings → AI → Model Defaults**: **vision**,
+**high-reasoning**, and **low-reasoning** AI models, plus a **text-to-image** media model. If any
+is missing, the run is blocked and the chat tells you which default to set. If a text-to-image
+default is configured but its provider has since been disabled, the run continues with a warning
+and falls back to stock imagery where generation was planned.
+
 ## Starting a session
 
 Before chatting, you configure the brief:
@@ -35,10 +43,13 @@ Before chatting, you configure the brief:
 - **Channels / formats** — pick one or more channel presets (e.g. Instagram Post, LinkedIn) or add
   a custom width × height. At least one is required.
 - **Custom sizes** — arbitrary width/height pairs, in addition to or instead of channel presets.
-- **Save path** — an optional destination folder in `/files`.
+- **Save to folder** — an optional destination folder in `/files`.
 - **Brand profile** — apply an existing brand's voice/visual guidelines.
+- **Style** — a style preset, or **Let AI decide**.
 - **Variants** — how many design variants to generate.
-- **Reference images** — pick existing files or import stock media as visual references.
+- **Reference images** — pick existing files or import stock media as visual references. When
+  your workspace has an image-to-image default, the first reference also conditions the generated
+  background/hero imagery (falling back to text-to-image, then stock).
 - **Mode** — **Chat** (open-ended conversation) or **Prompt** (a single one-shot brief).
 
 ## In the session
@@ -49,6 +60,11 @@ Once started, you get a chat interface showing:
 - A **live progress indicator** while an agent step is running (agent name, phase).
 - **Rendered previews** as variants complete.
 - Interactive prompts the pipeline may ask (e.g. a form or a plan to approve) before continuing.
+- **Delivery notes** that disclose any slot where a stock photo (or a gradient placeholder) stood in
+  for imagery that couldn't be generated.
+
+After delivery you can ask for revisions in the chat — for example, "change the background"
+regenerates the background imagery of an image-backed design.
 
 Sessions are resumable — the session id persists in the URL (`?session=`) so a page refresh
 reconnects and re-hydrates the message history instead of losing the conversation.
@@ -58,5 +74,9 @@ reconnects and re-hydrates the message history instead of losing the conversatio
 Finished designs are saved as real `Design` records (with rendered preview files) and can be
 opened directly in the [Designer](./designer) for manual refinement, just like any other design.
 
+Intermediate files a run creates (generated assets, imported references) and design preview
+thumbnails are kept out of the [Media Library](../media-library) listing. Deleting a session removes
+its intermediates, except any a delivered design still uses.
+
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

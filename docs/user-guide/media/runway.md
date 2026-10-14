@@ -27,4 +27,4 @@ The studio follows the standard Studio Kit flow: pick inputs, click **Generate**
 - A small number of native Runway parameters pass through automatically beyond the visible form.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

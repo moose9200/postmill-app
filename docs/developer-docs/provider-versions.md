@@ -1,12 +1,12 @@
 # Provider versions catalog
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 This page lists every provider currently registered in the unified provider framework, grouped by domain. All current providers are at version `v1`.
 
 Use `GET /providers/catalog?domain=` to fetch this catalog live from the running backend. Use `GET /admin/providers/health?domain=` (super-admin) for per-version health counters.
 
-The catalog is metadata-driven: each provider package exports `src/v1/metadata.ts` with `kind`, `domains`, `modelCategories`, `mediaCategories`, `hasModelList`, and `modelHints`. The public `/providers/catalog` endpoint and the Settings → AI *Model Defaults* / Settings → Content *Media Defaults* tabs use this metadata to build candidate sets, format labels such as `<provider>[-<ui-name>]: <model>`, and auto-rank models when no stored default exists.
+The catalog is metadata-driven: each provider package exports `src/v1/metadata.ts` with `kind`, `domains`, `modelCategories`, `mediaCategories`, `hasModelList`, and `modelHints`. The authenticated `/providers/catalog` endpoint and the Settings → AI *Model Defaults* / Settings → Content *Media Defaults* tabs use this metadata to build candidate sets, format labels such as `<provider>[-<ui-name>]: <model>`, and auto-rank models when no stored default exists.
 
 A few branded media studios ride another provider's adapter:
 
@@ -29,7 +29,7 @@ The table below shows each provider's registered domains. A provider that appear
 | DeepSeek | `deepseek` | ai | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
 | Fireworks AI | `fireworks` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 | GMI Cloud | `gmihub` | ai | action |
-| Google Gemini | `google` | ai, auth, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
+| Google Gemini | `google` | ai, auth, media, payments | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
 | Google Vertex | `vertex` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-video |
 | Groq | `groq` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, text-to-speech |
 | Lightning AI | `lightning` | ai | action |
@@ -50,16 +50,30 @@ The table below shows each provider's registered domains. A provider that appear
 | xAI Grok | `xai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 | Z.AI GLM | `zai` | ai | direct; low-reasoning, high-reasoning, workflow, vision |
 
-## Auth (`auth`) — 6 providers
+## Auth (`auth`) — 10 providers
 
 | Provider | ID |
 |---|---|
+| Apple | `apple` |
 | Email & Password | `local` |
+| Facebook | `facebook` |
 | Farcaster | `farcaster` |
 | GitHub | `github` |
 | Google | `google` |
+| LinkedIn | `linkedin` |
 | OIDC | `generic` |
 | Wallet | `wallet` |
+| X | `x` |
+
+## Comms (`comms`) — 5 providers
+
+| Provider | ID |
+|---|---|
+| Discord | `discord` |
+| LINE | `line` |
+| Matrix | `matrix` |
+| Slack | `slack` |
+| Telegram | `telegram` |
 
 ## Content packs (`contentpack`) — 4 providers
 
@@ -95,7 +109,7 @@ The table below shows each provider's registered domains. A provider that appear
 | ElevenLabs | `elevenlabs` | media | direct; text-to-speech |
 | Fireworks AI | `fireworks` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 | Genviral | `genviral` | media | hub; image-to-video, text-to-video |
-| Google AI Studio | `google` | ai, auth, media | direct; image-slide, text-to-image, text-to-video |
+| Google AI Studio | `google` | ai, auth, media, payments | direct; image-slide, text-to-image, text-to-video |
 | Google Vertex | `vertex` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-video |
 | Groq | `groq` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, text-to-speech |
 | Hedra | `hedra` | media | action; image-to-video, text-to-video, video-avatar |
@@ -123,6 +137,15 @@ The table below shows each provider's registered domains. A provider that appear
 | Wan | `wan` | media | direct; image-slide, image-to-video, text-to-image, text-to-video |
 | xAI Grok | `xai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 
+## Payments (`payments`) — 4 providers
+
+| Provider | ID |
+|---|---|
+| App Store | `apple` |
+| Google Play | `google` |
+| PayPal | `paypal` |
+| Stripe | `stripe` |
+
 ## Short-link (`shortlink`) — 20 providers
 
 | Provider | ID |
@@ -148,34 +171,43 @@ The table below shows each provider's registered domains. A provider that appear
 | TinyURL | `tinyurl` |
 | v.gd | `vgd` |
 
-## Social / channel (`social`) — 36 providers
+## Social / channel (`social`) — 45 providers
 
 | Provider | ID |
 |---|---|
+| Akkoma | `akkoma` |
 | Bluesky | `bluesky` |
 | Dev.to | `devto` |
 | Discord | `discord` |
+| Discourse | `discourse` |
 | Dribbble | `dribbble` |
 | Facebook Page | `facebook` |
 | Farcaster | `wrapcast` |
+| Friendica | `friendica` |
 | Google My Business | `gmb` |
+| GoToSocial | `gotosocial` |
 | Hashnode | `hashnode` |
 | Instagram (Facebook Business) | `instagram` |
 | Instagram (Standalone) | `instagram-standalone` |
 | Kick | `kick` |
 | Lemmy | `lemmy` |
+| LINE | `line` |
 | LinkedIn | `linkedin` |
 | LinkedIn Page | `linkedin-page` |
 | ListMonk | `listmonk` |
 | Mastodon | `mastodon` |
+| Matrix | `matrix` |
 | Medium | `medium` |
 | MeWe | `mewe` |
+| Misskey | `misskey` |
 | Moltbook | `moltbook` |
 | Nostr | `nostr` |
+| Odysee | `odysee` |
 | PeerTube | `peertube` |
 | Pinterest | `pinterest` |
 | Pixelfed | `pixelfed` |
 | Reddit | `reddit` |
+| Sharkey | `sharkey` |
 | Skool | `skool` |
 | Slack | `slack` |
 | Telegram | `telegram` |

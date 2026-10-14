@@ -27,4 +27,4 @@ Video jobs are submitted to the fal.ai queue and tracked in the **Render Queue**
 - **Pikaffects** do not require a prompt; the effect alone drives the transformation, with an optional prompt for extra guidance.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

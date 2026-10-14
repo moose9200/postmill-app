@@ -50,12 +50,13 @@ Two situations are allowed to bypass the normal layering rule by design:
    - `PostsService` → `AnalyticsRepository` / `CampaignsRepository` (the analytics/campaigns services depend on `PostsService`).
    - `OrgMediaProviderSettingsService` → `@Optional() OrgAiSettingsRepository` (the Qwen/Google universal-credential read; `OrgAiSettingsService` depends on this package's `ProviderCredentialLinkService`).
    - `AiMediaService` (`ai/governance/media.service.ts`) → `@Optional() OrgAiSettingsRepository` (universal-credential fallback; same DI-cycle rationale as above).
-   - `StripeService` → `StripeEventRepository` (narrow Stripe-webhook idempotency/grace reads, no service-level cycle).
+   - `PaymentsService` → `PaymentEventRepository` (narrow payment-webhook idempotency/grace reads, no service-level cycle).
    - `PostActivity` (Inngest) → `CampaignsRepository` (UTM `utmEnabled` flag) and `PostsRepository` (atomic publish claim).
    - `OrgVpnConfigService` → `OrgProviderConfigRepository` (`OrgProviderConfigService` depends back on this service; used to clear orphaned channel `vpnSelection` rows).
    - `StorageService` → subscription read via the repository (routing through `SubscriptionService` would close a DI cycle that crashes Nest at boot).
    - `WebhooksService` → `IntegrationRepository` (id-only ownership check, no token decrypt).
    - `NotificationService` → `OrganizationRepository` (`OrganizationService` depends on `NotificationService`).
+   - `PermissionsService` → `AiSettingsRepository` (the video-export gate's in-flight `AIMediaJob` count; the repository has no service back-edge).
 
 ---
 
@@ -196,21 +197,23 @@ database/prisma/
 ├── campaigns/         → campaigns.repository.ts
 ├── emails/            → email-log.repository.ts
 ├── featured-providers/→ featured-provider.repository.ts
+├── federation/        → federation.repository.ts
+├── file/              → file.repository.ts
 ├── integrations/      → integration.repository.ts
-├── media/             → media.repository.ts, multipart-upload.repository.ts
+├── media/             → multipart-upload.repository.ts
 ├── media-providers/   → org-media-provider-settings.repository.ts
 ├── notifications/     → notifications.repository.ts
 ├── oauth/             → oauth.repository.ts
 ├── organizations/     → organization.repository.ts
 ├── posts/             → posts.repository.ts
-├── provider-configs/  → provider-config.repository.ts, org-provider-config.repository.ts
+├── provider-configs/  → org-provider-config.repository.ts
 ├── roles/             → roles.repository.ts
 ├── sets/              → sets.repository.ts
 ├── short-links/       → org-shortlink-settings.repository.ts
 ├── signatures/        → signature.repository.ts
 ├── social-comments/   → social.comments.repository.ts
 ├── storage/           → storage.repository.ts
-├── subscriptions/     → subscription.repository.ts
+├── subscriptions/     → subscription.repository.ts, payment-event.repository.ts
 ├── users/             → users.repository.ts
 ├── watchlist/         → watchlist.repository.ts
 └── webhooks/          → webhooks.repository.ts
@@ -222,10 +225,10 @@ Each repository typically has a companion service file in the same directory (e.
 
 ## Module wiring
 
-All provider domains (AI, Media, Storage, Short-link, Social, VPN, Content Packs, Email, Auth) register through the shared **`ProviderKernel`** at module init. `apps/backend/src/providers.generated.ts` (hand-maintained despite the name) imports every provider package's modules into a single `providerModules` array; `ProvidersBootstrap.onModuleInit` (`apps/backend/src/providers.bootstrap.ts`) walks that array and calls `kernel.register(mod)` for each, honoring the `DEV_DISABLE_*` feature flags. Malformed manifests or duplicate registrations are fatal to boot. The kernel is the only registry — there is no fallback.
+All provider domains (AI, Media, Storage, Short-link, Social, VPN, Content Packs, Email, Auth, Comms, Payments) register through the shared **`ProviderKernel`** at module init. `apps/backend/src/providers.generated.ts` (hand-maintained despite the name) imports every provider package's modules into a single `providerModules` array; `ProvidersBootstrap.onModuleInit` (`apps/backend/src/providers.bootstrap.ts`) walks that array and calls `kernel.register(mod)` for each, honoring the `DEV_DISABLE_*` feature flags. Malformed manifests or duplicate registrations are fatal to boot. The kernel is the only registry — there is no fallback.
 
 Resolution is through `ProviderResolutionService` — the kernel is the sole resolution path. Channel provider integrations resolve the same way: social adapters are wrapped in `SocialProviderKernelAdapter` and registered like every other domain; `IntegrationManager` resolves them by identifier.
 
 See [Architecture](./architecture.md) and [Provider Framework](./provider-framework.md).
 
-> Verified against v1.0.0
+> Verified against v1.2.0

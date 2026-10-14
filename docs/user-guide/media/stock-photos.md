@@ -54,4 +54,4 @@ replaces the current preview.
 
 ---
 
-> Verified against v1.0.0
+> Verified against v1.2.0

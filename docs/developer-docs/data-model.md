@@ -1,6 +1,6 @@
 # Data Model
 
-85 Prisma models and 8 enums in a single schema at `libraries/nestjs-libraries/src/database/prisma/schema.prisma`. This page lists every model grouped by domain with a one-line purpose and key relationships.
+88 Prisma models and 8 enums in a single schema at `libraries/nestjs-libraries/src/database/prisma/schema.prisma`. This page lists every model grouped by domain with a one-line purpose and key relationships.
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Model | Purpose | Key Relationships |
 |---|---|---|
-| `Organization` | Tenant — every resource belongs to an org | FK to `Subscription`; has many `Integration`, `UserOrganization`, `Post`, `Campaign` |
+| `Organization` | Tenant — every resource belongs to an org. Carries `paymentProvider` (the payments provider its `paymentId` belongs to) and the nullable org-wide AI budget columns `aiBudgetMonthlyCap` / `aiBudgetDailyCap` / `aiBudgetAlertThresholdPct` | FK to `Subscription`; has many `Integration`, `UserOrganization`, `Post`, `Campaign` |
 | `User` | Identity/auth only — email, password, `providerName`/`providerId`, `isSuperAdmin`, `activated`, last-online telemetry | Unique on `(email, providerName)`; has one `UserProfile`, many `Session`, `UserOrganization` |
 | `UserProfile` | 1:1 profile split off from `User` — name, lastName, bio, `avatarUrl` (provider/Gravatar), `pictureId` (uploaded), IANA `timezone`, notification prefs | FK → `User` (unique, cascade), `File` (picture) |
 | `Session` | Login session backing refresh-token rotation — `tokenHash` (sha256 of the refresh token, rotated on every use), `previousTokenHash` (last rotated-out hash; reusing it revokes the session), userAgent/ip, `expiresAt`, `revokedAt` | FK → `User` (cascade) |
@@ -38,7 +38,7 @@
 
 ---
 
-## Media (12)
+## Media (11)
 
 | Model | Purpose | Key Relationships |
 |---|---|---|
@@ -53,11 +53,10 @@
 | `AiDesignerSession` | Persistent chat thread for the AI Designer (`/media/ai-designer`) | FK → `Organization`, `User`; has many `AiDesignerMessage` |
 | `AiDesignerMessage` | Persisted chat/form/plan/media/progress payloads for an AI Designer session | FK → `AiDesignerSession` |
 | `PopularPosts` | Curated popular post templates (category + topic + content + hook) | Standalone |
-| `Mentions` | Cross-platform mention tracking | Standalone |
 
 ---
 
-## Channel Integrations (5)
+## Channel Integrations (4)
 
 | Model | Purpose | Key Relationships |
 |---|---|---|
@@ -153,23 +152,34 @@ A connected `Integration` carries a nullable `providerConfigId` FK (`onDelete: S
 
 ---
 
-## OAuth (2)
+## OAuth & Postmill ID (4)
 
 | Model | Purpose | Key Relationships |
 |---|---|---|
 | `OAuthApp` | OAuth 2.0 application registration (client credentials, redirect URL) | FK → `Organization`, `File` (picture) |
 | `OAuthAuthorization` | OAuth authorization grant — PKCE, scopes, encrypted tokens, expiry, revocation | FK → `OAuthApp`, `User`, `Organization` |
+| `InstanceIdentity` | The instance's Postmill ID RS256 signing key — `kid`, public JWK, encrypted private key; generated on first use | Unique on `kid` |
+| `FederationGrant` | Postmill ID ("Sign in with Postmill") grant — hashed one-time code + PKCE S256 challenge, nonce, scopes, exact redirect URI, hashed `posf_` access token, expiry, revocation | FK → `User`, `Organization` (cascade); unique on `(userId, organizationId)` |
 
 ---
 
-## Billing (5)
+## Billing (4)
 
 | Model | Purpose | Key Relationships |
 |---|---|---|
-| `Subscription` | Billing subscription — tier, period, channel count, lifetime flag, add-on storage/video exports | FK → `Organization` (unique) |
+| `Subscription` | Billing subscription — tier, period, channel count, lifetime flag, add-on storage/video exports, `provider` (the payments provider that bills it; `manual` for lifetime/admin-granted rows) | FK → `Organization` (unique) |
 | `PaymentEvent` (table `StripeEvent`) | Deduplication ledger for payment-provider webhooks | Unique on `id` (the vendor event id); `provider` column |
 | `Credits` | AI credit balance per org (type: `ai_images`/`ai_videos`) | FK → `Organization` |
 | `UsedCodes` | Used promo/referral codes per org | FK → `Organization` |
+
+---
+
+## Comms (2)
+
+| Model | Purpose | Key Relationships |
+|---|---|---|
+| `CommsProviderConfig` | Per-org chat-app (comms) provider config — encrypted credentials, CSPRNG `webhookToken`, Matrix `syncCursor` | FK → `Organization`; unique on `(organizationId, identifier, version)` |
+| `CommsUserLink` | Links a member to their chat identity via a one-time connect code — agent-chat toggle + per-category notification delivery | FK → `Organization`, `CommsProviderConfig`, `User`; unique on `(configId, userId)` |
 
 ---
 
@@ -214,7 +224,7 @@ All 6 models are managed by the Mastra framework. They are **not** accessed thro
 | `State` | `QUEUE`, `PUBLISHED`, `ERROR`, `DRAFT`, `PUBLISHING` |
 | `CampaignEntityType` | `POST`, `INTEGRATION`, `ORG_VPN_CONFIG`, `AI_ORG_PROVIDER_CONFIG`, `AI_BRAND_PROFILE`, `STORAGE_PROVIDER_CONFIG`, `FILE`, `SETS`, `SIGNATURES` |
 | `SubscriptionTier` | `STARTER`, `PRO`, `TEAM`, `AGENCY` |
-| `Provider` | `LOCAL`, `GITHUB`, `GOOGLE`, `FARCASTER`, `WALLET`, `GENERIC` |
+| `Provider` | `LOCAL`, `GITHUB`, `GOOGLE`, `FARCASTER`, `WALLET`, `GENERIC`, `FACEBOOK`, `X`, `LINKEDIN`, `APPLE` |
 | `ShortLinkPreference` | `ASK`, `YES`, `NO` |
 | `CreationMethod` | `UNKNOWN`, `WEB`, `MCP`, `API`, `AUTOPOST`, `CLI` |
 | `StorageProviderType` | `LOCAL`, `S3`, `CLOUDFLARE_R2`, `BACKBLAZE_B2`, `IDRIVE_E2`, `WASABI`, `DIGITALOCEAN_SPACES`, `HETZNER`, `STORJ`, `SCALEWAY`, `VULTR`, `LINODE`, `S3_COMPATIBLE`, `MEDIALOCKER` |
@@ -224,4 +234,4 @@ All 6 models are managed by the Mastra framework. They are **not** accessed thro
 `20260714150606_add_medialocker_storage_type` (`ALTER TYPE ... ADD VALUE` — backward-compatible, no
 data rewrite).
 
-> Verified against v1.0.0
+> Verified against v1.2.0

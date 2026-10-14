@@ -6,11 +6,12 @@ or audit the security posture of their deployment.
 
 ## HTTP security headers (Helmet)
 
-Applied in production via `helmet()` middleware. **Bypassed entirely when `NOT_SECURED` is set**
-(dev-only — never set in production).
+Applied in production via `helmet()` middleware. **Bypassed in development** — when `NODE_ENV` is
+`development` (or unset), or when `NOT_SECURED` is set together with `NODE_ENV=development`. A stray
+`NOT_SECURED` in production does not strip these headers.
 
 ```typescript
-// apps/backend/src/main.ts:80-108
+// apps/backend/src/main.ts:138-163
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -35,6 +36,7 @@ app.use(helmet({
   },
   noSniff: true,
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true,
 }));
 ```
 
@@ -55,7 +57,7 @@ Applied to all mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`) on authentic
 
 1. On authentication, the server issues a `csrf_token` cookie (64 hex characters from CSPRNG
    random, 30-day expiry).
-2. In production (`NOT_SECURED` unset), the cookie is `secure` + `sameSite: none`, `httpOnly: false`
+2. Unless `NOT_SECURED` is set with `NODE_ENV=development`, the cookie is `secure` + `sameSite: none`, `httpOnly: false`
    (must be JavaScript-readable to be forwarded as a header).
 3. The frontend reads the `csrf_token` cookie and forwards it as the `x-csrf-token` header on
    every mutating request (via `useFetch`'s `custom.fetch.func.ts` and `csrf.header.ts`).
@@ -67,13 +69,15 @@ CSRF enforcement is **skipped** when:
 
 - The method is `GET`, `HEAD`, or `OPTIONS`
 - Authentication came from an `auth` header or API key (not a cookie) — typical for n8n/Zapier/API clients
-- The request body contains a JWT `params` field — used by the browser extension
-- `NOT_SECURED` is set (dev-only)
+- There is no `auth` cookie on the request
+
+Body fields are not an auth source, so they never exempt a request. `NOT_SECURED` does not disable
+HTTP CSRF enforcement; it only relaxes the cookie flags below (in development).
 
 ```typescript
-// apps/backend/src/services/auth/csrf.middleware.ts:24
-// Exempt: header/API-key auth, body-JWT (extension), or no auth
-if (!authFromCookie || authFromHeader || hasBodyJwt) {
+// apps/backend/src/services/auth/csrf.middleware.ts:27
+// Exempt: header/API-key auth, or no cookie auth
+if (!authFromCookie || authFromHeader) {
   next();
   return;
 }
@@ -81,7 +85,7 @@ if (!authFromCookie || authFromHeader || hasBodyJwt) {
 
 ### Cookie attributes
 
-| Attribute    | Prod (`NOT_SECURED` unset) | Dev (`NOT_SECURED` set) |
+| Attribute    | Default | Dev (`NOT_SECURED` set and `NODE_ENV=development`) |
 |--------------|---------------------------|------------------------|
 | `secure`     | `true`                    | not set |
 | `sameSite`   | `none`                    | default (lax) |
@@ -161,7 +165,7 @@ Secrets stored in the database are encrypted with AES-256-GCM.
   older formats are not decrypted at read time.
 
 ```typescript
-// libraries/helpers/src/auth/auth.service.ts:36-39
+// libraries/helpers/src/auth/auth.service.ts:5-8
 const GCM_ALGORITHM = 'aes-256-gcm';
 const GCM_IV_LENGTH = 12;
 const GCM_TAG_LENGTH = 16;
@@ -213,6 +217,7 @@ function getEncryptionKey(): Buffer {
 - `OrgShortLinkConfig` credentials — short-link provider API keys
 - `MediaProviderConfig` credentials — media-generation provider API keys
 - `AuthProviderConfig` — login provider `clientId`/`clientSecret`
+- `InstanceIdentity.privateKeyEnc` — the instance's Postmill ID (federation) RS256 signing key
 - Nostr private keys
 - Browser extension cookies (Skool)
 - Third-party API keys
@@ -250,7 +255,7 @@ secret in a controlled migration:
 | IDs/secrets| CSPRNG-generated (`crypto.randomBytes`)            |
 
 ```typescript
-// libraries/helpers/src/auth/auth.service.ts:93-98
+// libraries/helpers/src/auth/auth.service.ts:62-67
 static signJWT(value: object) {
   return sign(value, process.env.JWT_SECRET!, { expiresIn: '30d' });
 }
@@ -278,8 +283,9 @@ Error and breadcrumb data sent to Sentry is scrubbed of secrets and PII before t
 | Category       | Fields / patterns scrubbed                             |
 |----------------|-------------------------------------------------------|
 | Auth headers   | `Authorization`, `auth`, `cookie`, `showorg`, `impersonate` |
-| API tokens     | `apiKey`                                               |
-| Platform tokens| `pos_*`, `pca_*`, `pcs_*` patterns                     |
+| API tokens     | `apiKey`, `api_key`, `token`, `accessToken`, `refreshToken`, `secret` |
+| Platform tokens| `pos_*`, `pca_*`, `pcs_*`, `pm_*`, `posf_*` patterns   |
+| Postmill ID    | `id_token`, `code_verifier`                            |
 | Passwords      | Any field named `password`                             |
 | Prompt bodies  | Full AI prompt/response text                           |
 | Request data   | Request body and query string                          |
@@ -358,4 +364,4 @@ fields on all DTOs. Declare new optional fields explicitly on their DTO.
 - [Configuration](./configuration.md) — `ENCRYPTION_KEY`, `SSRF_ALLOWED_PRIVATE_CIDRS`,
   `INTEGRATION_RETURN_URL_ALLOWLIST`, `NOT_SECURED`
 
-> Verified against v1.0.0
+> Verified against v1.2.0

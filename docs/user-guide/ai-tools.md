@@ -21,7 +21,7 @@ The same AI facade resolves the right provider across four user-facing surfaces:
 1. **Utility AI** — inline composer assist, general CopilotKit chat, content repurposing, variants, translation, hashtags, comment tools, compliance checks, best-time analysis, and brand-voice generation.
 2. **`/agents` generator** — the LangGraph-based conversational agent that can schedule posts, generate media, check analytics, manage campaigns, and reply to comments. See [AI Agent](./agent.md).
 3. **Mastra chat agent** — the function-form model used by the MCP server and tool-calling paths.
-4. **CopilotKit runtime** — the `/copilot/chat` and `/copilot/agent` endpoints that build an `OpenAIAdapter` from the organisation's resolved AI credentials, gated by policy and budget.
+4. **CopilotKit runtime** — the `/copilot/chat` and `/copilot/agent` endpoints. `/copilot/chat` runs an agent on the organisation's governed model (so the AI budget, guardrails, and spend tracking apply); `/copilot/agent` runs the Mastra agent. Both are gated by policy and budget.
 
 ## Text generation
 
@@ -31,7 +31,7 @@ The composer text editor integrates with CopilotKit for inline AI assistance. Wi
 
 ### CopilotKit chat assistant
 
-The general-purpose AI assistant is available at `/copilot/chat`. It can answer questions about your scheduled content, suggest posting strategies, and help draft posts. The assistant resolves the active AI provider per organisation and is gated by both policy (`Create + Sections.AI`) and per-request budget checks.
+The general-purpose AI assistant is available at `/copilot/chat`. It can answer questions about your scheduled content, suggest posting strategies, and help draft posts. The assistant resolves the active AI provider per organisation and is gated by both policy (`Create + Sections.MCP`) and per-request budget checks.
 
 ### Content repurposing
 
@@ -154,7 +154,7 @@ The RAG (Retrieval Augmented Generation) system indexes your top-performing post
 - `POST /ai/brand-memory/search` — semantic search of only brand-memory-indexed content.
 - `GET /ai/search` — general semantic search across all RAG-indexed content in your organisation.
 
-The RAG system supports both `pgvector` (PostgreSQL ANN index via HNSW) and Qdrant as vector store backends. Configure it via `/rag/settings` or **Settings → AI → Brands → Knowledge Base**.
+The RAG system supports the built-in `pgvector` store (PostgreSQL ANN index via HNSW) or a remote pgvector, Qdrant, or Pinecone vector store. Configure it via `/rag/settings` or **Settings → AI → Brands → Knowledge Base**.
 
 ## Model defaults
 
@@ -176,17 +176,20 @@ API endpoints:
 
 ## Image and media generation
 
-`POST /ai/media` supports 7 media operations. Each operation routes through the per-organisation **media providers** configured in **Settings → Media** — an operation is available when a configured, enabled provider supports that capability:
+`POST /ai/media` supports 10 media operations. Each operation routes through the per-organisation **media providers** configured in **Settings → Content → AI Media** — an operation is available when a configured, enabled provider supports that capability:
 
 | Operation | Description |
 |-----------|-------------|
 | `image` | AI image generation from a text prompt (synchronous) |
 | `video` | Video generation from a text prompt (asynchronous job) |
+| `audio` | Audio generation from a prompt (asynchronous job) |
+| `avatar` | Avatar video generation (asynchronous job) |
 | `tts` | Text-to-speech audio synthesis |
 | `stt` | Speech-to-text transcription (base64 audio) |
 | `upscale` | Image upscaling |
 | `bg-remove` | Background removal from an image |
 | `inpaint` | Image inpainting (fill masked region from prompt) |
+| `alt-text` | Alt text for an image (vision model) |
 
 ```json
 // Example: generate an image
@@ -197,7 +200,7 @@ API endpoints:
 }
 ```
 
-All media operations are governed by the same budget, guardrails, and rate limits as text operations. Each media provider is configured independently in **Settings → Media** (with a storage location for generated output — see [Settings](./settings.md#media-tab)), allowing you to mix providers. Async results (video, audio, avatar) are saved into your organisation's storage and appear in the Media library.
+All media operations are governed by the same budget, guardrails, and rate limits as text operations. Each media provider is configured independently in **Settings → Content → AI Media** (see [Settings](./settings.md#ai-media-sub-tab)), allowing you to mix providers. Async results (video, audio, avatar) are saved into your organisation's storage and appear in the Media library.
 
 ### Media defaults
 
@@ -248,16 +251,16 @@ The `/agents/[id]` page provides a LangGraph-based post generator powered by the
 }
 ```
 
-The spend tab in **Settings → AI** provides a visual dashboard of this data, including per-provider progress bars.
+The **Dashboard** usage widget visualises this data — monthly/daily spend with the remaining budget, and spend by provider; **Analytics → Usage** adds spend by scope.
 
 ## Governance
 
 All AI operations are subject to three governance layers:
 
-1. **Guardrails** — input and output content filtering (toxicity, PII, prompt injection detection). Violations block the operation and return a `CapabilityNotAvailable` error.
+1. **Guardrails** — input and output content filtering (toxicity, PII, prompt injection detection). Violations block the operation and return a `GuardrailViolation` error.
 2. **Budgets** — two independent layers, both monthly and daily, in USD. An **organisation budget** is a hard ceiling on total spend across all providers: once reached, every AI call returns HTTP 429 (`org_budget_exceeded`). **Provider caps** limit one provider at a time: exceeding one returns HTTP 429 (`provider_budget_exceeded`) for that provider while others remain usable. A call must pass both. Configure the organisation budget in the card at the top of **Settings → AI → LLM Providers**, and provider caps in each provider's configure form. The usage dashboard shows the organisation's remaining budget.
 3. **Rate limits** — throttle limits apply per endpoint (typically 30 requests per 60 seconds for most AI endpoints, lower for intensive operations like brand memory indexing).
 
 All AI operations log to the spend ledger (`AISpendLog`) for audit and cost tracking.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

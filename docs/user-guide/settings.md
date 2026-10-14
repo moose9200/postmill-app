@@ -12,24 +12,33 @@ and usage:
 - **Plan selection** — choose between **Starter**, **Pro**, **Team**, and **Agency** tiers, billed
   monthly or yearly. Each plan lists its channel, video-export, and storage allotments.
 - **Current plan badge** — the plan you are on is marked **Current**.
-- **Usage bars** — visual gauges for channels used, video exports used, and storage used versus the
-  plan limit. Bars turn amber at 80% and red at 100%.
-- **Add-ons** — purchase extra storage packs (25 GB each) and extra video-export packs (50 exports
-  each) without changing tier.
-- **Change plan** — upgrade or downgrade; the change is applied through the billing backend.
+- **Usage bars** — visual gauges for posts, video exports, storage, channels, team members,
+  competitors, webhooks, and brand kits used versus the plan limit. Bars turn amber at 80% and red
+  at 100%.
+- **Add-ons** — buy extra packs (storage, video exports, channels, team seats, posts, brand kits,
+  webhooks, competitors) without changing tier.
+- **Change plan** — upgrade or downgrade; the change is applied through the billing backend. A
+  pending downgrade shows a banner with an **Undo** button.
 - **Cancel / resume** — cancel the subscription at the end of the current period, or resume a
   cancelled subscription before it expires.
-- **Payment method & invoices** — view and update the card on file, and download invoice history.
+- **Payment method & invoices** — handled on the `/billing` page through your payment provider's
+  customer portal.
 
-See [Subscription & Billing](./subscription-and-billing.md) for plans, metered caps, and Stripe
-configuration.
+Which of these controls appear depends on the payment provider your organisation is billed
+through — for example PayPal has no add-ons and cannot resume a cancelled subscription, and a
+subscription bought in the mobile app shows a **Manage subscription** link to the app store
+instead. See [Subscription & Billing](./subscription-and-billing.md) for plans, metered caps, and
+payment providers.
 
 ## Team tab
 
 Available when your subscription tier includes team members. Manage who has access to your
 organisation:
 
-- **Invite members** — send email invitations. Invited users receive a registration link.
+- **Invite Member** — send an email invitation (or copy the invitation link instead). Invited users
+  receive a registration link valid for one hour.
+- **Create User** — create an activated local account with a password and role directly (members
+  with `members:manage`).
 - **Roles** — membership is governed by a full role-based access control (RBAC) system.
   Five system roles are seeded for every organisation:
 
@@ -37,18 +46,19 @@ organisation:
   |------|----------------|
   | **Owner** | Everything in the org, including billing and member management. The user who created the org is the owner. |
   | **Admin** | Everything except billing management and deleting the organisation. |
-  | **Editor** | Full control of posts, media, and comments; read access to channels, analytics, and brands. |
+  | **Editor** | Full control of posts, media, channels, and comments; read access to analytics and brands. |
   | **Member** | Create, read, and update posts; upload and view media; read analytics, comments, and brands. |
   | **Viewer** | Read-only access to all resources. |
 
   The team screen's role selector lists every role in the org — the five system roles plus any
   custom roles. A member who lacks a permission receives **HTTP 403** on the gated action
   (distinct from a 402, which means your plan doesn't include the feature).
-- **Custom roles** — the Workspace → **Roles** tab (visible to members with `members:manage` or
-  `settings:update`) lets an admin clone a system role, toggle individual permissions grouped by
+- **Custom roles** — the **Manage roles** button on the Team page (visible to members with
+  `members:manage` or `settings:update`) opens a modal that lets an admin clone a system role, toggle individual permissions grouped by
   resource, create/edit/delete custom roles (system roles can't be deleted), and assign a role to
   a team member.
-- **Datatable** — the team list shows each member's name, email, role, and join date. Role
+- **Datatable** — the team list shows each member's name, role, and status (Active / Pending), and
+  can be searched by name or email, filtered by role, and sorted by name or join date. Role
   changes and member removal are available from the per-row controls to members holding
   `members:manage`; only the owner can change or remove another owner.
 
@@ -66,46 +76,42 @@ Connect and manage social media and chat channels.
 
 ### Named credential sets
 
-A **channel** here is a named OAuth-app credential set. Click **Add channel**, pick a provider,
+A **channel** here is a named OAuth-app credential set. Click **Add Channel**, pick a provider,
 then fill in the configuration dialog:
 
-- **Name** (required) — a label that identifies this credential set (e.g. "Marketing LinkedIn").
-- **Client ID / Client Secret** — your own OAuth app credentials.
-- **Scopes** and **Redirect URI** — optional; defaults apply when left blank.
-- **Enabled** — a set must have a Client ID before it can be enabled.
+- **Channel name** (required) — a label that identifies this credential set (e.g. "Marketing
+  LinkedIn").
+- **Connect with &lt;provider&gt;** — when the operator has configured the platform app for that
+  provider, the dialog says **Uses the Postmill app — no setup needed** and connecting is one click;
+  your own app's credentials move under **Advanced**.
+- **Client ID / API Key** and **Client Secret / API Secret** — your own app credentials. The
+  dialog shows the **Callback URL** to register (with a copy button), the permissions that will be
+  requested, and setup instructions.
+- **Enabled** — a set must have a Client ID / API Key before it can be enabled.
 
 You can add **many credential sets for the same provider**, each with a different name — useful when
 an org juggles several OAuth apps for one platform. Each named set has its **own auth**: a social
 account connected through a set uses that set's credentials for the OAuth handshake, token refresh,
-and API calls. The **Add channel** picker shows each provider's capability tags and offers a
+and API calls. The **Add Channel** picker shows each provider's capability tags and offers a
 **search** box and a **Capabilities** filter dropdown (checkboxes) to find the right provider; the
-configured-channel list itself is searchable by name.
+configured-channel list itself is searchable by name and shows each set's enabled state and the
+accounts connected through it ("Connected as …").
 
 ### Channel configuration
 
 Credential sets are stored per-organisation in `OrgProviderConfiguration` records and encrypted at
 rest (AES-256-GCM). From a set's dialog you can:
 
-- **Edit** — update the name, Client ID, Client Secret, scopes, and redirect URI.
-- **Test** — validate the credentials by generating an auth URL.
+- **Save** — update the name and credentials (leave a secret blank to keep the stored value).
+- **Connect another account** — connect a further social account through this set.
+- **Test** — validate the credentials.
 - **Remove** — delete this credential set. Accounts that were connected through it become
   unbound: they keep working only if the platform env OAuth app is configured for that
   provider, otherwise reconnect them through another set.
 
-### Connection health status
-
-Below the provider list, a **Connection Status** table shows every connected channel:
-
-| Status | Meaning |
-|--------|---------|
-| **Connected** | Channel is healthy and ready to publish. |
-| **Token Expired** | OAuth token has expired. Reconnect the channel. |
-| **Refresh Needed** | Token requires a refresh cycle. Click **Reconnect**. |
-| **Disabled** | Channel has been manually disabled or the provider is turned off. |
-
 ### Provider capabilities
 
-The **Add channel** picker shows capability badges on each provider — analytics, comments, first
+The **Add Channel** picker shows capability badges on each provider — analytics, comments, first
 comment, polls, video, carousel, alt text, link preview, refresh token, and watchlist support — and
 its **Capabilities** filter dropdown narrows the provider list to those supporting the selected
 features, so you can judge feature availability before configuring a provider.
@@ -115,61 +121,68 @@ See [Supported Channels](./supported-channels.md) for the full capability matrix
 ### Per-channel VPN egress
 
 Each channel configuration can opt into routing all of its outbound posting requests through a VPN
-region's proxy. The channel's edit dialog shows a **VPN Region** selector populated from the
-organisation's enabled VPN providers and their enabled regions. Only SOCKS5 / HTTP-CONNECT VPN
+region's proxy. The channel's edit dialog has a **VPN connection** switch and a **Provider &
+region** selector populated from the organisation's enabled VPN providers and their enabled
+regions. Only SOCKS5 / HTTP-CONNECT VPN
 providers can be applied per-request; tunnel providers (WireGuard/OpenVPN) are not selectable here.
 Routing is resolved at publish time through a pooled dispatcher and is invalidated automatically
 when the VPN config changes. See [VPN tab](#vpn-tab) for configuring VPN providers.
+
+## Comms tab
+
+Connect your team's chat apps (Slack, Telegram, Discord, Matrix, LINE) so members can chat with
+the Postmill agent and receive notifications there. Click **Add Comms Channel**, pick a provider,
+and connect it — with the instance's platform app when the operator has set one up, or with your
+own bot/app under **Advanced**. Each configured channel shows whether it is enabled and which team
+members are linked to it. See
+[Platform Comms Apps](../operations-guide/platform-comms-apps.md) for the operator setup.
 
 ## AI tab
 
 Configure AI providers, models, spending, and prompt management.
 
-### Provider & Model sub-tab
+### LLM Providers sub-tab
 
-- **Active provider** — displays the currently active AI provider for your organisation. If none
-  is set, AI features are disabled across all surfaces.
-- **Provider list** — shows all available AI providers grouped by type: **Direct Providers**
-  (native API integrations) and **Hub Providers** (OpenAI-compatible gateways). Each provider
-  card shows its brand icon, name, default model, and status (Active / Configured / unconfigured).
-  You can configure as many providers as you like; one is the active default.
-- **Configure (two steps)** — first enter API credentials (API key, base URL,
-  organisation ID; encrypted at rest), then pick the provider's model defaults: a **standard
-  (default) model** and an optional **reasoning model**. The model picker splits the provider's
-  text models into *Standard* and *Reasoning* groups; AI features that request deep reasoning use
-  the reasoning model and fall back to the default model when none is set. Image models are no
-  longer part of AI provider configuration — image/video/audio generation is configured in the
-  [Content tab](#content-tab).
 - **Organization budget** — the card at the top of **LLM Providers**: a hard ceiling on your
   organisation's total AI spend across every provider (monthly cap, daily cap, both in USD, plus an
   alert threshold). Once it is reached, every AI call is refused with HTTP 429 regardless of
   per-provider caps — including surfaces that don't pick a single provider (AI Designer, content
   pipeline, the daily brief). Turning the switch off clears the ceiling. A saved cap is enforced
   immediately on the instance that saved it and within a minute everywhere else.
+- **Provider list** — every available AI provider (direct providers plus hub/gateway providers,
+  which carry a **Hub** chip), with its brand icon and capability chips (text, image, vision,
+  embeddings, speech, tools). A search box and capability filter chips narrow the list. If no
+  provider is enabled, AI features are disabled across all surfaces.
+- **Configure** — click a provider's row to open its configuration: API credentials (encrypted at
+  rest; a base URL only for OpenAI-compatible endpoints). Image models are not part of AI provider
+  configuration — image/video/audio generation is configured in the [Content tab](#content-tab).
 - **Provider budget** — opt-in via the **Budget limits** switch in the provider's configure form
   (off by default). When enabled, each provider can carry its own monthly cap, daily cap (both
   numeric, in USD), and alert threshold (a percentage slider). When a cap is exceeded, calls against
   that provider return HTTP 429 while other configured providers remain usable. Activating a new
   provider version copies the budget from the previously active row when the target row has no
   budget set.
-- **Set Active** — activate a configured provider. All AI operations for your organisation will
-  use this provider.
-- **Model selection** — choose models per scope:
-  - **Utility** — used by text generation, hashtags, compliance, repurposing, variants, and
-    translate endpoints.
-  - **Generator** — used by the agents page (`/agents/[id]`).
-  - **Agent** — used by comment reply drafting and LangGraph-based agent workflows.
-  - **MCP** — used by the MCP server's Mastra chat agent.
-- **Test connection** — validates that the configured credentials can reach the provider's API.
+- **On / Off and Make Primary** — you can enable as many configured providers as you like with
+  their **On/Off** switch; **Make Primary** marks one enabled provider as the organisation's
+  primary.
+- **Test / Remove** — validate that the stored credentials can reach the provider's API, or delete
+  the configuration.
 
-### Spend sub-tab
+### Model Defaults sub-tab
 
-- **Usage summary** — total spend, monthly spend, and daily spend across all AI operations.
-- **Spend by scope** — breakdown of costs per scope (utility, generator, agent, MCP).
-- **Spend by provider** — per-active-provider spend with monthly/daily caps and remaining budget.
-- **Budget settings** — configure monthly and daily spending caps per provider. When a provider cap is
-  exceeded, that provider returns HTTP 429 until the period resets; other providers remain usable.
-- **Remaining budget** — real-time display of how much budget remains in the current period.
+Pick the default model for each category from your enabled providers, or leave it on **Auto**
+(Postmill picks a model from your enabled providers; **Reset to Auto** reverts a saved choice):
+
+- **Low Reasoning** — utility text, prompts, slide breakdowns, and embeddings.
+- **High Reasoning** — generation, agents, MCP, and any reasoning-heavy task.
+- **Vision** — image understanding and focal-point detection.
+- **Workflow** — reserved for future agentic workflow steps.
+
+A category with no provider able to serve it is shown disabled.
+
+AI spend (monthly and daily totals with the remaining budget, and spend by provider) is shown in
+the **Usage & budget** card on the [Dashboard](./dashboard.md); spend by scope is on
+**Analytics → Usage**.
 
 ### Prompt Templates sub-tab
 
@@ -253,15 +266,15 @@ Each brand carries a brand kit, surfaced both in Settings → Brands and in the 
 Configure and manage short-link providers per organisation. Short links are used to shorten URLs
 in published posts.
 
-- **Provider list** — provider cards with real brand icons, configured/active badges, and per-row
-  **Configure / Set Active / Remove** actions. 20 supported providers: Bitly, TinyURL, T.LY, Short.io,
+- **Provider list** — provider cards with real brand icons and a **Primary** badge; click a row to
+  configure it, with per-row **Make Primary / Test / Remove** actions. 20 supported providers: Bitly, TinyURL, T.LY, Short.io,
   Rebrandly, Dub.co, Cutt.ly, Tiny.cc, is.gd, v.gd, BL.INK, T2M, Linkly, Lnkify, Replug, Switchy,
   PixelMe, Sniply, Ow.ly, CleanURI.
 - **Multiple accounts per provider** — you can add several accounts of the same provider (e.g. two
   Bitly accounts), each with its own display **name**. Adding the *same* account twice is rejected
   (accounts are fingerprinted from their credentials).
-- **One active at a time** — only one short-link account can be active per organisation. Switching
-  automatically deactivates the previous one.
+- **One primary at a time** — only one short-link account is the primary per organisation. Making
+  another account primary replaces the previous one.
 - **Single-step configuration** — OAuth where the provider offers it (e.g. Bitly), otherwise API
   keys. No second step.
 - **Custom domains** — if your selected provider supports custom (branded) domains, enter the domain
@@ -311,9 +324,11 @@ in published posts.
 
 The **Content** page groups the content-authoring surfaces into one tabbed view:
 
-- **AI Media** — the AI media-generation providers (see [Media sub-tab](#media-sub-tab) below).
-- **Content Packs** — premium stock-media packs.
-- **Sets** and **Signatures** — reusable post templates and signatures (paid tiers only).
+- **AI Media** — the AI media-generation providers (see [AI Media sub-tab](#ai-media-sub-tab) below).
+- **Media Defaults** — the default provider/model per media task (see below).
+- **Content Packs** — premium stock-media packs (shown to members who can manage media
+  configuration).
+- **Post Templates** (sets) and **Signatures** — reusable post templates and signatures.
 
 ### Content Packs sub-tab
 
@@ -334,37 +349,14 @@ browser pages under [Media Studios](./media/index.md) for how packs affect searc
 
 ### AI Media sub-tab
 
-Rebuilt as a pluggable per-organisation media-provider page that mirrors the AI tab: provider cards
-with brand icons, capability chips, configured/enabled badges, and per-row **Configure / Test /
-Remove** actions.
+A pluggable per-organisation media-provider page that mirrors the AI tab: provider cards with brand
+icons and capability chips, a search box and capability filter chips, an **On/Off** switch and
+**Make Primary** per configured provider, and **Test / Remove** actions. Click a provider's row to
+enter its API credentials (encrypted at rest).
 
-Available providers and their capabilities:
-
-| Provider | Image | Video | Audio | Avatar |
-|----------|:---:|:---:|:---:|:---:|
-| fal.ai | ✓ | ✓ | ✓ | |
-| OpenAI | ✓ | ✓ | ✓ | |
-| ElevenLabs | | | ✓ | |
-| HeyGen | | ✓ | | ✓ |
-| Runway | ✓ | ✓ | | |
-| Black Forest Labs | ✓ | | | |
-| Google Vertex | ✓ | ✓ | | |
-| Replicate | ✓ | ✓ | ✓ | ✓ |
-| Stability AI | ✓ | ✓ | ✓ | |
-| Tavus | | ✓ | | ✓ |
-| D-ID | | ✓ | | ✓ |
-| Hedra | | ✓ | | ✓ |
-| MiniMax | ✓ | ✓ | ✓ | |
-| Deepgram | | | ✓ (STT) | |
-| Luma | | ✓ | | |
-
-Configuration is **two steps**:
-
-1. **Auth** — API credentials (encrypted at rest).
-2. **Storage location** — where this provider's generated output lands: local storage or one of
-   your configured storage providers, under a provider folder with a typed sub-tree
-   (`documents/`, `audio/`, `images/`, `video/`, `other/`). Generated assets persist in your own
-   storage (and show in the Media library) until you delete them.
+It lists every AI media provider studio — fal.ai, OpenAI, ElevenLabs, HeyGen, Runway, Black Forest
+Labs, Google, Replicate, Stability AI, MiniMax, Luma, and more; see
+[Media Studios](./media/index.md) for the full list.
 
 Image generation returns immediately; video, audio, and avatar generation run as background jobs
 and the finished artifact is saved into your storage when the provider completes.
@@ -372,14 +364,20 @@ and the finished artifact is saved into your storage when the provider completes
 **Auto-config:** entering OpenAI or MiniMax credentials in the AI tab also configures them as a
 media provider (and vice versa) — the key is shared, you don't re-enter it.
 
+### Media Defaults sub-tab
+
+Pick the default provider and model for each media task — text-to-speech, text-to-music,
+text-to-image, text-to-video, image-to-image, image-to-video, upscale, background removal,
+inpainting, focal point, slides, video avatar, and so on — from your enabled media providers.
+
 #### C2PA provenance
 
 When enabled, generated media files are signed with C2PA Content Authenticity Initiative
 metadata, embedding cryptographically verifiable provenance into output files.
 
-### Sets sub-tab
+### Post Templates (Sets) sub-tab
 
-Available on paid tiers (not FREE). Create named, reusable post templates:
+Create named, reusable post templates:
 
 - A **Set** captures a full composer payload — the selected channels, per-channel settings, post
   content, and any attached media — so you can reload it into the composer in one click.
@@ -391,7 +389,7 @@ Managing sets requires the `posts` permission (RBAC).
 
 ### Signatures sub-tab
 
-Available on paid tiers (not FREE). Manage reusable, channel-aware signatures:
+Manage reusable, channel-aware signatures:
 
 - **Content** — a reusable text block appended to a post (hashtag blocks, legal disclosures,
   "Follow us" CTAs).
@@ -431,11 +429,11 @@ for the operations perspective.
 
 ### Providers sub-tab
 
-Provider cards with real brand icons (AWS S3, Cloudflare R2, Backblaze B2, IDrive e2, Local),
-configured/mounted badges, and quota/usage chips.
+Provider cards with real brand icons, configured/mounted badges, and quota/usage chips.
 
-- **Add provider** — configure a new storage backend: Amazon S3, Cloudflare R2, Backblaze B2,
-  IDrive e2, MediaLocker, or Local disk. You can add as many storages as you want per provider type, each with
+- **Add provider** — configure a new storage backend: AWS S3, Cloudflare R2 (an endpoint is
+  required), Backblaze B2, IDrive e2, Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr,
+  Linode / Akamai, any S3-compatible service, or MediaLocker. You can add as many storages as you want per provider type, each with
   its own name — but **each must be a unique account**: adding the same account twice is rejected
   (accounts are fingerprinted from their credentials).
 - **Provider cards** — each configured provider shows its name, type, mount status, and usage.
@@ -450,18 +448,15 @@ configured/mounted badges, and quota/usage chips.
   - **Migrate** — move files from this provider to another.
 - **LOCAL is the always-on base storage** — it cannot be deleted or unmounted. All app-internal
   writes (avatars, AI-generated media, uploads) go to LOCAL. Additional providers (S3, R2, B2,
-  iDrive e2) mount onto LOCAL and appear as root folders in the media library; there is no "default"
-  provider concept. Local files are stored in a per-organisation partition with a soft quota
-  (5 GB by default; see [Storage Setup](../operations-guide/storage.md)).
+  and the other cloud buckets) mount onto LOCAL and appear as root folders in the media library;
+  there is no "default" provider concept. Local files are stored in a per-organisation partition
+  with a soft quota (5 GB by default; see [Storage Setup](../operations-guide/storage.md)).
 
-### Quota sub-tab
+### Quota display
 
-- **Usage bar** — visual display of used versus allocated storage. Colour-coded:
-  - Green: under 80% used.
-  - Yellow: 80–90% used (warning threshold).
-  - Red: over 90% used (near block threshold).
-- **Quota values** — absolute bytes used and total quota allowed.
-- **Percentage** — exact usage percentage.
+There is no separate quota sub-tab. Each provider card shows used versus allocated storage with a
+percentage bar (amber from 80%, red from 90%), and a warning banner appears at the top of the
+storage pages when you approach your quota.
 
 ### Usage Breakdown sub-tab
 
@@ -477,25 +472,27 @@ migrations initiated, and quota events.
 
 Available when your subscription tier includes webhooks.
 
-- **Create webhook** — define an endpoint URL, select event types to subscribe to, and optionally
-  configure an HMAC secret for payload verification.
-- **Manage** — edit, enable/disable, or delete existing webhook endpoints.
-- **Test ping** — send a test payload to verify your endpoint receives and processes webhooks
+- **Add webhook** — define a name and endpoint URL, select event types to subscribe to, choose all
+  or specific integrations, and optionally configure an HMAC secret for payload verification.
+- **Manage** — edit or delete existing webhook endpoints.
+- **Test Webhook** — send a test payload to verify your endpoint receives and processes webhooks
   correctly.
-- **Event types** — subscribe to events such as `post.published`, `post.failed`,
-  `post.scheduled`, `comment.created`, and `analytics.snapshot.created`.
+- **Event types** — `post.published`, `post.failed`, `comment.new`, `comment.reply`, and
+  `analytics.snapshot_complete`.
 
 See [Webhooks](../developer-docs/webhooks.md) for the developer reference on payload format and
 HMAC verification.
 
 ## Auto Post tab
 
-Available when your subscription tier includes auto-posting. Configure scheduled recurring posts:
+Available on every tier. Create **Auto Post Rules** that turn an RSS feed into posts:
 
-- **RSS/URL scraping** — provide an RSS feed URL or a web page URL. Postmill periodically checks
-  for new content and creates draft posts.
-- **AI content** — optionally use AI to rewrite or summarise scraped content before posting.
-- **Schedule** — define how often to check the source and when to publish.
+- **RSS URL** — provide a title and an RSS feed URL (**Validate RSS** checks it). Postmill
+  periodically checks the feed for new items (the rule also has a **Sync from last post?** option).
+- **AI content** — optionally **Autogenerate content** (and **Generate picture?**) with AI, or
+  write a fixed post template.
+- **When to post?** — post immediately or on the next available slot, to all or specific
+  integrations.
 
 ## Campaigns tab
 
@@ -531,16 +528,20 @@ See [Public API v1](../developer-docs/public-api.md) for the full API reference.
 
 ### MCP
 
-The Developers tab also surfaces the MCP server connection details and available tool scopes. See
-[MCP Server](../developer-docs/mcp.md).
+The Developers tab also surfaces the MCP client configuration (for CLI clients such as Claude Code
+/ Codex, or remote servers such as ChatGPT and Claude) and a **CLI & AI Skills** panel, both keyed
+to an API key. See [MCP Server](../developer-docs/mcp.md).
 
 ## Approved Apps tab
 
 Lists all OAuth applications that you have granted access to your account:
 
-- Each entry shows the application name, granted scopes, and authorisation date.
-- **Revoke access** — remove an application's access to your account. After revocation, the
+- Each entry shows the application's logo, name, description, and authorisation date.
+- **Revoke** — remove an application's access to your account. After revocation, the
   application's tokens are invalidated and it can no longer act on your behalf.
+- **Postmill ID sign-ins** — a second section (shown once you have used one) lists first-party apps,
+  such as the template store, that you signed in to with **Sign in with Postmill**, together with
+  the organisation you consented for. **Revoke** removes that sign-in grant.
 
 ## Profile, sessions, and notifications
 
@@ -550,11 +551,13 @@ These live outside the Settings page, in the avatar menu:
   to display schedule dates and the composer's time picker). Your avatar resolves in this order:
   external avatar (OAuth login provider's picture, or a Gravatar generated from your email) →
   uploaded profile picture → your initials.
-- **Security** (`/user/me`) — change your password, and an **Active Sessions** device list (browser,
+- **Security** (`/user/me/security`) — change your password, and an **Active Sessions** device list (browser,
   IP, last used). Revoke any session individually, or log out all other sessions at once. Logging
   out revokes all of your sessions.
-- **Notifications** (`/user/me`) — per-category notification preferences across email, push, and
-  in-app channels (post published/failed, channels, comments, budget, media, announcements, streak).
+- **Notifications** (`/user/me/notifications`) — per-category notification preferences across
+  email, push, and in-app channels for all ten categories (post published, post failed, channel
+  issues, replies, AI budget, media jobs, announcements, streak reminders, agent briefs, analytics
+  alerts).
   See [Notifications](./notifications.md).
 
 ## Who can see Settings
@@ -565,4 +568,4 @@ Settings access is permission-gated: reading and changing the org-level settings
 permissions. A member whose role lacks the grant receives **HTTP 403**; an org can grant these
 permissions to a custom role. Billing management is owner-only.
 
-> Verified against v1.0.0
+> Verified against v1.2.0

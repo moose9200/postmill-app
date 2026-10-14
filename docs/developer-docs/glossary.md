@@ -1,13 +1,13 @@
 # Glossary
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 Terminology reference for the Postmill platform.
 
 ## Core concepts
 
 **Postmill**
-The application itself — a social media and chat post scheduling platform supporting 36 channels.
+The application itself — a social media and chat post scheduling platform supporting 45+ channels.
 
 **Organization**
 A tenant / workspace. All data (posts, channels, media, analytics, AI config) belongs to exactly one organization. Every request is org-scoped.
@@ -83,7 +83,7 @@ Competitor account monitoring. `WatchedAccount` rows track public metrics for co
 ## AI
 
 **AIModelProvider**
-The central AI facade. A single injection point that resolves models per scope/category and organization. Precedence: per-org stub → per-scope → global active → provider default. Provides `generateText`, `generateObject`, and `imageModel` wrappers.
+The central AI facade. A single injection point that resolves models per scope/category and organization. Precedence: the org's per-category model default (Settings → AI → Model Defaults) → the org's primary active provider → the surface's default model; with no active org provider, AI is off for that org. Provides `generateText`, `generateObject`, and `imageModel` wrappers.
 
 **Model category**
 The AI model classification used by defaults resolution: `low-reasoning`, `high-reasoning`, `vision`, `workflow`. The scopes `utility`, `generator`, `agent`, `mcp` map to these categories.
@@ -95,7 +95,7 @@ The Content / Media Defaults classification, e.g. `text-to-image`, `text-to-vide
 A provider-specific implementation of `AIProviderAdapter`. Each supported AI provider implements `createLanguageModel`, `createLangchainModel`, and optionally `createImageModel`, `createEmbeddingModel`, or `createSpeechModel`.
 
 **Governance**
-The AI compliance layer: `GuardrailService` (prompt-injection, PII, brand-safety, NSFW filtering), `BudgetService` (per-scope spend caps with threshold alerts), `TelemetryService` (OpenTelemetry GenAI tracing), and `ProviderHealthService` (connection health tracking).
+The AI compliance layer: `GuardrailService` (prompt-injection, PII, brand-safety, NSFW filtering), `BudgetService` (the organization-wide AI budget ceiling plus per-provider spend caps, with threshold alerts), `TelemetryService` (OpenTelemetry GenAI tracing), and `ProviderHealthService` (connection health tracking).
 
 **RAG**
 Retrieval Augmented Generation — semantic search over the organization's past content. Uses pgvector with HNSW ANN indexes for similarity search, a Redis-based indexing queue for durability, and org-scoped search. All raw SQL is confined to `AiRagRepository`.
@@ -136,7 +136,7 @@ The SSRF-safe HTTP client. All outbound HTTP on user-influenced URLs goes throug
 AES-256-GCM at-rest encryption for secrets (OAuth tokens, Nostr keys, integration credentials). Uses a versioned `v2:` prefix. Uses `ENCRYPTION_KEY` env var, falling back to derivation from `JWT_SECRET`.
 
 **CSRF**
-Cross-Site Request Forgery protection via a cookie + header token pair. Required on all cookie-authenticated mutating routes. Header/API-key clients are unaffected. Bypassed under `NOT_SECURED` (dev-only).
+Cross-Site Request Forgery protection via a cookie + header token pair. Required on all cookie-authenticated mutating routes. Header/API-key clients are unaffected. The HTTP middleware is not relaxed by `NOT_SECURED`.
 
 **Repository Pattern**
 The database access layer. Only repositories (under `nestjs-libraries/src/database/prisma/<domain>/`) may touch Prisma. Controllers and services must go through repositories — never call Prisma directly.
@@ -148,10 +148,10 @@ The SWR-based data fetching hook for the frontend (`libraries/helpers/src/utils/
 The TypeScript ORM and database toolkit used as the data access layer. The single schema file at `libraries/nestjs-libraries/src/database/prisma/schema.prisma` is the source of truth; migrations are applied with `prisma migrate deploy`.
 
 **Helmet**
-An Express middleware that sets secure HTTP response headers (HSTS, CSP, `noSniff`, `frameguard`). Applied globally in `main.ts`, skipped in dev via the `NOT_SECURED` env var.
+An Express middleware that sets secure HTTP response headers (HSTS, CSP, `noSniff`, `frameguard`). Applied globally in `main.ts`, skipped in dev (or with `NOT_SECURED` when `NODE_ENV=development`).
 
 **NOT_SECURED**
-A dev-only environment variable that disables security hardening: skips Helmet, HSTS, CSRF middleware, and CopilotKit policy gating. Must never be set in production.
+A dev-only environment variable that, with `NODE_ENV=development`, relaxes security hardening: skips Helmet/HSTS and drops the auth cookies' `Secure`/`sameSite` flags. It never bypasses RBAC or billing. Must never be set in production.
 
 ---
 
@@ -171,6 +171,12 @@ A brand voice profile (`AIBrandProfile`) — instructions, language, and per-pla
 
 **Media Provider**
 An AI media-generation backend (Runway, ElevenLabs, HeyGen, …) configured per organization via `MediaProviderConfig`, with credentials encrypted at rest and output bound to the tenant's own storage under typed folders.
+
+**Payment provider**
+A billing backend in the `payments` kernel domain (`payments/stripe@v1`, PayPal, App Store, Google Play), enabled purely by its `.env` keys and orchestrated by `PaymentsService`. Billing is on when at least one is configured (`billingEnabled()`). See [Payment Providers](./payment-providers.md).
+
+**Postmill ID**
+First-party SSO federation ("Sign in with Postmill"): first-party apps authenticate a Postmill instance's users via public-client PKCE and receive scope-gated identity claims. Grants are stored as `FederationGrant` rows. See [Postmill ID](./postmill-id.md).
 
 **Content Pack**
 A premium, BYOK stock-media provider (Adobe Stock, Envato Elements, Magnific, Vecteezy) configured per organization. Resolved per capability; falls back to the free stock provider for any capability the active pack does not cover.

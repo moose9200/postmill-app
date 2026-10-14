@@ -4,7 +4,7 @@ Postmill ships a pluggable, multi-provider AI layer. Every AI surface resolves i
 
 > For the end-user view, see [AI Tools](../user-guide/ai-tools.md).
 
-> Verified against v1.0.0
+> Verified against v1.2.0
 
 ---
 
@@ -89,7 +89,7 @@ Adapters receive decrypted credentials at call time and never store or log them.
 
 `listModels` is **live-first with a static fallback**, not a hardcoded list:
 
-- Adapters whose API exposes a model listing fetch it over the injected `SafeFetchPort` and merge it with their static catalog via the kernel helpers `fetchOpenAIStyleModels` / `mergeLiveModels` (`libraries/providers/kernel/src/domains/ai-helpers.ts`). In the merge, the **live list decides which models exist** (static entries absent upstream were retired), while **static entries keep their curated metadata** (labels, `vision`/`reasoning` flags) on known ids; live-only ids get capability heuristics. This covers `deepseek`, `openai`, `groq`, `xai`, `mistral`, `cohere`, `togetherai`, `fireworks`, `perplexity`, `openrouter`, `anthropic`, `google`, `gateway`, and all nine `OpenAICompatibleAdapter` hubs.
+- Adapters whose API exposes a model listing fetch it over the injected `SafeFetchPort` and merge it with their static catalog via the kernel helpers `fetchOpenAIStyleModels` / `mergeLiveModels` (`libraries/providers/kernel/src/domains/ai-helpers.ts`). In the merge, the **live list decides which models exist** (static entries absent upstream were retired), while **static entries keep their curated metadata** (labels, `vision`/`reasoning` flags) on known ids; live-only ids get capability heuristics. This covers `deepseek`, `openai`, `groq`, `xai`, `mistral`, `cohere`, `togetherai`, `fireworks`, `perplexity`, `openrouter`, `anthropic`, `google`, `gateway`, and all fourteen `OpenAICompatibleAdapter` adapters.
 - On **any** failure (no safeFetch, non-OK, transport error, SSRF block, empty/unexpected payload) the static catalog is returned unchanged — `listModels` never throws.
 - `azure`, `vertex`, and `bedrock` remain **static-only**: their model inventories are deployment-scoped and cannot be enumerated with the stored API key.
 - Live results are cached in **Redis for 24h** (`providers:models:{domain}:{providerId}:{version}:{credHash}[:{scope}]`, via `getOrCacheModelList` in `libraries/nestjs-libraries/src/ai/defaults/defaults-cache.ts`), keyed by a SHA-256 hash of the credential material — a credential change lands on a fresh key naturally. Only non-empty results are cached. All consumers go through it: the Settings → AI → Model Defaults and Settings → Content → Media Defaults catalog endpoints plus `DefaultsResolutionService` (auto-pick / stored-model validation). Media listings are per-operation, so media keys carry the operation as `scope`. The rendered per-org catalogs keep their separate 60s cache.
@@ -181,7 +181,7 @@ pgvector-based RAG: content chunking, embedding computation via `AIModelProvider
 
 ### AI rate limiting
 
-Per-org AI gating happens at the budget layer: `BudgetService.checkBudget(scope, orgId, providerId)` is called at each AI call site (`AIModelProvider` wrappers, media dispatch, RAG backfill, agent/copilot) and blocks only the exhausted provider. No NestJS throttler guard is currently wired.
+Per-org AI gating happens at the budget layer: `BudgetService.checkBudget(scope, orgId, providerId)` is called at each AI call site (`AIModelProvider` wrappers, media dispatch, RAG backfill, agent/copilot) and blocks every call once the org ceiling is reached, or only the exhausted provider when a per-provider cap is hit. No NestJS throttler guard is currently wired.
 
 ### IdempotencyFactory
 

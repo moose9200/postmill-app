@@ -116,11 +116,11 @@ Browser and mobile push notifications are sent via Firebase Cloud Messaging (FCM
 
 ## AI Budget Enforcement
 
-Per-provider AI budgets are configured per-organization in **Settings → AI**. The deployment-level kill switch below controls whether provider caps are actually enforced.
+AI budgets are configured per-organization in **Settings → AI**: an organization-wide ceiling (monthly/daily caps + alert threshold, from the card at the top of **Settings → AI → LLM Providers** or `PUT /settings/ai/budget`) and per-provider caps. Once a cap is reached, AI calls are refused with HTTP 429 (`org_budget_exceeded` for the organization-wide ceiling). The deployment-level kill switch below controls whether the caps are actually enforced.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `AI_PROVIDER_BUDGET_ENFORCE` | `true` (unset = on) | When `true`, `BudgetService.checkBudget` enforces per-provider monthly/daily caps from `AIOrgProviderConfig`. When `false`, provider budget checks always allow the call (alerts and spend logging continue). Set to `false` to roll back enforcement during an incident without losing cap configuration or alerts. |
+| `AI_PROVIDER_BUDGET_ENFORCE` | `true` (unset = on) | When `true`, `BudgetService.checkBudget` enforces the organization-wide ceiling (`Organization.aiBudget*`) and the per-provider monthly/daily caps from `AIOrgProviderConfig`. When `false`, budget checks always allow the call (alerts and spend logging continue). Set to `false` to roll back enforcement during an incident without losing cap configuration or alerts. |
 
 ## API
 
@@ -140,7 +140,7 @@ Per-provider AI budgets are configured per-organization in **Settings → AI**. 
 | `INTEGRATION_RETURN_URL_ALLOWLIST` | — | Comma-separated allowed partner origins for integration/enterprise return URLs |
 | `SSRF_ALLOWED_PRIVATE_CIDRS` | — | Comma-separated private CIDRs to allow for self-hosted provider instances (opt-in SSRF exception) |
 | `RESTRICT_UPLOAD_DOMAINS` | — | When set, media attached to a post must contain this domain in its path; saving a post with externally-hosted media is rejected (HTTP 400). Use the domain of your own upload endpoint |
-| `NOT_SECURED` | — | Dev-only toggle. Skips Helmet, HSTS, CSRF enforcement, and CopilotKit policy gating. Never set in production |
+| `NOT_SECURED` | — | Dev-only toggle. With `NODE_ENV=development` it skips Helmet/HSTS and drops the `Secure`/`sameSite` flags on auth and CSRF cookies; it also suppresses the production fail-fast config exit. Never set in production |
 
 ## Payments
 
@@ -163,6 +163,7 @@ per-provider setup: [Subscriptions & payment providers](./subscriptions.md).
 | `APPLE_IAP_ISSUER_ID` / `APPLE_IAP_KEY_ID` / `APPLE_IAP_PRIVATE_KEY` | — | App Store Connect In-App Purchase key (base64 `.p8`) |
 | `APPLE_IAP_APP_APPLE_ID` | — | Numeric Apple ID of the app |
 | `APPLE_IAP_ENV` / `APPLE_IAP_ALLOW_SANDBOX` | `Production` / — | Store environment; `true` also accepts sandbox purchases |
+| `APPLE_IAP_SANDBOX_ORG_IDS` | — | Comma-separated organization ids allowed to activate sandbox purchases (see [Subscriptions](./subscriptions.md)) |
 | `PAYMENTS_APPLE_PRODUCT_PREFIX` | `postmill` | App Store product-id prefix |
 | `GOOGLE_PLAY_PACKAGE_NAME` | — | Mobile app package name — enables the Google Play provider |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | — | Base64 service-account key with Play Developer API access |
@@ -229,6 +230,15 @@ See [OAuth / SSO](./oauth-sso.md) for a complete setup walkthrough.
 | `NEXT_PUBLIC_POSTMILL_OAUTH_DISPLAY_NAME` | — | Name shown on the login button |
 | `NEXT_PUBLIC_POSTMILL_OAUTH_LOGO_URL` | — | Logo URL shown on the login button |
 
+## Postmill ID federation
+
+"Sign in with Postmill" lets a pinned first-party relying party (the template store) authenticate users of this instance. There is no client registration or secret, and the signing key is generated on first use — nothing needs configuring unless you change the defaults below. `FRONTEND_URL` must be set: it is the published `authorization_endpoint`.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `FEDERATION_TRUSTED_REDIRECT_URIS` | `https://templates.postmill.ai/auth/callback/postmill` | Comma-separated allow-list of redirect URIs an authorization code may be sent to. Exact full-string match (a trailing slash counts). Setting it **replaces** the default, so re-list production when adding a dev URL |
+| `FEDERATION_ISSUER` | (backend URL) | Explicit `iss` for issued id_tokens. Falls back to `NEXT_PUBLIC_OVERRIDE_BACKEND_URL`, then `BACKEND_URL`, then `NEXT_PUBLIC_BACKEND_URL` |
+
 ## Social login bootstrap
 
 These env vars are used only when no enabled DB config exists for the provider.
@@ -245,16 +255,17 @@ These env vars are used only when no enabled DB config exists for the provider.
 
 Setting a provider's platform OAuth app credentials here gives every organization one-click **Connect** without per-org key entry. Leaving a provider unset requires each org to add its own app via Settings → Channels. A per-org config always takes precedence. Step-by-step portal setup for each provider: [Platform Channel Apps](./platform-channel-apps.md).
 
-These channel and comms variables are the only provider credentials read from the environment. AI provider keys, short-link, and storage credentials are configured per-org in-app and have no env fallback; login-provider variables must never be used as AI credentials.
+Apart from the operator-level payment providers above, these channel and comms variables are the only provider credentials read from the environment. AI provider keys, short-link, and storage credentials are configured per-org in-app and have no env fallback; login-provider variables must never be used as AI credentials.
 
 | Variable | Provider |
 |----------|----------|
 | `X_API_KEY` / `X_API_SECRET` | X |
-| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | LinkedIn (also LinkedIn Page) |
+| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | LinkedIn |
+| `LINKEDIN_PAGE_CLIENT_ID` / `LINKEDIN_PAGE_CLIENT_SECRET` | LinkedIn Page (needs a dedicated LinkedIn app — Community Management API must be its only product) |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook (also Instagram via Facebook login) |
 | `FACEBOOK_CONFIG_ID` | Facebook Login for Business Configuration ID (optional; required for FBfB-only Meta apps) |
 | `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` | Instagram standalone |
-| `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | Discord |
+| `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` / `DISCORD_BOT_TOKEN` | Discord (the bot token is also the comms platform app's) |
 | `SLACK_ID` / `SLACK_SECRET` | Slack |
 | `TIKTOK_CLIENT_ID` / `TIKTOK_CLIENT_SECRET` | TikTok |
 | `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` | YouTube channel posting (shared with Google login) |
@@ -275,9 +286,8 @@ These channel and comms variables are the only provider credentials read from th
 | `SLACK_SIGNING_SECRET` | Slack comms platform app — webhook signing secret (comms only; see [Platform Comms Apps](./platform-comms-apps.md#slack)) |
 | `DISCORD_PUBLIC_KEY` | Discord comms platform app — interaction webhook verification (comms only; see [Platform Comms Apps](./platform-comms-apps.md#discord)) |
 | `LINE_CHANNEL_SECRET` | LINE comms platform app — webhook signature verification (comms only; see [Platform Comms Apps](./platform-comms-apps.md#line)) |
-| `POSTMILL_OAUTH_CLIENT_ID` / `POSTMILL_OAUTH_CLIENT_SECRET` | Custom OAuth channel (shared with generic OIDC login) |
 
-Three opt-in flags add the platform channel apps as **login providers** (the login page never advertises a provider whose credentials are incomplete). Facebook and LinkedIn reuse the channel creds above; X login needs its own OAuth 2.0 client pair — the OAuth 1.0a `X_API_KEY` / `X_API_SECRET` are channel-only. See [Platform Channel Apps → SSO dual-use](./platform-channel-apps.md#sso-dual-use-login-with-the-same-app).
+Three opt-in flags add the platform channel apps as **login providers** (the login page never advertises a provider whose credentials are incomplete). Facebook and LinkedIn reuse the channel creds above; X login needs its own OAuth 2.0 client pair — the OAuth 1.0a `X_API_KEY` / `X_API_SECRET` are channel-only. See [Platform Channel Apps → SSO dual-use](./platform-channel-apps.md#sso-dual-use-login-with-the-same-app). Sign in with Apple is a separate, login-only provider with its own credentials (last rows below).
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -286,6 +296,8 @@ Three opt-in flags add the platform channel apps as **login providers** (the log
 | `X_SSO_ENABLED` | `false` | Set to `true` to add a "Continue with X" login button (requires `X_CLIENT_ID` / `X_CLIENT_SECRET`) |
 | `X_CLIENT_ID` / `X_CLIENT_SECRET` | — | The X app's **OAuth 2.0 Client ID and Client Secret** (Keys and tokens; issued once OAuth 2.0 is enabled under User authentication settings). Login only — never used for posting. Login requests `tweet.read users.read users.email`; enable "Request email from users" on the app for the real address |
 | `LINKEDIN_SSO_ENABLED` | `false` | Set to `true` to add a "Continue with LinkedIn" login button (requires `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`) |
+| `APPLE_SSO_ENABLED` | `false` | Set to `true` to add Sign in with Apple (login only — no channel app). Requires the four `APPLE_*` values below; see [OAuth / SSO → Apple login](./oauth-sso.md#apple-login) |
+| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | — | Apple Services ID, Developer Team ID, Sign in with Apple key ID, and the base64-encoded `.p8` key |
 
 ## X channel behaviour
 
@@ -310,6 +322,7 @@ Three opt-in flags add the platform channel apps as **login providers** (the log
 | `DATAFAST_API_KEY` | — | Datafast API key. Posts a `register` goal to datafa.st when a new user signs up carrying a `datafast_visitor_id` |
 | `FACEBOOK_PIXEL_ACCESS_TOKEN` | — | Meta Conversions API access token for server-side pixel events |
 | `NEXT_PUBLIC_FACEBOOK_PIXEL` | — | Meta pixel ID (browser-visible). Server-side pixel events fire only when both this and `FACEBOOK_PIXEL_ACCESS_TOKEN` are set |
+| `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | — | Plausible-registered domain for the frontend analytics tracker. Unset = tracker off (legacy fallback: `postmill.ai` when billing is enabled) |
 
 **Provider errors vs. Postmill errors.** When an organization's own AI / media provider
 (OpenAI, Gemini, Runway, …) rejects a request — bad key, quota or billing limit, rate limit,
@@ -356,6 +369,7 @@ Set any of these to `true` or `1` to disable the corresponding subsystem during 
 | `DEV_DISABLE_CRON` | Skip `ScheduleModule.forRoot()` |
 | `DEV_DISABLE_SENTRY` | Skip Sentry initialization |
 | `DEV_DISABLE_OPENTELEMETRY` | Skip OpenTelemetry exporter setup |
+| `DEV_DISABLE_COMMS` | Skip comms (chat-app) adapter registration |
 | `AGENT_SUPERVISOR_ENABLED` | `true` (default) uses the supervisor + specialists agent model |
 | `CONTENT_PIPELINE_TOTAL_TIMEOUT_MS` | `300000` | Wall-clock deadline for a `runContentPipeline` run |
 | `CONTENT_PIPELINE_AGENT_TIMEOUT_MS` | `120000` | Per-agent LLM dispatch deadline inside a `runContentPipeline` run |
@@ -420,4 +434,4 @@ See [Video Rendering](./video-rendering.md) for the full list of `VIDEO_RENDER_*
 | `PUPPETEER_EXECUTABLE_PATH` | (bundled Chromium) | Path to a system/distro Chromium binary for design frame capture (used by the render-worker container). Unset = Puppeteer's bundled Chromium |
 | `PUPPETEER_DISABLE_SANDBOX` | `false` | Set to `true` to launch the campaign-report PDF Chromium with `--no-sandbox` (for CI/containers without user namespaces; also disabled automatically when `CI=true`). Production defaults to sandboxed mode |
 
-> Verified against v1.0.0
+> Verified against v1.2.0

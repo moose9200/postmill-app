@@ -31,7 +31,7 @@ export default defineConfig({
     ],
     footer: {
       message: 'The AI-native social media management platform — <a href="https://postmill.ai" target="_blank" rel="noopener">postmill.ai</a>',
-      copyright: '© 2026 REAA Technologies Inc',
+      copyright: '© 2026 Postmill AI Inc.',
     },
     sidebar: {
       '/user-guide/': [

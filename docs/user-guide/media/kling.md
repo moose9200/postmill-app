@@ -24,7 +24,7 @@ Video jobs are submitted to the fal.ai queue and appear in the **Render Queue** 
 ## Caveats
 
 - **fal.ai-backed:** the adapter is shared with other fal-hosted providers (Pika and the generic fal image/audio path), but the Kling descriptor uses Kling-specific model endpoints.
-- **No webhook:** Kling completions rely on the shared media-jobs poll cron, so the queue updates on its polling interval.
+- **Webhook with poll fallback:** when your backend has a public HTTPS URL, fal.ai calls back on completion; otherwise (and as a fallback) completions rely on the shared media-jobs poll cron, so the queue updates on its polling interval.
 - **Namespaced job ids:** fal queue jobs are stored as `<model>::<request_id>` so the poller can route status checks to the correct model endpoint.
 
 ## Related docs
@@ -34,4 +34,4 @@ Video jobs are submitted to the fal.ai queue and appear in the **Render Queue** 
 - [Settings](../settings) — configuring the fal.ai media provider used by Kling.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

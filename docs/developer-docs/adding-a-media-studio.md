@@ -161,6 +161,7 @@ Key rules:
 - Use the injected `_fetch` (a `SafeFetchPort`) for all outbound HTTP.
 - Resolve API keys with `resolveApiKey(options)`.
 - On transient poll errors (429, 5xx), **throw** so the lifecycle retries; on terminal errors, return `{ status: 'failed', error }`.
+- Throw upstream HTTP failures as `await mediaUpstreamError(this, res, operation)` (from `@postmill-ai/provider-kernel`) so they surface as a provider-attributed `ProviderUpstreamError` (HTTP 502 naming the provider) instead of a bare 500.
 
 ## Step 3: add provider metadata
 
@@ -257,7 +258,7 @@ Add the studio to `apps/frontend/src/app/(app)/(site)/media/layout.tsx` under th
 
 Three patterns exist depending on the provider:
 
-1. **Own-key provider** — configured at Settings → Media (e.g. Runway, Qwen can also be configured there). The adapter declares `credentialFields` (or a single `apiKey` field by default).
+1. **Own-key provider** — configured at Settings → Content → AI Media (e.g. Runway, Qwen can also be configured there). The adapter declares `credentialFields` (or a single `apiKey` field by default).
 2. **Universal-credential provider** — reuses the org's existing Settings → AI key (e.g. Qwen, Google Gemini). `OrgMediaProviderSettingsService.getConfigForProvider` falls back to the AI config when no dedicated media credential exists.
 3. **Multi-field credential** — for providers that need more than one secret, such as Vertex (`project`, `location`, `googleCredentials`) or Higgsfield (`keyId`, `keySecret`). Declare `credentialFields` in the adapter/metadata and the settings modal renders them dynamically.
 
@@ -282,7 +283,7 @@ Use a bespoke studio when the workflow does not match "form inputs → media art
 
 ## Testing a new studio
 
-1. Configure the provider at Settings → AI or Settings → Media.
+1. Configure the provider at Settings → AI or Settings → Content → AI Media.
 2. Open `/media/<provider>` and verify the landing, tabs, and fields render.
 3. Run a generation for each `operation` and confirm the job lands in `/files`.
 4. Verify Edit in Designer and Post handoffs work.
@@ -297,4 +298,4 @@ Use a bespoke studio when the workflow does not match "form inputs → media art
 - [User Guide: Media studios](../user-guide/media/index.md)
 - [Backend conventions](./backend-conventions.md)
 
-> Verified against v1.0.0
+> Verified against v1.2.0

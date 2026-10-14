@@ -27,4 +27,4 @@ The studio follows the standard Studio Kit flow: fill the form, click **Generate
 - Image-to-video uploads the source frame as a multipart file.
 
 ---
-> Verified against v1.0.0
+> Verified against v1.2.0

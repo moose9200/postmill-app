@@ -11,7 +11,7 @@ We, at Postmill (postmill-ai), cover the following scopes for vulnerability disc
 - The core repository for `postmill-app` (github.com/postmill-ai/postmill-app)
 - All `postmill-ai` repositories that are official components, tooling, or integrations of Postmill
 - Official Postmill container images published under `postmill-ai` on GHCR
-- Official Postmill CLI tools and NPM packages (NPM orgs: @postmill-ai and @reaatech)
+- Official Postmill CLI tools and NPM packages (NPM org: @postmill-ai)
 - Postmill-Cloud related infrastructure & services. (API, Frontend, Configurations etc.)
 - Plugins for Postmill maintained within the `postmill-ai` organization
 

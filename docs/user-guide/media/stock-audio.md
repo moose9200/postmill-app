@@ -29,7 +29,7 @@ stable `audiodownload` URL used for saving. When you save, Postmill imports the 
 `text/html` label.
 
 In select mode (for example, picking audio for the Designer timeline), the row shows **Use** and
-returns the streaming URL and track name.
+returns the stable download URL (falling back to the streaming URL) and track name.
 
 ## Content Pack tracks
 
@@ -43,4 +43,4 @@ For Envato Elements audio, a licensed preview URL is minted from the item id bef
 
 ---
 
-> Verified against v1.0.0
+> Verified against v1.2.0
