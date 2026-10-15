@@ -12,6 +12,7 @@ import React, {
 import { Image as KonvaImage, Rect, Ellipse, Line, Star, Text as KonvaText, TextPath, Group, Shape } from 'react-konva';
 import Konva from 'konva';
 import { isNativeBlend } from '@postmill-ai/nestjs-libraries/media/designer-doc/pixel-ops';
+import { canvasColor } from '@postmill-ai/nestjs-libraries/media/designer-doc/canvas-color';
 import type { DesignerElement, DesignerGradient, TextRun } from './designer.store';
 import { computeCoverCrop } from './reflow';
 import { fittedFontSize, fitDesignerText, measureForElement } from './measure-text';
@@ -244,7 +245,8 @@ export const gradientFillProps = (
   origin: { x: number; y: number } = { x: 0, y: 0 }
 ): Record<string, unknown> => {
   if (!g || !g.stops?.length) return {};
-  const colorStops = g.stops.flatMap((s) => [s.offset, s.color]);
+  // Stops may carry alpha as 8-digit hex; Konva accepts rgba() everywhere.
+  const colorStops = g.stops.flatMap((s) => [s.offset, canvasColor(s.color) as string]);
   const cx = origin.x + width / 2;
   const cy = origin.y + height / 2;
   if (g.type === 'radial') {
@@ -665,7 +667,7 @@ const ImageNode: FC<ImageNodeProps> = ({ element, onSelect, onContextMenu, inter
           y={0}
           width={element.width}
           height={element.height}
-          stroke={element.stroke}
+          stroke={canvasColor(element.stroke)}
           strokeWidth={element.strokeWidth || 1}
           cornerRadius={element.borderRadius || 0}
           listening={false}
@@ -731,7 +733,7 @@ const IconNode: FC<IconNodeProps> = ({ element, onSelect, onContextMenu, interac
           y={0}
           width={element.width}
           height={element.height}
-          stroke={element.stroke}
+          stroke={canvasColor(element.stroke)}
           strokeWidth={element.strokeWidth || 1}
           cornerRadius={element.borderRadius || 0}
           listening={false}
@@ -789,7 +791,7 @@ const ArrowHeads: FC<{ element: DesignerElement; points: { x: number; y: number 
           rotation={element.rotation}
           points={pts.flatMap((p) => [p.x, p.y])}
           closed
-          fill={element.stroke || element.fill || '#000000'}
+          fill={canvasColor(element.stroke || element.fill || '#000000')}
           listening={false}
         />
       ))}
@@ -1036,13 +1038,13 @@ export const CanvasElements: FC<ElementsProps> = ({
                     fontFamily={el.fontFamily || 'Arial'}
                     fontSize={el.fontSize || 16}
                     fontStyle={fontStyle}
-                    fill={hasGrad ? undefined : el.fill || '#000000'}
-                    shadowColor={shadow?.color}
+                    fill={hasGrad ? undefined : canvasColor(el.fill || '#000000')}
+                    shadowColor={canvasColor(shadow?.color)}
                     shadowBlur={shadow?.blur}
                     shadowOffsetX={shadow?.offsetX}
                     shadowOffsetY={shadow?.offsetY}
                     shadowEnabled={!!shadow}
-                    stroke={outline?.color}
+                    stroke={canvasColor(outline?.color)}
                     strokeWidth={outline?.width}
                     fillAfterStrokeEnabled={!!outline}
                   />
@@ -1073,16 +1075,16 @@ export const CanvasElements: FC<ElementsProps> = ({
                         ? {}
                         : gradientFillProps(el.fillGradient, el.width, el.height))}
                       fill={
-                        seg.run.fill ||
-                        (hasGrad ? undefined : el.fill || '#000000')
+                        canvasColor(seg.run.fill) ||
+                        (hasGrad ? undefined : canvasColor(el.fill || '#000000'))
                       }
                       textDecoration={seg.run.underline ? 'underline' : undefined}
-                      shadowColor={shadow?.color}
+                      shadowColor={canvasColor(shadow?.color)}
                       shadowBlur={shadow?.blur}
                       shadowOffsetX={shadow?.offsetX}
                       shadowOffsetY={shadow?.offsetY}
                       shadowEnabled={!!shadow}
-                      stroke={outline?.color}
+                      stroke={canvasColor(outline?.color)}
                       strokeWidth={outline?.width}
                       fillAfterStrokeEnabled={!!outline}
                     />
@@ -1104,13 +1106,13 @@ export const CanvasElements: FC<ElementsProps> = ({
                   fontFamily={el.fontFamily || 'Arial'}
                   fontSize={el.fontSize || 16}
                   fontStyle={fontStyle}
-                  fill={hasGrad ? undefined : el.fill || '#000000'}
-                  shadowColor={shadow?.color}
+                  fill={hasGrad ? undefined : canvasColor(el.fill || '#000000')}
+                  shadowColor={canvasColor(shadow?.color)}
                   shadowBlur={shadow?.blur}
                   shadowOffsetX={shadow?.offsetX}
                   shadowOffsetY={shadow?.offsetY}
                   shadowEnabled={!!shadow}
-                  stroke={outline?.color}
+                  stroke={canvasColor(outline?.color)}
                   strokeWidth={outline?.width}
                   fillAfterStrokeEnabled={!!outline}
                 />
@@ -1160,12 +1162,12 @@ export const CanvasElements: FC<ElementsProps> = ({
                 fontSize: fitted.fontSize,
                 fontStyle,
                 letterSpacing: el.letterSpacing || 0,
-                shadowColor: shadow?.color,
+                shadowColor: canvasColor(shadow?.color),
                 shadowBlur: shadow?.blur,
                 shadowOffsetX: shadow?.offsetX,
                 shadowOffsetY: shadow?.offsetY,
                 shadowEnabled: !!shadow,
-                stroke: outline?.color,
+                stroke: canvasColor(outline?.color),
                 strokeWidth: outline?.width,
                 strokeScaleEnabled: false,
                 fillAfterStrokeEnabled: !!outline,
@@ -1196,7 +1198,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                               y={0}
                               text={word.text}
                               {...sharedTextProps}
-                              fill={hasGrad ? undefined : el.fill || '#000000'}
+                              fill={hasGrad ? undefined : canvasColor(el.fill || '#000000')}
                               // The ramp spans the whole BOX, not the word, so
                               // it is rebuilt in the box's space via the origin.
                               {...gradientFillProps(el.fillGradient, boxWidth, el.height, {
@@ -1216,7 +1218,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                         width={boxWidth - row.indent}
                         text={row.line}
                         {...sharedTextProps}
-                        fill={hasGrad ? undefined : el.fill || '#000000'}
+                        fill={hasGrad ? undefined : canvasColor(el.fill || '#000000')}
                         {...gradientFillProps(el.fillGradient, boxWidth, el.height)}
                         align={el.align === 'justify' ? 'left' : el.align || 'left'}
                       />
@@ -1247,7 +1249,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                 // its own selection box and the canvas disagrees with the PNG.
                 fontSize={fittedFontSize(el)}
                 fontStyle={fontStyle}
-                fill={hasGrad ? undefined : el.fill || '#000000'}
+                fill={hasGrad ? undefined : canvasColor(el.fill || '#000000')}
                 // Justify is laid out line by line above; a measurable element
                 // never reaches this node with it set.
                 align={el.align === 'justify' ? 'left' : el.align || 'left'}
@@ -1255,12 +1257,12 @@ export const CanvasElements: FC<ElementsProps> = ({
                 wrap="word"
                 lineHeight={el.lineHeight || 1.2}
                 letterSpacing={el.letterSpacing || 0}
-                shadowColor={shadow?.color}
+                shadowColor={canvasColor(shadow?.color)}
                 shadowBlur={shadow?.blur}
                 shadowOffsetX={shadow?.offsetX}
                 shadowOffsetY={shadow?.offsetY}
                 shadowEnabled={!!shadow}
-                stroke={outline?.color}
+                stroke={canvasColor(outline?.color)}
                 strokeWidth={outline?.width}
                 // A scaled node scales its stroke too; the server's outline is
                 // in page units, so pin it or the two disagree.
@@ -1288,9 +1290,9 @@ export const CanvasElements: FC<ElementsProps> = ({
                   {...commonProps}
                   points={flattenPoints(warped)}
                   closed={el.shape !== 'line'}
-                  fill={hasGrad ? undefined : el.fill || '#2B5CD3'}
+                  fill={hasGrad ? undefined : canvasColor(el.fill || '#2B5CD3')}
                   {...grad}
-                  stroke={el.stroke}
+                  stroke={canvasColor(el.stroke)}
                   strokeWidth={el.strokeWidth}
                 />
               );
@@ -1312,7 +1314,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                     offsetY={-el.height / 2}
                     radiusX={el.width / 2}
                     radiusY={el.height / 2}
-                    fill={hasGrad ? undefined : el.fill || '#2B5CD3'}
+                    fill={hasGrad ? undefined : canvasColor(el.fill || '#2B5CD3')}
                     {...gradientFillProps(
                       el.fillGradient,
                       el.width,
@@ -1320,7 +1322,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                       // Node-local coordinates run from the ellipse's centre.
                       { x: -el.width / 2, y: -el.height / 2 }
                     )}
-                    stroke={el.stroke}
+                    stroke={canvasColor(el.stroke)}
                     strokeWidth={el.strokeWidth}
                   />
                 );
@@ -1332,9 +1334,9 @@ export const CanvasElements: FC<ElementsProps> = ({
                       x={el.x}
                       y={el.y}
                       points={[0, 0, el.width, el.height]}
-                      stroke={el.stroke || '#000000'}
+                      stroke={canvasColor(el.stroke || '#000000')}
                       strokeWidth={el.strokeWidth || 2}
-                      fill={el.fill}
+                      fill={canvasColor(el.fill)}
                     />
                     <ArrowHeads
                       element={el}
@@ -1365,9 +1367,9 @@ export const CanvasElements: FC<ElementsProps> = ({
                     {...commonProps}
                     points={flattenPoints(pts || [])}
                     closed={true}
-                    fill={hasGrad ? undefined : el.fill || '#2B5CD3'}
+                    fill={hasGrad ? undefined : canvasColor(el.fill || '#2B5CD3')}
                     {...grad}
-                    stroke={el.stroke}
+                    stroke={canvasColor(el.stroke)}
                     strokeWidth={el.strokeWidth}
                   />
                 );
@@ -1377,9 +1379,9 @@ export const CanvasElements: FC<ElementsProps> = ({
                   <Rect
                     key={el.id}
                     {...commonProps}
-                    fill={hasGrad ? undefined : el.fill || '#2B5CD3'}
+                    fill={hasGrad ? undefined : canvasColor(el.fill || '#2B5CD3')}
                     {...grad}
-                    stroke={el.stroke}
+                    stroke={canvasColor(el.stroke)}
                     strokeWidth={el.strokeWidth}
                     cornerRadius={el.borderRadius || 0}
                   />
@@ -1414,12 +1416,12 @@ export const CanvasElements: FC<ElementsProps> = ({
                     if (el.closed) ctx.fillStrokeShape(shape);
                     else ctx.strokeShape(shape);
                   }}
-                  fill={hasGrad ? undefined : el.fill}
+                  fill={hasGrad ? undefined : canvasColor(el.fill)}
                   {...grad}
                   // No fallback colour: the server draws nothing when `stroke`
                   // is unset, so inventing black here would make the canvas
                   // disagree with the export. Creation always sets one.
-                  stroke={el.stroke}
+                  stroke={canvasColor(el.stroke)}
                   strokeWidth={el.strokeWidth ?? 2}
                   hitStrokeWidth={Math.max(12, (el.strokeWidth ?? 2) + 8)}
                 />
@@ -1443,7 +1445,7 @@ export const CanvasElements: FC<ElementsProps> = ({
                 {...commonProps}
                 fill={
                   style.type === 'solid'
-                    ? style.color || '#000000'
+                    ? canvasColor(style.color || '#000000')
                     : style.type === 'pattern'
                       ? undefined
                       : undefined
