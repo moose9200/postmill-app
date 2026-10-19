@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import { parseDataUrl } from '@postmill-ai/provider-kernel';
 import { DefaultsResolutionService } from '@postmill-ai/nestjs-libraries/ai/defaults/defaults-resolution.service';
 import { AiDefaultsService } from '@postmill-ai/nestjs-libraries/ai/defaults/ai-defaults.service';
 import { MediaJobLifecycleService } from '@postmill-ai/nestjs-libraries/database/prisma/media-providers/media-job-lifecycle.service';
@@ -232,6 +233,13 @@ export class SlideService {
     }
 
     // Encode slideshow: images at 30fps + mixed audio, padded to total duration.
+    // Two hard-won ffmpeg behaviors here:
+    // - Frame synthesis MUST be the fps filter, not the `-r` output option: the
+    //   concat demuxer emits one sparse packet per slide image, and `-r` only
+    //   retimes those packets — the video truncates after the first slide.
+    // - No `-shortest`: the mixed narration ends before the slideshow does (each
+    //   slide is held for max(audio, min)), and `-shortest` would cut the video
+    //   to the audio length. `-t` is the exact master-timeline bound.
     await runFfmpeg([
       '-y',
       '-f',
@@ -242,24 +250,31 @@ export class SlideService {
       concatPath,
       '-i',
       mixedAudioPath,
+      '-vf',
+      'fps=30',
       '-c:v',
       'libx264',
       '-pix_fmt',
       'yuv420p',
-      '-r',
-      '30',
       '-t',
       totalDuration.toFixed(3),
       '-c:a',
       'aac',
       '-b:a',
       '128k',
-      '-shortest',
       outputPath,
     ]);
   }
 
   private async _downloadImage(url: string, destPath: string): Promise<void> {
+    // Media adapters may return the generated image inline as a data: URI
+    // (e.g. OpenRouter) instead of a hosted URL. safeFetch is an SSRF guard
+    // for http/https and rightfully blocks those — decode them locally.
+    const dataUrl = url.startsWith('data:') ? parseDataUrl(url) : null;
+    if (dataUrl) {
+      fs.writeFileSync(destPath, dataUrl.buffer);
+      return;
+    }
     // Relative specifier: tsc rewrites static import declarations to dist paths
     // but leaves dynamic import() specifiers untouched, and the bare
     // '@postmill-ai/nestjs-libraries/...' alias does not resolve in the built
