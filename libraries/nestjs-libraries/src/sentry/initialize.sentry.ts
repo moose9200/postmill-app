@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { capitalize } from 'lodash';
 import { Logger } from '@nestjs/common';
+import { isAbortedRequestEvent } from './aborted-request';
 
 const logger = new Logger('Sentry');
 
@@ -159,15 +160,7 @@ export const initializeSentry = (appName: string, allowLogs = false) => {
         const original = hint?.originalException as
           | { type?: string; code?: string }
           | undefined;
-        const isAbortedRequest =
-          original?.type === 'request.aborted' ||
-          original?.code === 'ECONNABORTED' ||
-          event.exception?.values?.some(
-            (v) =>
-              v.type === 'BadRequestError' &&
-              /request aborted/i.test(v.value ?? '')
-          );
-        if (isAbortedRequest) return null;
+        if (isAbortedRequestEvent(original, event.exception?.values)) return null;
         return scrubEvent(event);
       },
 
