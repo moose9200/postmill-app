@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   Param,
   Post,
   Query,
@@ -40,7 +42,6 @@ import { GenerateSlideDto } from '@postmill-ai/nestjs-libraries/dtos/ai/generate
 import { GenerateVideoDto } from '@postmill-ai/backend/dtos/media/generate-video.dto';
 import { VideoFunctionDto } from '@postmill-ai/backend/dtos/media/video-function.dto';
 import { BrandsService } from '@postmill-ai/nestjs-libraries/brands/brands.service';
-import { BadRequestException } from '@nestjs/common';
 import { FileService } from '@postmill-ai/nestjs-libraries/database/prisma/file/file.service';
 import { AiDefaultsService, DefaultNotConfiguredError } from '@postmill-ai/nestjs-libraries/ai/defaults/ai-defaults.service';
 import { DefaultsResolutionService } from '@postmill-ai/nestjs-libraries/ai/defaults/defaults-resolution.service';
@@ -53,6 +54,8 @@ import { MediaCapabilityFilter } from '@postmill-ai/backend/api/routes/media-cap
 @Controller('/media')
 @UseFilters(MediaCapabilityFilter)
 export class MediaController {
+  private readonly _logger = new Logger(MediaController.name);
+
   constructor(
     private _aiDefaults: AiDefaultsService,
     private _aiMediaService: AiMediaService,
@@ -192,12 +195,29 @@ export class MediaController {
     isPicturePrompt = false
   ) {
     try {
+      if (typeof prompt !== 'string' || !prompt.trim()) {
+        throw new BadRequestException('prompt must be a non-empty string');
+      }
       let finalPrompt = prompt;
-      if (isPicturePrompt) {
-        finalPrompt = await this._aiDefaults.lowReasoningText(
-          org.id,
-          `Create a concise, vivid image-generation prompt from this idea: ${prompt}`
-        );
+      // The low-reasoning rewrite exists to expand terse ideas; a prompt that
+      // is already detailed only drifts off the user's specifics when
+      // rewritten, so it goes to the image model verbatim.
+      if (isPicturePrompt && prompt.length <= 120) {
+        try {
+          const rewritten = await this._aiDefaults.lowReasoningText(
+            org.id,
+            `Create a concise, vivid image-generation prompt from this idea: ${prompt}`
+          );
+          // Keep the original alongside the rewrite so details the LLM drops
+          // still reach the image model.
+          finalPrompt = `${rewritten}\nOriginal request: ${prompt}`;
+        } catch (err) {
+          // A missing/failing low-reasoning default must not fail the whole
+          // request — fall back to the user's prompt as-is.
+          this._logger.warn(
+            `Image prompt rewrite failed, using the original prompt: ${(err as Error).message}`
+          );
+        }
       }
       const url = await this._aiDefaults.textToImage(org.id, finalPrompt);
       const dataUrl = await this._aiMediaService.urlToBase64Image(url);
