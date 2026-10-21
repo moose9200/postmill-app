@@ -56,9 +56,10 @@ Postmill prunes and rolls up data through Inngest scheduled functions. You do no
 | Notifications | 180 days | Hard-deleted by the retention-purge function | `NOTIFICATIONS_RETENTION_DAYS` |
 | Incomplete multipart uploads | 7 days | Hard-deleted by the retention-purge function | `MULTIPART_UPLOAD_RETENTION_DAYS` |
 | Mastra traces/scorers | 30 days | Hard-deleted by the retention-purge function | `MASTRA_TRACE_RETENTION_DAYS` |
-| Soft-deleted posts/files | 30 days | Hard-purged by the retention-purge function | `SOFT_DELETE_RETENTION_DAYS` |
+| Soft-deleted posts/files/design versions | 30 days | Hard-purged by the retention-purge function | `SOFT_DELETE_RETENTION_DAYS` |
 | AI Designer chat sessions | 90 days | Hard-deleted by the retention-purge function (which also soft-deletes the session's intermediate asset/reference files not referenced by a delivered design) | `AI_DESIGNER_SESSION_RETENTION_DAYS` |
 | Blank canvases | 1 day | Soft-deleted by the retention-purge function: never-customized `Untitled Design` rows whose doc is content-free, with their preview files | `BLANK_DESIGN_RETENTION_DAYS` |
+| Designer version history | Newest 10 automatic + 20 named snapshots per design | Older snapshots trimmed when a new one is saved | `DESIGN_VERSIONS_KEEP_AUTO` / `DESIGN_VERSIONS_KEEP_NAMED` |
 | User/Session IP and agent | 90 days | Nulled by the retention-purge function | `IP_RETENTION_DAYS` |
 
 See [Inngest & Cron](./inngest-and-cron.md) for how the functions operate.
@@ -113,4 +114,4 @@ find "$BACKUP_DIR" -name '*.sql' -mtime +7 -delete
 find "$BACKUP_DIR" -name '*.tar.gz' -mtime +7 -delete
 ```
 
-> Verified against v1.2.0
+> Verified against v1.3.0

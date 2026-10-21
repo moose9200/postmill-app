@@ -157,3 +157,5 @@ Payment providers: stripe, razorpay; web checkout default: razorpay (explicit).
 that a row appears in the payment-event ledger (`StripeEvent` table — it now serves every
 provider). An organization is bound to the provider it subscribed through; switching providers is
 cancel + resubscribe.
+
+> Verified against v1.3.0

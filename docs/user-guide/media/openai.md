@@ -23,8 +23,8 @@ Image and audio generations complete synchronously and land directly in `/files`
 - `gpt-image-1` returns base64-encoded images inline; DALL·E 3 returns hosted URLs when available.
 - Selecting **Transparent** background in GPT Image only works when the output format is set to **PNG** or **WebP**.
 - TTS audio is returned as an inline `data:` URL and saved as an audio file in `/files`.
-- OpenAI video generation (Sora) lives on its own dedicated **[Sora](./sora.md)** studio, which uses the same OpenAI key.
+- The OpenAI studio does not generate video (OpenAI has retired its Sora video API).
 - The model and native parameter names in each tab are passed straight to the OpenAI API, so the available options match the provider's current API.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

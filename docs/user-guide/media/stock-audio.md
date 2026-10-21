@@ -33,7 +33,8 @@ returns the stable download URL (falling back to the streaming URL) and track na
 
 ## Content Pack tracks
 
-For Envato Elements audio, a licensed preview URL is minted from the item id before import.
+For Envato Elements audio, the track's preview MP3 URL returned with the search result is used for
+both the player and the import; no separate download URL is minted from the item id.
 
 ## Related docs
 
@@ -43,4 +44,4 @@ For Envato Elements audio, a licensed preview URL is minted from the item id bef
 
 ---
 
-> Verified against v1.2.0
+> Verified against v1.3.0

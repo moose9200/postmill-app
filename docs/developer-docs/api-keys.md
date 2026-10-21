@@ -126,4 +126,4 @@ When an API key is used with the MCP server, the resolved scopes depend on the u
 
 Admin-configured `mcpsettings.allowedScopes` are merged with the defaults into the scope set each request must hold.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

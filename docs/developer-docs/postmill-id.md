@@ -135,3 +135,5 @@ backend** — the keypair is memoised in-process for the lifetime of the process
 deleting the row alone has no effect until then. The JWKS publishes a single key
 with no overlap window, so rotation invalidates outstanding `id_token`s
 immediately (they expire within an hour anyway).
+
+> Verified against v1.3.0

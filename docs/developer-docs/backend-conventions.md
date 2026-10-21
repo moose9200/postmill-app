@@ -231,4 +231,4 @@ Resolution is through `ProviderResolutionService` — the kernel is the sole res
 
 See [Architecture](./architecture.md) and [Provider Framework](./provider-framework.md).
 
-> Verified against v1.2.0
+> Verified against v1.3.0

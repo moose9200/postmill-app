@@ -47,7 +47,7 @@ organisation:
   | **Owner** | Everything in the org, including billing and member management. The user who created the org is the owner. |
   | **Admin** | Everything except billing management and deleting the organisation. |
   | **Editor** | Full control of posts, media, channels, and comments; read access to analytics and brands. |
-  | **Member** | Create, read, and update posts; upload and view media; read analytics, comments, and brands. |
+  | **Member** | Create, read, and update posts; create, view, edit, and delete media; read analytics, comments, and brands. |
   | **Viewer** | Read-only access to all resources. |
 
   The team screen's role selector lists every role in the org — the five system roles plus any
@@ -156,6 +156,9 @@ Configure AI providers, models, spending, and prompt management.
 - **Configure** — click a provider's row to open its configuration: API credentials (encrypted at
   rest; a base URL only for OpenAI-compatible endpoints). Image models are not part of AI provider
   configuration — image/video/audio generation is configured in the [Content tab](#content-tab).
+  Popular providers show a **Where do I get my API key?** link to their keys page. Saving tests
+  the connection first: if the test fails, nothing is saved and the provider's error is shown,
+  with a **Save anyway** option.
 - **Provider budget** — opt-in via the **Budget limits** switch in the provider's configure form
   (off by default). When enabled, each provider can carry its own monthly cap, daily cap (both
   numeric, in USD), and alert threshold (a percentage slider). When a cap is exceeded, calls against
@@ -368,7 +371,7 @@ media provider (and vice versa) — the key is shared, you don't re-enter it.
 
 Pick the default provider and model for each media task — text-to-speech, text-to-music,
 text-to-image, text-to-video, image-to-image, image-to-video, upscale, background removal,
-inpainting, focal point, slides, video avatar, and so on — from your enabled media providers.
+inpainting, outpainting, focal point, slides, video avatar, and so on — from your enabled media providers.
 
 #### C2PA provenance
 
@@ -435,7 +438,8 @@ Provider cards with real brand icons, configured/mounted badges, and quota/usage
   required), Backblaze B2, IDrive e2, Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr,
   Linode / Akamai, any S3-compatible service, or MediaLocker. You can add as many storages as you want per provider type, each with
   its own name — but **each must be a unique account**: adding the same account twice is rejected
-  (accounts are fingerprinted from their credentials).
+  (accounts are fingerprinted from their credentials). A new provider is mounted automatically
+  once its connection test passes, so it appears as a root folder in the media library right away.
 - **Provider cards** — each configured provider shows its name, type, mount status, and usage.
   Actions per card:
   - **Mount/Unmount** — make the provider available or unavailable as a root folder in the media
@@ -568,4 +572,4 @@ Settings access is permission-gated: reading and changing the org-level settings
 permissions. A member whose role lacks the grant receives **HTTP 403**; an org can grant these
 permissions to a custom role. Billing management is owner-only.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

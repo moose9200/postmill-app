@@ -16,7 +16,7 @@ See [Settings](../settings) for provider setup.
 
 ## Generation flow
 
-The studio follows the standard Studio Kit flow: fill the form, click **Generate**, and the job appears in the **Render Queue**. When it completes, the video is saved to `/files` and can be opened in the [Designer](./index.md) or posted directly. See [Media Studios overview](./index.md) for details.
+The studio follows the standard Studio Kit flow: fill the form, click **Generate**, and the job appears in the **Render Queue**. When it completes, the video is saved to `/files` and can be opened in the [Designer](./designer) or posted directly. See [Media Studios overview](./index.md) for details.
 
 ## Caveats
 
@@ -27,4 +27,4 @@ The studio follows the standard Studio Kit flow: fill the form, click **Generate
 - Reel.Farm is video-only — it does not generate images or audio.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

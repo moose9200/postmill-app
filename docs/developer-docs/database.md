@@ -145,6 +145,7 @@ See [Backend Conventions](./backend-conventions.md) for the full layering rules 
 
 | Directory | Repository |
 |---|---|
+| `ai-designer/` | AI Designer sessions and messages (`AiDesignerSession`, `AiDesignerMessage`) |
 | `ai-rag/` | RAG index operations (raw SQL for vector side table) |
 | `ai-settings/` | AI provider config, spend logs |
 | `analytics/` | Snapshot queries and rollup |
@@ -155,18 +156,24 @@ See [Backend Conventions](./backend-conventions.md) for the full layering rules 
 | `autopost/` | AutoPost CRUD |
 | `brands/` | Brand profiles (`AIBrandProfile`, many-per-org) |
 | `campaigns/` | Campaign CRUD + post association |
+| `content-packs/` | Per-org content-pack config (`ContentPackConfig`) |
+| `design/` | Designer designs, version history, templates and template folders (`Design`, `DesignVersion`, `DesignTemplate`, `DesignTemplateFolder`) |
 | `emails/` | Email send-log lifecycle |
 | `featured-providers/` | Curated featured-provider list |
 | `federation/` | Postmill ID signing key and grants (`InstanceIdentity`, `FederationGrant`) |
 | `file/` | Media file CRUD and folder operations |
+| `health/` | Database ping for the `/health/ready` readiness probe |
+| `inngest-runs/` | Latest Inngest cron run per function (`InngestFunctionRun`) |
 | `integrations/` | Integration/plug/webhook management |
 | `media/` | Multipart uploads |
 | `media-providers/` | Per-org media provider config (`MediaProviderConfig`) |
+| `migration-ledger/` | Internal migration bookkeeping (`MigrationLedger`) |
 | `notifications/` | Notification delivery |
 | `oauth/` | OAuth app and authorization management |
 | `organizations/` | Organization and user-org relationship |
 | `posts/` | Post CRUD, state transitions, recursive queries |
 | `provider-configs/` | `OrgProviderConfiguration` |
+| `retention/` | Retention-bound pruning queries for the `retention-purge` cron |
 | `roles/` | RBAC roles and permissions (`AppRole`/`Permission`) |
 | `sets/` | Content set management |
 | `short-links/` | Per-org short-link provider config |
@@ -175,6 +182,7 @@ See [Backend Conventions](./backend-conventions.md) for the full layering rules 
 | `storage/` | Storage provider config (S3, R2, B2, etc.) |
 | `subscriptions/` | Billing subscriptions, payment-webhook ledger (`PaymentEvent`) |
 | `users/` | User CRUD, profiles (`UserProfile`), sessions |
+| `vpn/` | Per-org VPN/proxy provider config (`OrgVpnConfig`) |
 | `watchlist/` | Competitor account and metric tracking |
 | `webhooks/` | Webhook CRUD + integration-webhook linking |
 
@@ -229,4 +237,4 @@ total_connections ≈ (backend_replicas + inngest_workers) × DATABASE_CONNECTIO
 
 A reasonable start for a small/medium deployment: `DATABASE_CONNECTION_LIMIT=10`, `DATABASE_POOL_TIMEOUT=20`. Raise the limit only after confirming Postgres `max_connections` (or the pgBouncer pool) has room across **all** backend replicas plus the Inngest worker. When fronted by pgBouncer in transaction mode, set a low per-process limit and let the bouncer pool.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

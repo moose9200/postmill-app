@@ -24,4 +24,4 @@ Ideogram follows the standard [Media Studios flow](./index.md): generate, watch 
 - The v3 endpoint has no model selector; the studio targets `ideogram-v3/generate` directly.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

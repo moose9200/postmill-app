@@ -139,6 +139,7 @@ interface MediaProviderCapabilities {
   upscale: boolean;
   bgRemove: boolean;
   inpaint: boolean;
+  outpaint: boolean;
 }
 ```
 
@@ -231,7 +232,9 @@ export default function QwenPage() {
 
 ## Step 6: add the nav entry
 
-Add the studio to `apps/frontend/src/app/(app)/(site)/media/layout.tsx` under the correct group (Providers or Content Pack). The layout is the source of truth for the `/media` navigation order.
+Add the studio to `MEDIA_TABS` in `apps/frontend/src/components/media-tools/media-tools.nav.tsx` under the correct `section` (Providers or Content Pack). That file is the source of truth for the `/media` navigation order.
+
+Then add the descriptor to `ALL_DESCRIPTORS` in `apps/frontend/src/components/media-tools/studio-kit/compact-registry.ts` so the studio can also be embedded as a compact studio in the Designer's generate dialogs.
 
 ## How the generic backend works
 
@@ -298,4 +301,4 @@ Use a bespoke studio when the workflow does not match "form inputs → media art
 - [User Guide: Media studios](../user-guide/media/index.md)
 - [Backend conventions](./backend-conventions.md)
 
-> Verified against v1.2.0
+> Verified against v1.3.0

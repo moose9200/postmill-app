@@ -345,6 +345,7 @@ the API therefore always means a Postmill-side failure.
 | `AI_DESIGNER_AGENT_REGISTRY` | — | Directory of per-agent YAML files overriding the bundled registry |
 | `AI_DESIGNER_AGENT_TIMEOUT_MS` | `120000` | Per-agent LLM dispatch deadline |
 | `AI_DESIGNER_ASSET_TIMEOUT_MS` | `90000` | Asset (image generation/stock) step deadline |
+| `AI_DESIGNER_SCENE_VIDEO_TIMEOUT_MS` | `480000` | Deadline for one generated scene video in a video session |
 | `AI_DESIGNER_STUCK_SESSION_MINUTES` | `15` | Planning/executing sessions untouched longer than this roll back to awaiting_plan |
 | `TRUST_PROXY_HOPS` | (disabled) | Number of XFF-appending reverse proxies in front of the backend. Unset/invalid = key on the socket peer address (safe default, not spoofable). When set, per-IP rate buckets key on the Nth-from-right `x-forwarded-for` entry. Applies to the `/ai-designer` connect-rate bucket **and** the HTTP throttler's per-IP buckets (login/register/enterprise/public-report) and the MCP rate limits. Operators behind a proxy **must** set it to the exact number of appending proxies — overestimating lands in attacker-controlled left-most XFF entries and makes the limits spoofable |
 | `SESSION_TTL_MINUTES` | — | agent-mesh package env var — no Postmill effect (see caveat below) |
@@ -406,6 +407,8 @@ Set any of these to `true` or `1` to disable the corresponding subsystem during 
 | `BLANK_DESIGN_RETENTION_DAYS` | `1` | Days an untouched, content-free `Untitled Design` is kept before the retention sweep soft-deletes it (with its preview file) |
 | `IP_RETENTION_DAYS` | `90` | Null `User`/`Session` IP and agent after this window |
 | `AI_DESIGNER_SESSION_RETENTION_DAYS` | `90` | Retention for AI Designer chat sessions |
+| `DESIGN_VERSIONS_KEEP_AUTO` | `10` | Automatic version snapshots kept per Designer design (oldest trimmed on insert) |
+| `DESIGN_VERSIONS_KEEP_NAMED` | `20` | Named version snapshots kept per Designer design (oldest trimmed on insert) |
 
 ## Stock media
 
@@ -435,4 +438,4 @@ See [Video Rendering](./video-rendering.md) for the full list of `VIDEO_RENDER_*
 | `PUPPETEER_EXECUTABLE_PATH` | (bundled Chromium) | Path to a system/distro Chromium binary for design frame capture (used by the render-worker container). Unset = Puppeteer's bundled Chromium |
 | `PUPPETEER_DISABLE_SANDBOX` | `false` | Set to `true` to launch the campaign-report PDF Chromium with `--no-sandbox` (for CI/containers without user namespaces; also disabled automatically when `CI=true`). Production defaults to sandboxed mode |
 
-> Verified against v1.2.0
+> Verified against v1.3.0

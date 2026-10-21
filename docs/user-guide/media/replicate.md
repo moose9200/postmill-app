@@ -41,13 +41,13 @@ text-to-image.
 
 ## Warm vs community models and cost badges
 
-Each category lists **warm** official models by default. Warm models are pre-loaded by Replicate
-and start faster; the cost shown in the badge is fixed per run.
+Each category lists only its curated, runnable models, grouped in the **Model** dropdown with the
+price shown next to each name:
 
-- **Warm** models are output-priced — the cost bar shows a fixed estimate before you click
-  **Generate**.
-- **Community** models are priced by compute time. Turn on the **Show community models** toggle to
-  see them; they may cold-start, and the cost bar shows a usage-based estimate instead.
+- **Instant (official)** — warm models pre-loaded by Replicate. They start fast and are
+  output-priced, so the cost bar shows a fixed estimate before you click **Generate**.
+- **Community (may cold-start)** — models priced by compute time (shown as *usage-billed*). They
+  may cold-start, and the cost bar shows a usage-based estimate instead.
 
 Select a model to reveal its dynamic input form, generated from the model's own schema. Required
 fields are marked; optional fields can be left at their defaults.
@@ -125,4 +125,4 @@ The meme editor is a native canvas tool:
 - [Settings](../settings) — configuring the Replicate media provider.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

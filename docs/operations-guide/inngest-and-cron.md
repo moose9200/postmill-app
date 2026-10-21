@@ -49,10 +49,10 @@ Without this, the analytics dashboard, comment inbox, media render queue, and wa
 | `analytics-collection` | Daily at 02:00 UTC | Fans out one `analytics/sync-org` event per org |
 | `comments-collection` | Every minute (sleeps `COMMENTS_SWEEP_INTERVAL_MINUTES` between sweeps) | Fans out one `comments/sync-org` event per org |
 | `missing-post-finder` | Hourly | Detect posts that should have published but are stuck |
-| `media-jobs-poll` | Every minute | Poll pending external media-generation jobs and re-enqueue stuck renders |
+| `media-jobs-poll` | Every minute | Poll pending external media-generation jobs, re-enqueue stale pending renders, and fail renders stuck in processing past their time budget |
 | `campaign-tag-purge` | Daily at 03:00 UTC | Delete `CampaignItem` tags for campaigns whose `endDate` is older than `CAMPAIGN_PURGE_DAYS` |
 | `payments-expire-canceled` | Daily at 03:15 UTC | Tear down subscriptions whose scheduled end has passed for providers that cannot keep a cancelled subscription alive until period end (e.g. PayPal); warns about Stripe subscriptions past their end with no teardown webhook |
-| `retention-purge` | Daily at 03:30 UTC | Bounded retention sweep for errors, notifications, multipart uploads, mastra traces, soft-deleted posts/files, AI Designer sessions, and IP/agent columns |
+| `retention-purge` | Daily at 03:30 UTC | Bounded retention sweep for errors, notifications, multipart uploads, mastra traces, soft-deleted posts/files/design versions, blank canvases, AI Designer sessions, and IP/agent columns |
 | `digest-email-daily` | Daily at 09:00 America/New_York | Fans out one `digest/send-one` event per target for daily digests |
 | `digest-email-weekly` | Mondays at 09:00 America/New_York | Fans out one `digest/send-one` event per target for weekly digests |
 | `agent-digest` | Mondays at 07:00 America/New_York | Fans out one `agent/digest-org` event per org (disabled unless `AGENT_DIGEST_ENABLED=true`) |
@@ -112,7 +112,8 @@ Rollup behaviour:
 | `NOTIFICATIONS_RETENTION_DAYS` | 180 days | Notifications and `NotificationRead` rows hard-deleted |
 | `MULTIPART_UPLOAD_RETENTION_DAYS` | 7 days | Abandoned multipart uploads hard-deleted |
 | `MASTRA_TRACE_RETENTION_DAYS` | 30 days | Mastra traces/scorers hard-deleted |
-| `SOFT_DELETE_RETENTION_DAYS` | 30 days | Soft-deleted posts/files hard-purged |
+| `SOFT_DELETE_RETENTION_DAYS` | 30 days | Soft-deleted posts/files/design versions hard-purged |
+| `BLANK_DESIGN_RETENTION_DAYS` | 1 day | Never-customized, content-free `Untitled Design` canvases soft-deleted |
 | `AI_DESIGNER_SESSION_RETENTION_DAYS` | 90 days | AI Designer chat sessions hard-deleted |
 | `IP_RETENTION_DAYS` | 90 days | `User`/`Session` IP and user agent nulled |
 
@@ -174,4 +175,4 @@ Enable in `.env`:
 AGENT_DIGEST_ENABLED=true
 ```
 
-> Verified against v1.2.0
+> Verified against v1.3.0

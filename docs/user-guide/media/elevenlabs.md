@@ -30,4 +30,4 @@ ElevenLabs TTS is **synchronous**. The audio is returned inline and appears in t
 - [Settings](../settings) — configuring media providers.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

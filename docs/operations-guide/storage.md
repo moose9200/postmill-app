@@ -66,7 +66,11 @@ MEDIA_UPLOAD_MAX_BYTES: '1073741824'
 S3-compatible object storage with no egress fees. Configure per-org in Settings → Storage with an
 R2 API token's access key ID and secret, the bucket, and the bucket's S3 **endpoint**
 (`https://<accountId>.r2.cloudflarestorage.com`). The endpoint is **required** for R2 — it cannot
-be derived — and a config saved without one is rejected with HTTP 400 and not stored.
+be derived — and a config saved without one is rejected with HTTP 400 and not stored. A **Public
+URL** (the bucket's custom domain or its `r2.dev` public URL) is also required: the connection test
+fails without one, so the config is not saved, because stored files would otherwise get unusable
+relative URLs. Existing R2 configs without a Public URL keep serving files they already stored, but
+their connection test now reports this error.
 
 ### AWS S3 (per-tenant)
 
@@ -149,7 +153,8 @@ scoped/bucket-level keys.
 
 Wasabi, DigitalOcean Spaces, Hetzner, Storj, Scaleway, Vultr, Linode, and the generic
 **S3-compatible** type use the same access key + secret, bucket, and endpoint fields as the
-providers above. MediaLocker has its own credential form. All are configured per-org in Settings →
+providers above. MediaLocker has its own credential form and, like R2, requires a Public URL (CDN
+or public bucket base) for its connection test to pass. All are configured per-org in Settings →
 Storage. If a provider's adapter rejects the submitted config, the save is rolled back and answers
 HTTP 400 with the provider's message.
 
@@ -181,13 +186,15 @@ Migrations are recorded in the audit log.
 
 Moving a file (or a bulk selection) between folders in the Files library also migrates the bytes
 when the source and destination folders are served by different providers: the object is read from
-the source provider, written to the destination provider, the file record is repointed to the new
-path, and the source object is removed. Moving within the same provider only updates the folder
-assignment.
+the source provider, checked against the destination's quota, written to the destination provider,
+the file record is repointed to the new path, and the source object is removed (best-effort). A bulk
+move skips files that fail without blocking the rest. Moving within the same provider only updates
+the folder assignment.
 
 ## Health tracking
 
-Each storage provider is periodically health-checked:
+A storage provider's health is recorded whenever its connection is tested — when the config is
+created and whenever an org admin runs a connection test (there is no scheduled background check):
 
 - `lastHealthCheck` timestamp is updated on each test
 - `lastHealthError` captures the error message if connection fails
@@ -230,4 +237,4 @@ size-capped. `LOCAL` storage is same-origin and needs no CORS.
 - [Requirements](./requirements.md) — object storage options
 - [Designer](../developer-docs/designer.md) — editor architecture & endpoints
 
-> Verified against v1.2.0
+> Verified against v1.3.0

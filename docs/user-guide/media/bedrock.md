@@ -29,4 +29,4 @@ Images are generated synchronously through the AI-SDK Bedrock bridge and saved t
 - [Settings](../settings) — configuring AI providers.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

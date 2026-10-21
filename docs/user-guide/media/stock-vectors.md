@@ -45,4 +45,4 @@ Saved files carry `source` and `attribution` metadata.
 
 ---
 
-> Verified against v1.2.0
+> Verified against v1.3.0

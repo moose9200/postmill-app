@@ -29,4 +29,4 @@ The studio follows the standard Studio Kit flow: fill the form, click **Generate
 - Image models are discovered from the provider catalog; video/audio models use a curated fallback list.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

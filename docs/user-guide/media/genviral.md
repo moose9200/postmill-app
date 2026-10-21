@@ -1,6 +1,6 @@
 # Genviral
 
-**Genviral** (`/media/genviral`) is a Studio AI video generator that routes prompts to underlying video models such as Sora and Seedance. Provide a prompt and a model from the live catalog, and it returns a short-form video.
+**Genviral** (`/media/genviral`) is a Studio AI video generator that routes prompts to underlying video models such as Seedance. Provide a prompt and a model from the live catalog, and it returns a short-form video.
 
 ## Where to configure
 
@@ -29,4 +29,4 @@ Genviral video generation is **async**. The studio submits the job to Genviral's
 - [Settings](../settings) — configuring media providers.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0
