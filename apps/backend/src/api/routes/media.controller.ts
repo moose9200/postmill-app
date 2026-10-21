@@ -74,6 +74,7 @@ export class MediaController {
 
   @Post('/generate-video')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateVideo(
     @GetOrgFromRequest() org: Organization,
     @Body() body: GenerateVideoDto
@@ -184,6 +185,7 @@ export class MediaController {
 
   @Post('/video/function')
   @CheckPolicies([AuthorizationActions.Read, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async videoFunction(
     @GetOrgFromRequest() org: Organization,
     @Body() body: VideoFunctionDto
@@ -226,6 +228,7 @@ export class MediaController {
 
   @Post('/generate-image')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateImage(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -270,6 +273,7 @@ export class MediaController {
 
   @Post('/generate-image-with-prompt')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateImageFromText(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -435,6 +439,7 @@ export class MediaController {
 
   @Post('/generate-music')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateMusic(
     @GetOrgFromRequest() org: Organization,
     @Body() body: GenerateMusicDto
@@ -452,6 +457,7 @@ export class MediaController {
 
   @Post('/generate-avatar')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateAvatar(
     @GetOrgFromRequest() org: Organization,
     @Body() body: GenerateAvatarDto
@@ -469,6 +475,7 @@ export class MediaController {
 
   @Post('/generate-slide')
   @CheckPolicies([AuthorizationActions.Create, Sections.MEDIA])
+  @RequirePermission('media', 'create')
   async generateSlide(
     @GetOrgFromRequest() org: Organization,
     @Body() body: GenerateSlideDto
@@ -519,6 +526,7 @@ export class MediaController {
 
   @Post('/fonts/upload')
   @CheckPolicies([AuthorizationActions.Update, Sections.MEDIA])
+  @RequirePermission('media', 'update')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   async uploadFont(
     @GetOrgFromRequest() org: Organization,
@@ -532,6 +540,7 @@ export class MediaController {
 
   @Delete('/fonts/:fileId')
   @CheckPolicies([AuthorizationActions.Update, Sections.MEDIA])
+  @RequirePermission('media', 'delete')
   async deleteFont(
     @GetOrgFromRequest() org: Organization,
     @Param('fileId') fileId: string

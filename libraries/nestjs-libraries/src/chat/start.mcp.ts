@@ -211,14 +211,16 @@ export function mapPersistedScopes(scope: string | null | undefined): string[] {
   return Array.from(new Set([...DEFAULT_MCP_SCOPES, ...granted]));
 }
 
-function requiredMcpScopes(
-  mcpSettings: McpSettings | null,
-  defaults = DEFAULT_MCP_SCOPES,
-): string[] {
-  const configured = Array.isArray(mcpSettings?.allowedScopes)
-    ? mcpSettings!.allowedScopes!.filter((scope) => typeof scope === 'string' && scope.trim())
-    : [];
-  return Array.from(new Set([...defaults, ...configured]));
+// `mcpsettings.allowedScopes` is an allow-list CEILING, not a requirement: a
+// token's scopes outside it are stripped before any per-tool scope check
+// (tool.helpers reads `access.scopes`). `mcp:read` is always within the ceiling
+// (it is the one scope every request must hold). Unset → no ceiling.
+function allowedMcpScopes(mcpSettings: McpSettings | null): string[] | null {
+  if (!Array.isArray(mcpSettings?.allowedScopes)) return null;
+  const configured = mcpSettings!.allowedScopes!.filter(
+    (scope) => typeof scope === 'string' && scope.trim(),
+  );
+  return Array.from(new Set([...DEFAULT_MCP_SCOPES, ...configured]));
 }
 
 // ── Typed scope enforcement via AuthStrategy ──
@@ -238,15 +240,17 @@ export function createMcpScopeStrategy(
       if (!resolved) {
         return { authenticated: false, reason: 'Invalid API Key or OAuth token' };
       }
-      const scopes = resolved.scopes.filter((scope) => typeof scope === 'string' && scope.trim());
-      const required = requiredMcpScopes(mcpSettings);
+      const ceiling = allowedMcpScopes(mcpSettings);
+      const scopes = resolved.scopes.filter(
+        (scope) =>
+          typeof scope === 'string' && scope.trim() && (!ceiling || ceiling.includes(scope)),
+      );
+      const authenticated = requireScopes({ authenticated: true, scopes }, DEFAULT_MCP_SCOPES);
       return {
-        authenticated: requireScopes({ authenticated: true, scopes }, required),
+        authenticated,
         principal: resolved.auth.id ?? token,
         scopes,
-        reason: requireScopes({ authenticated: true, scopes }, required)
-          ? undefined
-          : `Requires ${required.join(', ')}`,
+        reason: authenticated ? undefined : `Requires ${DEFAULT_MCP_SCOPES.join(', ')}`,
       };
     },
   };
@@ -297,8 +301,9 @@ export const startMcp = async (app: INestApplication) => {
       mcpSettings = settings.mcpSettings;
     }
   } catch {
-    // MCP settings unavailable — fall back to defaults (enabled, scope mcp:read)
-    mcpSettings = { enabled: true, allowedScopes: ['mcp:read'], mediaEnabled: false };
+    // MCP settings unavailable — fall back to defaults (enabled, no allowedScopes
+    // ceiling, so tokens keep the scopes they were granted; mcp:read still required)
+    mcpSettings = { enabled: true, mediaEnabled: false };
   }
 
   const mcpEnabled = mcpSettings?.enabled !== false;
@@ -614,10 +619,10 @@ export const startMcp = async (app: INestApplication) => {
       res.status(403).send(authResult.reason || 'Insufficient scope');
       return;
     }
-    if (!requireScopes(authResult, requiredMcpScopes(mcpSettings))) {
+    if (!requireScopes(authResult, DEFAULT_MCP_SCOPES)) {
       res.status(403).json({
         error: 'insufficient_scope',
-        error_description: `Requires ${requiredMcpScopes(mcpSettings).join(', ')}`,
+        error_description: `Requires ${DEFAULT_MCP_SCOPES.join(', ')}`,
       });
       return;
     }
