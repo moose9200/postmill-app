@@ -11,7 +11,6 @@ const T2I_MODELS = [
   { value: 'wan2.2-t2i-plus', label: 'Wan 2.2 T2I Plus (quality)' },
   { value: 'wanx2.1-t2i-turbo', label: 'Wanx 2.1 T2I Turbo' },
   { value: 'wanx2.1-t2i-plus', label: 'Wanx 2.1 T2I Plus' },
-  { value: 'wan2.5-t2i-preview', label: 'Wan 2.5 T2I Preview' },
 ];
 
 const T2I_SIZE = [
@@ -26,7 +25,6 @@ const T2V_MODELS = [
   { value: 'wan2.2-t2v-plus', label: 'Wan 2.2 T2V Plus' },
   { value: 'wan2.1-t2v-turbo', label: 'Wan 2.1 T2V Turbo (fast)' },
   { value: 'wan2.1-t2v-plus', label: 'Wan 2.1 T2V Plus' },
-  { value: 'wan2.5-t2v-preview', label: 'Wan 2.5 T2V Preview' },
 ];
 
 const T2V_SIZE = [
