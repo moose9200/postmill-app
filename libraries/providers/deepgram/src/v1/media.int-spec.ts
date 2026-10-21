@@ -33,7 +33,7 @@ describe('deepgram media adapter (speech-to-text)', () => {
     const out = await adapter.speechToTextWords(Buffer.from('AUDIOBYTES'), { apiKey: 'dg-key' });
 
     const r = recs[0];
-    expect(r.url).toBe('https://api.deepgram.com/v1/listen?model=whisper');
+    expect(r.url).toBe('https://api.deepgram.com/v1/listen?model=nova-2');
     expect(r.method).toBe('POST');
     expect(r.headers.Authorization).toBe('Token dg-key');
     expect(r.headers['Content-Type']).toBe('audio/wav');
@@ -67,7 +67,7 @@ describe('deepgram media adapter (speech-to-text)', () => {
     const adapter: any = deepgramMediaModule.create(ctx as any);
     const text = await adapter.speechToText(Buffer.from('AUDIO'), { apiKey: 'dg-key' });
     expect(text).toBe('hello world');
-    expect(recs[0].url).toBe('https://api.deepgram.com/v1/listen?model=whisper');
+    expect(recs[0].url).toBe('https://api.deepgram.com/v1/listen?model=nova-2');
   });
 
   it('rejects a missing key and unsupported generative operations', async () => {

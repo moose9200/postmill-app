@@ -3,14 +3,15 @@ import type { StudioDescriptor } from '@postmill-ai/frontend/components/media-to
 // Wan (Tongyi Wanxiang) on Alibaba Cloud Model Studio (DashScope, intl host). Field names are the
 // native DashScope params: `negative_prompt`/`img_url` ride into `input`, everything else (size,
 // resolution, duration, n, prompt_extend, watermark) into `parameters` — see wan.adapter.ts. Model
-// lists are curated (DashScope has no clean per-modality catalog for the task API); the combobox
-// also accepts any typed model id, so newer Wan ids work without a code change.
+// lists are curated (DashScope has no clean per-modality catalog for the task API) and the model
+// fields are plain selects, so a newer Wan id must be added to these lists to be offered.
 
 const T2I_MODELS = [
   { value: 'wan2.2-t2i-flash', label: 'Wan 2.2 T2I Flash (fast)' },
   { value: 'wan2.2-t2i-plus', label: 'Wan 2.2 T2I Plus (quality)' },
   { value: 'wanx2.1-t2i-turbo', label: 'Wanx 2.1 T2I Turbo' },
   { value: 'wanx2.1-t2i-plus', label: 'Wanx 2.1 T2I Plus' },
+  { value: 'wan2.5-t2i-preview', label: 'Wan 2.5 T2I Preview' },
 ];
 
 const T2I_SIZE = [
@@ -25,6 +26,7 @@ const T2V_MODELS = [
   { value: 'wan2.2-t2v-plus', label: 'Wan 2.2 T2V Plus' },
   { value: 'wan2.1-t2v-turbo', label: 'Wan 2.1 T2V Turbo (fast)' },
   { value: 'wan2.1-t2v-plus', label: 'Wan 2.1 T2V Plus' },
+  { value: 'wan2.5-t2v-preview', label: 'Wan 2.5 T2V Preview' },
 ];
 
 const T2V_SIZE = [

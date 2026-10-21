@@ -105,7 +105,7 @@ export class LtxAdapter extends BearerTokenMediaAdapter {
   }
 
   async pollJob(jobId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches openai/Sora), not a thrown
+    // Missing key is a config error → terminal failed (matches the openai adapter), not a thrown
     // error the lifecycle would retry to the 24h timeout.
     let headers: Record<string, string>;
     try {

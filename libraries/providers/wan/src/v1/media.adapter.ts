@@ -151,7 +151,7 @@ export class WanAdapter implements MediaProviderAdapter {
   }
 
   async pollJob(jobId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches openai/Sora), not a thrown
+    // Missing key is a config error → terminal failed (matches the openai adapter), not a thrown
     // error the lifecycle would retry to the 24h timeout.
     if (!resolveApiKey(options)) return { status: 'failed', error: 'Wan (Alibaba Model Studio) API key is required' };
     const res = await this._fetch(`${BASE}/tasks/${jobId}`, { headers: this._headers(options) });

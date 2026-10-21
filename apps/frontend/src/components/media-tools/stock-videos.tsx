@@ -8,36 +8,6 @@ import { StockVideoItem, stockSourceLabel } from './stock.types';
 import { useStockSearch } from './use-stock-search';
 import { useT } from '@postmill-ai/react/translation/get.transation.service.client';
 
-const COLOR_SWATCHES: { value: string; label: string; swatch: string }[] = [
-  { value: 'black_and_white', label: 'B&W', swatch: 'linear-gradient(90deg, #000000 50%, #FFFFFF 50%)' },
-  { value: 'black', label: 'Black', swatch: '#000000' },
-  { value: 'white', label: 'White', swatch: '#FFFFFF' },
-  { value: 'gray', label: 'Gray', swatch: '#9E9E9E' },
-  { value: 'red', label: 'Red', swatch: '#F44336' },
-  { value: 'orange', label: 'Orange', swatch: '#FF5722' },
-  { value: 'yellow', label: 'Yellow', swatch: '#FFEB3B' },
-  { value: 'green', label: 'Green', swatch: '#8BC34A' },
-  { value: 'blue', label: 'Blue', swatch: '#2196F3' },
-  { value: 'purple', label: 'Purple', swatch: '#9C27B0' },
-  { value: 'brown', label: 'Brown', swatch: '#795548' },
-];
-
-// Maps a swatch's stable API `value` to its translation key (labels themselves
-// live at module scope and can't call the translation hook).
-const COLOR_KEY: Record<string, string> = {
-  black_and_white: 'color_bw',
-  black: 'color_black',
-  white: 'color_white',
-  gray: 'color_gray',
-  red: 'color_red',
-  orange: 'orange',
-  yellow: 'color_yellow',
-  green: 'green',
-  blue: 'blue',
-  purple: 'purple',
-  brown: 'color_brown',
-};
-
 const SUGGESTED_SEARCHES = ['Nature', 'City', 'Technology', 'Ocean', 'Abstract'];
 
 interface StockVideosProps {
@@ -62,11 +32,10 @@ export const StockVideos: FC<StockVideosProps> = ({ mode = 'browse', onSelect, o
   const [debouncedQuery] = useDebounce(query, 300);
   const [orientation, setOrientation] = useState('');
   const [size, setSize] = useState('');
-  const [color, setColor] = useState('');
 
   const filters = useMemo(
-    () => ({ orientation, size, color }),
-    [orientation, size, color]
+    () => ({ orientation, size }),
+    [orientation, size]
   );
 
   const {
@@ -185,42 +154,6 @@ export const StockVideos: FC<StockVideosProps> = ({ mode = 'browse', onSelect, o
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-      </div>
-
-      <div className="flex items-center flex-wrap gap-[8px]">
-        <button
-          type="button"
-          onClick={() => setColor('')}
-          aria-pressed={color === ''}
-          className={`h-[30px] px-[12px] rounded-full border text-[12px] transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#2B5CD3] ${
-            color === ''
-              ? 'border-[#2B5CD3] bg-[#2B5CD3]/15 text-btnPrimaryAccent font-[500]'
-              : 'border-newColColor text-newTextColor/70 hover:text-textColor hover:border-newTextColor/40'
-          }`}
-        >
-          {t('all', 'All')}
-        </button>
-        {COLOR_SWATCHES.map((c) => {
-          const colorLabel = t(COLOR_KEY[c.value] ?? c.value, c.label);
-          return (
-          <button
-            key={c.value}
-            type="button"
-            onClick={() => setColor((cur) => (cur === c.value ? '' : c.value))}
-            aria-pressed={color === c.value}
-            aria-label={t('color_name', 'Color: {{color}}', { color: colorLabel })}
-            title={colorLabel}
-            className={`relative w-[30px] h-[30px] rounded-full border transition-transform focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#2B5CD3] hover:scale-110 ${
-              color === c.value ? 'border-[#2B5CD3] ring-2 ring-[#2B5CD3]/40' : 'border-newColColor'
-            }`}
-          >
-            <span
-              className="absolute inset-[3px] rounded-full"
-              style={{ background: c.swatch }}
-            />
-          </button>
-          );
-        })}
       </div>
 
       {/* Content states */}

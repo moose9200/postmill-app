@@ -35,7 +35,7 @@
     "prisma-db-push": "pnpm dlx prisma@6.5.0 db push --accept-data-loss --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-db-pull": "pnpm dlx prisma@6.5.0 db pull --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-schema-diff": "pnpm dlx prisma@6.5.0 migrate diff --from-url $DATABASE_URL --to-schema-datamodel ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --script",
-    "prisma-schema-check": "bash -o pipefail -c 'pnpm dlx prisma@6.5.0 migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --script | node tools/db/schema-destructive-guard.mjs'",
+    "prisma-schema-check": "bash tools/db/schema-check.sh",
     "prisma-migrate-dev": "pnpm dlx prisma@6.5.0 migrate dev --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-migrate-deploy": "pnpm dlx prisma@6.5.0 migrate deploy --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-migrate-resolve": "pnpm dlx prisma@6.5.0 migrate resolve --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",

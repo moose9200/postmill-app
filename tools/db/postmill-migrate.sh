@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-# Run a Prisma schema sync inside the live Postmill container.
+# Apply the committed Prisma migrations inside the live Postmill container.
 #
-#   ./tools/db/postmill-migrate.sh                     # safe additive sync (refuses data loss)
-#   ./tools/db/postmill-migrate.sh --accept-data-loss  # allow drops/retypes (DESTRUCTIVE — back up first!)
+#   ./tools/db/postmill-migrate.sh            # prisma migrate deploy (extra args are passed through)
 #
-# This pushes whatever schema.prisma is baked into the RUNNING image. For anything
-# permanent, the clean path is: edit schema.prisma -> commit -> tag -> CI builds the
-# image -> bump the tag in Coolify -> redeploy (the container runs prisma-db-push on
-# boot). Use this only for a manual, in-place sync.
+# This applies the migrations baked into the RUNNING image (forward-only, the same
+# `prisma migrate deploy` the upgrade guide documents). The container does NOT apply
+# migrations on boot (docker/entrypoint.sh runs no prisma), so run this after
+# redeploying a new image tag. Take a backup first when a release ships a destructive
+# migration.
+#
+# The runtime image has no pnpm, so this uses the prisma CLI already installed in the
+# image's production node_modules (pinned 6.5.0) — no network fetch.
 set -euo pipefail
-CONTAINER="${POSTMILL_CONTAINER:-postmill-app}"
+CONTAINER="${POSTMILL_CONTAINER:-postmill}"
 SCHEMA="./libraries/nestjs-libraries/src/database/prisma/schema.prisma"
 
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
@@ -17,7 +20,7 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
-echo ">> Reminder: take a backup first if passing --accept-data-loss."
-echo ">> prisma db push in $CONTAINER $*"
-docker exec -w /app "$CONTAINER" pnpm dlx prisma@6.5.0 db push --schema "$SCHEMA" "$@"
+echo ">> Reminder: take a backup first if this release ships a destructive migration."
+echo ">> prisma migrate deploy in $CONTAINER $*"
+docker exec -w /app "$CONTAINER" node_modules/.bin/prisma migrate deploy --schema "$SCHEMA" "$@"
 echo ">> done."

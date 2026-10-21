@@ -92,7 +92,7 @@ pnpm run prisma-migrate-deploy
 
 - **`prisma-migrate-dev`** authors and applies the migration locally; the committed migration is the source of truth for what every other environment applies via `prisma-migrate-deploy`.
 - **`prisma-schema-diff`** = `prisma migrate diff --from-url $DATABASE_URL --to-schema-datamodel [schema] --script` — the forward SQL only (no rollback); used to feed the destructive guard.
-- **`prisma-schema-check`** pipes the live `prisma-schema-diff` output into `tools/db/schema-destructive-guard.mjs` (Node, no deps). The guard reads SQL from `--file [path]` (or stdin) and **exits 1** if it finds `DROP TABLE`/`DROP COLUMN`/`DROP CONSTRAINT` or `ADD COLUMN ... NOT NULL` without a `DEFAULT`.
+- **`prisma-schema-check`** (`tools/db/schema-check.sh`) pipes the live `prisma-schema-diff` output into `tools/db/schema-destructive-guard.mjs` (Node, no deps); `pnpm run prisma-schema-check -- --file [path]` guards a saved diff instead, without touching the database. The guard reads SQL from `--file [path]` (or stdin) and **exits 1** if it finds `DROP TABLE`/`DROP COLUMN`/`DROP CONSTRAINT` or `ADD COLUMN ... NOT NULL` without a `DEFAULT`.
 - **Destructive changes** (drops, in-place renames, a new required column) must follow an **expand/contract** plan — add the new shape, backfill, switch reads/writes, then drop the old shape in a follow-up migration — and the guard must be explicitly overridden with `ALLOW_DESTRUCTIVE_SCHEMA=true` to acknowledge the data-loss risk:
 
   ```bash

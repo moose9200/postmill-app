@@ -35,6 +35,43 @@ const fileSize = (bytes: number, t: ReturnType<typeof useT>) => {
   return t('file_size_mb', '{{size}} MB', { size: (bytes / (1024 * 1024)).toFixed(1) });
 };
 
+const clickDownloadAnchor = (href: string, filename: string) => {
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
+
+/**
+ * Save a file to disk. The `download` attribute is ignored for cross-origin
+ * URLs (uploads on S3/R2/CDN storage), so those are fetched into a blob and
+ * saved from an object URL; if that fetch fails (e.g. no CORS), fall back to
+ * opening the file in a new tab.
+ */
+export const downloadFile = async (url: string, filename: string) => {
+  let sameOrigin = false;
+  try {
+    sameOrigin = new URL(url, window.location.href).origin === window.location.origin;
+  } catch {
+    // Unparseable URL — treat as cross-origin and let the fetch decide.
+  }
+  if (sameOrigin) {
+    clickDownloadAnchor(url, filename);
+    return;
+  }
+  try {
+    const res = await window.fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const objectUrl = URL.createObjectURL(await res.blob());
+    clickDownloadAnchor(objectUrl, filename);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch {
+    window.open(url, '_blank');
+  }
+};
+
 export const FileDetailsPanel: FC<{
   file: FileItem;
   onClose: () => void;
@@ -118,6 +155,10 @@ export const FileDetailsPanel: FC<{
   }, [file, fetch, onRefresh, onClose, toaster, t]);
 
   const handleDownload = useCallback(() => {
+    downloadFile(mediaDirectory.set(file.path), displayName);
+  }, [file, mediaDirectory, displayName]);
+
+  const handleOpen = useCallback(() => {
     window.open(mediaDirectory.set(file.path), '_blank');
   }, [file, mediaDirectory]);
 
@@ -286,7 +327,7 @@ export const FileDetailsPanel: FC<{
               {t('download', 'Download')}
             </button>
             <button
-              onClick={handleDownload}
+              onClick={handleOpen}
               className="w-full flex items-center gap-[8px] px-[12px] py-[8px] rounded-[8px] text-[13px] text-textColor hover:bg-boxHover transition-all"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">

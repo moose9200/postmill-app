@@ -91,7 +91,7 @@ export const aiDescriptor: ProviderSurfaceDescriptor<AiMeta> = {
   title: 'LLM Providers',
   titleKey: 'llm_providers',
   description:
-    'Choose the AI for writing and replies. Add your account key and click Set Active.',
+    'Choose the AI for writing and replies. Add your account key and click Make Primary.',
   descriptionKey: 'llm_providers_description',
 
   load: async (fetch: SurfaceFetch) => {

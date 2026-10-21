@@ -213,7 +213,7 @@ export class GoogleAiMediaAdapter implements MediaProviderAdapter {
   }
 
   async pollJob(jobId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches openai/Sora), not a thrown
+    // Missing key is a config error → terminal failed (matches the openai adapter), not a thrown
     // error the lifecycle would retry to the 24h timeout.
     const key = resolveApiKey(options);
     if (!key) return { status: 'failed', error: 'Google AI Studio requires a Gemini API key' };
@@ -240,7 +240,7 @@ export class GoogleAiMediaAdapter implements MediaProviderAdapter {
     }
     if (video?.uri) {
       // The file URI is auth-only — download with the key and inline it as a data URL so the
-      // lifecycle's unauthenticated re-download doesn't 401 (the Sora pattern).
+      // lifecycle's unauthenticated re-download doesn't 401 (the openai adapter's pattern).
       const fileRes = await this._fetch(video.uri, { headers });
       // 2.2 — classify the download leg: a 429/5xx is transient (THROW to retry the paid render),
       // but a permanent 4xx (expired/deleted file) is terminal — return failed rather than
