@@ -119,6 +119,11 @@ export const RENDER_ASSET_MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
  * - malformed job id / file name (traversal, the manifest) → 404, no network;
  * - another job's asset → continue: only the token-gated HTTP route may serve it;
  * - asset missing locally → continue: the HTTP route stays the fallback.
+ *
+ * Only RANGE responses are clamped to RENDER_ASSET_MAX_RESPONSE_BYTES per CDP
+ * message — Chromium's media stack always range-requests video, so a full-body
+ * (200) response is the rare path (a giant <img> background) and may exceed
+ * puppeteer's message cap; the catch below then falls back to the HTTP route.
  */
 export async function interceptRenderAssetRequest(
   request: HTTPRequest,
