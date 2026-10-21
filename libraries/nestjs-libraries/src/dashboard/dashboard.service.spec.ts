@@ -645,6 +645,21 @@ describe('DashboardService _aiBudgetAlert via getAttention', () => {
 
     expect(result.items).toHaveLength(0);
   });
+
+  it('normalizes a legacy percent-style org threshold (80 → 0.8)', async () => {
+    const { service, aiSettingsService } = buildService();
+    aiSettingsService.getOrgBudget = vi
+      .fn()
+      .mockResolvedValue({ monthlyCap: 100, dailyCap: null, alertThresholdPct: 80 });
+
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 79 } }]);
+    expect((await service.getAttention('org-1', 'user-1', ['budget'])).items).toHaveLength(0);
+
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 100 } }]);
+    const result = await service.getAttention('org-1', 'user-1', ['budget']);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].severity).toBe('critical');
+  });
 });
 
 describe('DashboardService.getMediaJobs', () => {

@@ -36,8 +36,8 @@ export function getRenderTimeoutMs(): number {
  * 150 = 5 s @ 30 fps — a 10 s social video (300 frames) is exactly the case
  * that needs parallelism most, and the old 300 threshold kept it sequential.
  * The memory risk that motivated the high threshold is addressed by the PR #172
- * hardening: page setup runs sequentially, parallel pages preload videos lazily,
- * and wedged frames/seeks fail fast under watchdogs.
+ * hardening: page setup runs sequentially with each page preloading its media
+ * eagerly during that setup, and wedged frames/seeks fail fast under watchdogs.
  */
 export const PARALLEL_CAPTURE_MIN_FRAMES = 150;
 

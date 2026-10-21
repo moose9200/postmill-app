@@ -60,8 +60,9 @@ Postmill ships committed Prisma migrations under
 `prisma migrate deploy`:
 
 ```bash
-# Run inside the running container (pnpm is not installed in the runtime image, so use npx)
-docker exec postmill npx --yes prisma@6.5.0 migrate deploy \
+# Run inside the running container, using the Prisma CLI already installed in the image
+# (pnpm is not installed in the runtime image; no download needed)
+docker exec -w /app postmill node_modules/.bin/prisma migrate deploy \
   --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma
 ```
 

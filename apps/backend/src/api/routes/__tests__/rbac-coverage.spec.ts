@@ -389,7 +389,6 @@ describe('RBAC coverage — every org-resource mutation is gated or explicitly a
       'CampaignsController',
       'ChannelConfigPerTenantController',
       'ContentPackController',
-      'CopilotController',
       'DashboardController',
       'DeepgramController',
       'DesignController',
@@ -405,14 +404,12 @@ describe('RBAC coverage — every org-resource mutation is gated or explicitly a
       'OrgVpnSettingsController',
       'CommsSettingsController',
       'OrganizationsController',
-      'RagController',
       'ReplicateStudioController',
       'RolesController',
       'SetsController',
       'SettingsController',
       'StockMediaController',
       'BrandsController',
-      'AiModerateController',
       'AiDesignerController',
     ];
     for (const name of gatedControllers) {
@@ -423,6 +420,12 @@ describe('RBAC coverage — every org-resource mutation is gated or explicitly a
         )
         .map((h) => h.method);
       expect(ungated, `${name} has an ungated mutation`).toEqual([]);
+
+      const leaked = [...INTENTIONALLY_UNGATED].filter((key) => key.startsWith(`${name}.`));
+      expect(
+        leaked,
+        `${name} must not rely on INTENTIONALLY_UNGATED — remove the allowlist entry or remove the controller from this list`
+      ).toEqual([]);
     }
   });
 });

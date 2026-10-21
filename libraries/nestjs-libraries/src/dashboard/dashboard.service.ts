@@ -194,7 +194,7 @@ export class DashboardService {
         // continue
       }
 
-      const result = await this._computeSummary(org, user);
+      const result = await this._computeSummary(org);
       this._redisService
         .set(cacheKey, JSON.stringify(result), SUMMARY_TTL_SECONDS)
         .catch(() => {});
@@ -203,8 +203,7 @@ export class DashboardService {
   }
 
   private async _computeSummary(
-    org: Organization,
-    user: User
+    org: Organization
   ): Promise<DashboardSummaryResponse> {
     const orgId = org.id;
     const sevenDaysAgo = dayjs.utc().subtract(7, 'days').toDate();
@@ -705,7 +704,10 @@ export class DashboardService {
       return null;
     }
 
-    threshold = threshold ?? 0.8;
+    const rawThreshold = threshold ?? 0.8;
+    // The DTO enforces 0–1 now; keep normalizing a legacy percent-style value
+    // (80), matching BudgetService's enforcement path.
+    threshold = rawThreshold > 1 ? rawThreshold / 100 : rawThreshold;
     const startOfMonth = dayjs.utc().startOf('month').toDate();
     const spend = await this._aiSettingsService.getSpendSummary(orgId, startOfMonth);
     const total = spend.reduce((sum, row: any) => sum + (row._sum?.costUsd ?? 0), 0);

@@ -1006,6 +1006,25 @@ describe('bulkCreate — per-provider validation + media_url import', () => {
     expect(rows[0].error).toMatch(/image or video/);
   });
 
+  it('removes the imported media when every channel in the row fails validation', async () => {
+    const importFromUrl = vi
+      .fn()
+      .mockResolvedValue({ id: 'file-3', path: 'https://cdn.example/a.png', type: 'image' });
+    const deleteFile = vi.fn().mockResolvedValue(undefined);
+    const { service, validateSpy, createSpy } = setup({ importFromUrl, deleteFile });
+    validateSpy.mockResolvedValue([{ ...okValidation[0], tooLong: true }] as any);
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [
+        { content: 'a', channels: ['int-1'], scheduleAt: FUTURE, mediaUrl: 'https://example.com/a.png' },
+      ],
+    } as any);
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(rows[0].success).toBe(false);
+    expect(deleteFile).toHaveBeenCalledWith('org-1', 'file-3');
+  });
+
   it('still rejects a past schedule date before any media is fetched', async () => {
     const importFromUrl = vi.fn();
     const { service } = setup({ importFromUrl });

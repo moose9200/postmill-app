@@ -1981,6 +1981,12 @@ export class PostsService {
         rowError = err.message;
       }
 
+      // Every channel failed — remove the imported media so a failed row does
+      // not leave an orphan file in the org's library counting against quota.
+      if (postIds.length === 0 && image.length > 0) {
+        await this._fileService.deleteFile(orgId, image[0].id).catch(() => undefined);
+      }
+
       results.push({
         index: i,
         success: !rowError && postIds.length > 0,

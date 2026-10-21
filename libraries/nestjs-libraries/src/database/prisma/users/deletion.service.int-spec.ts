@@ -9,6 +9,7 @@ describe('DeletionService.deleteUser (integration)', () => {
     const service = new DeletionService(prisma as unknown as PrismaService, {
       create: async () => ({}),
     } as any);
+    let orgId: string | undefined;
     try {
       const owner = await prisma.user.create({
         data: { email: 'owner@deletion.int', providerName: 'LOCAL' },
@@ -17,6 +18,7 @@ describe('DeletionService.deleteUser (integration)', () => {
         data: { email: 'member@deletion.int', providerName: 'LOCAL' },
       });
       const org = await prisma.organization.create({ data: { name: 'Shared' } });
+      orgId = org.id;
       await prisma.userOrganization.createMany({
         data: [
           { userId: owner.id, organizationId: org.id },
@@ -51,7 +53,7 @@ describe('DeletionService.deleteUser (integration)', () => {
       await prisma.design.deleteMany({ where: { createdBy: { email: { in: emails } } } });
       await prisma.federationGrant.deleteMany({ where: users });
       await prisma.userOrganization.deleteMany({ where: users });
-      await prisma.organization.deleteMany({ where: { name: 'Shared' } });
+      await prisma.organization.deleteMany({ where: { id: orgId ?? '__none__' } });
       await prisma.user.deleteMany({ where: { email: { in: emails } } });
       await prisma.$disconnect();
     }
