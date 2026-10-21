@@ -97,13 +97,28 @@ async function fetchModel(owner, name) {
   return res.json();
 }
 
+// Kernel media categories served by Replicate that have no Replicate-studio tab,
+// so they are absent from MODEL_ALLOWLIST. Without this list a re-run silently
+// drops them from metadata.ts and the defaults resolver stops offering Replicate
+// for them (#221 dropped `image-outpaint` this way, breaking Expand Image).
+const METADATA_ONLY_MODELS = {
+  'image-outpaint': ['black-forest-labs/flux-fill-pro'],
+};
+
 async function main() {
   const mediaModels = {};
   let fetched = 0;
   let failed = 0;
 
-  for (const [allowlistKey, modelIds] of Object.entries(MODEL_ALLOWLIST)) {
-    const category = categoryFromAllowlistKey(allowlistKey);
+  const sources = [
+    ...Object.entries(MODEL_ALLOWLIST).map(([key, ids]) => [
+      categoryFromAllowlistKey(key),
+      ids,
+    ]),
+    ...Object.entries(METADATA_ONLY_MODELS),
+  ];
+
+  for (const [category, modelIds] of sources) {
     if (!category) continue;
 
     for (const modelId of modelIds) {
