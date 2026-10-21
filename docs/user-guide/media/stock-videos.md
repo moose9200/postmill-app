@@ -50,4 +50,4 @@ current preview.
 
 ---
 
-> Verified against v1.3.0
+> Verified against v1.2.0

@@ -60,11 +60,6 @@ caveats:
 - **Background jobs** run on Inngest, which handles its own concurrency/idempotency — they
   are not duplicated per replica.
 - **Collaboration websocket** is **not** multi-replica-safe by default — see below.
-- **Designer video renders** download a design's remote media into the rendering replica's
-  temp directory, and the headless renderer fetches it back through `NEXT_PUBLIC_BACKEND_URL`.
-  That URL must reach the replica running the render — behind a load balancer that spreads
-  requests across replicas, those fetches can land on a replica without the files and the render
-  fails.
 
 ## Collaboration single-instance constraint
 

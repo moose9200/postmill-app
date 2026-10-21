@@ -93,6 +93,13 @@ Docker Compose environment, or deployment config, then redeploy if needed.
   - Cloudflare R2 and MediaLocker configurations need a **Public URL** to pass the connection test. Existing configurations without one keep serving their files but report a health error, so add the Public URL in **Settings → File Storage**.
 - **Member role.** The boot-time seeder grants the member role `media:update` and `media:delete`; no manual step is needed.
 - **Sora removed.** The Sora studio (`/media/sora`) is gone because OpenAI retired the API.
+- **Role checks tightened.** Routes that were only billing-gated now also check the member's role, so each role gets exactly what it is defined to allow:
+  - **Viewers** (read-only) can no longer use the Postmill agent, AI media generation, custom font upload/delete, or create autoposts or webhooks.
+  - **Members** can no longer create autoposts or webhooks, matching the update and delete routes they never had.
+  - Owners, admins and editors are unaffected.
+- **MCP `allowedScopes` is now a ceiling.** It limits the scopes a token can use instead of being required of every token, so read-only tokens keep working when write scopes are allowed.
+- **Bulk CSV import validates every row.** Rows for channels that need settings a CSV can't carry, such as a Pinterest board or a YouTube title, now fail at import instead of at publish. `media_url` is imported into the media library and attached.
+- **`tools/db/postmill-migrate.sh`** now runs `prisma migrate deploy` with the Prisma CLI bundled in the image, against the `postmill` container. It no longer runs `db push --accept-data-loss`.
 
 ## v1.2.0
 
