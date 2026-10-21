@@ -750,10 +750,14 @@ export class AiDesignerGateway
     }
 
     // CSRF before any DB work — it needs only the handshake, and a cross-site
-    // attacker must be rejected without spending user/org lookups. This is the
-    // one check NOT_SECURED may bypass — matching HTTP, where the dev toggle
-    // relaxes CSRF/helmet but never RBAC or billing.
-    if (!process.env.NOT_SECURED) {
+    // attacker must be rejected without spending user/org lookups. The only
+    // bypass is the dev-only NOT_SECURED toggle, and only when NODE_ENV is
+    // `development` (same gate as main.ts's helmet/cookie relaxation); a stray
+    // NOT_SECURED in production never disables it. RBAC and billing are never
+    // bypassed.
+    const notSecuredDev =
+      !!process.env.NOT_SECURED && process.env.NODE_ENV === 'development';
+    if (!notSecuredDev) {
       const csrfCookie = cookies[CSRF_COOKIE];
       const csrfToken = (handshake.auth as any)?.csrfToken as
         | string

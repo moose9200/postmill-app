@@ -31,7 +31,7 @@ MCP startup is gated by feature flags: `DEV_DISABLE_MCP` and `DEV_DISABLE_AGENT`
 Token resolution uses a two-layer strategy:
 
 1. **Token type detection**: tokens starting with `pos_` resolve via `OAuthService.getOrgByOAuthToken`. All other tokens resolve as per-user API keys (`ApiKeysService.findActiveByHash`).
-2. **Scope enforcement**: via `@reaatech/a2a-reference-auth` `AuthStrategy`. The resolved identity is checked against required scopes.
+2. **Scope enforcement**: via `@reaatech/a2a-reference-auth` `AuthStrategy`. The resolved identity must hold `mcp:read`; its scopes are capped by `mcpsettings.allowedScopes` (below).
 
 ### Scopes
 
@@ -43,7 +43,7 @@ Token resolution uses a two-layer strategy:
 
 For API keys, `mcp:posts:write` is granted only when the user's role in the org is `owner` or `admin`. For OAuth tokens, the granted scopes come from the authorization's `scope` field, intersected with the known scopes, and floored at `mcp:read`.
 
-Admin-configured `mcpsettings.allowedScopes` are merged with the defaults.
+Admin-configured `mcpsettings.allowedScopes` is an allow-list **ceiling**, not a requirement: every request must hold only `mcp:read`, and any scope a token carries outside `allowedScopes` is stripped before per-tool scope checks (so a write tool still needs `mcp:posts:write`, and only when `allowedScopes` permits it). `mcp:read` is always within the ceiling; when `allowedScopes` is unset there is no ceiling.
 
 ## Subscription gating
 

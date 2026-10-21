@@ -178,6 +178,20 @@ enforcement point (exact file/symbol). Cross-refs: `agents/backend.md`,
   `copilot.controller.ts` contains no `NOT_SECURED` reference — the toggle relaxes
   cookie/helmet transport flags (and selected dev shortcuts elsewhere); it is not a
   general middleware bypass. Dev/local only, regardless.
+- The AI Designer Socket.IO handshake (`apps/backend/src/api/gateways/ai-designer.gateway.ts`
+  `_authenticate`) skips its CSRF check under the same `NOT_SECURED && NODE_ENV ===
+  'development'` gate — never on `NOT_SECURED` alone (pinned by `ai-designer.gateway.spec.ts`).
+  Any new `NOT_SECURED` branch must use this dev-only form.
+
+## MCP scopes — `allowedScopes` is a ceiling
+
+- Every MCP request must hold `mcp:read` (`DEFAULT_MCP_SCOPES`); that is the only required
+  scope. `mcpsettings.allowedScopes` is an allow-list **ceiling**: `createMcpScopeStrategy`
+  (`libraries/nestjs-libraries/src/chat/start.mcp.ts`) strips any token scope outside it
+  before the scopes reach `access.scopes`, which the per-tool gate (`requireWrite` in
+  `chat/tools/tool.helpers.ts`) checks. `mcp:read` is always inside the ceiling; unset
+  `allowedScopes` = no ceiling. Never turn `allowedScopes` back into a required set — that
+  locks read-only `pos_` tokens and non-admin API keys out of MCP entirely.
 
 ## Sentry / logs — no secrets or PII
 
@@ -205,6 +219,12 @@ enforcement point (exact file/symbol). Cross-refs: `agents/backend.md`,
   HTTP **403** (`org-rbac.guard.ts:98`). Question: "is this member allowed?"
 - `User.isSuperAdmin` bypasses RBAC (`org-rbac.guard.ts:75`) — **not** billing. A route
   may carry both decorators.
+- `@CheckPolicies` alone is **not** RBAC: a viewer on a paid plan passes it. `OrgRbacGuard`
+  is allow-by-default, so every org-resource mutation needs `@RequirePermission` (or a
+  justified `INTENTIONALLY_UNGATED` entry) — enforced by
+  `apps/backend/src/api/routes/__tests__/rbac-coverage.spec.ts`, which counts only
+  `REQUIRE_PERMISSION` metadata. `POST /copilot/agent` requires `posts:create` because its
+  Mastra tools run in `access.mode: 'user'`, which permits writes.
 
 ## Channel credentials — org config wins, env fallback is channels-only
 

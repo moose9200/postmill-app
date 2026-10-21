@@ -63,41 +63,76 @@ vi.mock('./oauth-types', () => ({
 }));
 
 import { createMcpScopeStrategy, requireScopes, mapPersistedScopes } from './start.mcp';
+import { requireWrite } from './tools/tool.helpers';
+
+// The per-tool write gate reads `access.scopes` — the exact set the entrypoints
+// pass through from the strategy's authResult.
+const mcpToolContext = (scopes: string[] | undefined) => ({
+  requestContext: new Map([['access', JSON.stringify({ mode: 'mcp', scopes })]]),
+});
 
 describe('startMcp auth helpers', () => {
-  it('does not grant configured scopes to a token that does not have them', async () => {
-    const strategy = createMcpScopeStrategy(
-      vi.fn().mockResolvedValue({
-        auth: { id: 'org-1' },
-        scopes: ['mcp:read'],
-      }),
-      { allowedScopes: ['mcp:admin'] },
-    );
+  const authenticate = (tokenScopes: string[], mcpSettings: any) =>
+    createMcpScopeStrategy(
+      vi.fn().mockResolvedValue({ auth: { id: 'org-1' }, scopes: tokenScopes }),
+      mcpSettings,
+    ).authenticate({ headers: { authorization: 'Bearer token' } } as any);
 
-    const result = await strategy.authenticate({
-      headers: { authorization: 'Bearer token' },
-    } as any);
-
-    expect(result.authenticated).toBe(false);
-    expect(result.scopes).toEqual(['mcp:read']);
-    expect(result.reason).toContain('mcp:admin');
-  });
-
-  it('authenticates when the resolved token scopes satisfy configured requirements', async () => {
-    const strategy = createMcpScopeStrategy(
-      vi.fn().mockResolvedValue({
-        auth: { id: 'org-1' },
-        scopes: ['mcp:read', 'mcp:posts:write'],
-      }),
-      { allowedScopes: ['mcp:posts:write'] },
-    );
-
-    const result = await strategy.authenticate({
-      headers: { authorization: 'Bearer token' },
-    } as any);
+  it('accepts a read-only token when allowedScopes includes write/admin scopes', async () => {
+    // allowedScopes is a ceiling, not a requirement — a read-only pos_ token or a
+    // member's API key must still connect when the admin allows write scopes.
+    const result = await authenticate(['mcp:read'], {
+      allowedScopes: ['mcp:read', 'mcp:posts:write', 'mcp:admin'],
+    });
 
     expect(result.authenticated).toBe(true);
     expect(result.principal).toBe('org-1');
+    expect(result.scopes).toEqual(['mcp:read']);
+  });
+
+  it('does not grant configured scopes to a token that does not have them', async () => {
+    const result = await authenticate(['mcp:read'], { allowedScopes: ['mcp:posts:write'] });
+
+    // The token never held mcp:posts:write, so the write-tool gate still rejects it.
+    expect(result.authenticated).toBe(true);
+    expect(result.scopes).not.toContain('mcp:posts:write');
+    expect(() => requireWrite(mcpToolContext(result.scopes))).toThrow(/mcp:posts:write/);
+  });
+
+  it('keeps a write scope the token holds when allowedScopes permits it', async () => {
+    const result = await authenticate(['mcp:read', 'mcp:posts:write'], {
+      allowedScopes: ['mcp:posts:write'],
+    });
+
+    expect(result.authenticated).toBe(true);
+    expect(result.scopes).toEqual(expect.arrayContaining(['mcp:read', 'mcp:posts:write']));
+    expect(() => requireWrite(mcpToolContext(result.scopes))).not.toThrow();
+  });
+
+  it('strips a scope the token holds that is outside allowedScopes', async () => {
+    const result = await authenticate(['mcp:read', 'mcp:posts:write'], {
+      allowedScopes: ['mcp:read'],
+    });
+
+    expect(result.authenticated).toBe(true);
+    expect(result.scopes).toEqual(['mcp:read']);
+    expect(() => requireWrite(mcpToolContext(result.scopes))).toThrow(/mcp:posts:write/);
+  });
+
+  it('applies no ceiling when allowedScopes is not configured', async () => {
+    const result = await authenticate(['mcp:read', 'mcp:posts:write'], {});
+
+    expect(result.authenticated).toBe(true);
+    expect(result.scopes).toEqual(['mcp:read', 'mcp:posts:write']);
+  });
+
+  it('still requires mcp:read', async () => {
+    const result = await authenticate(['mcp:posts:write'], {
+      allowedScopes: ['mcp:read', 'mcp:posts:write'],
+    });
+
+    expect(result.authenticated).toBe(false);
+    expect(result.reason).toContain('mcp:read');
   });
 
   it('requires every requested scope', () => {

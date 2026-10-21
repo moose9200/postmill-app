@@ -24,6 +24,7 @@ import { MastraService } from '@postmill-ai/nestjs-libraries/chat/mastra.service
 import { Request, Response } from 'express';
 import { RequestContext } from '@mastra/core/di';
 import { CheckPolicies } from '@postmill-ai/backend/services/auth/permissions/permissions.ability';
+import { RequirePermission } from '@postmill-ai/backend/services/auth/rbac/require-permission.decorator';
 import { AuthorizationActions, Sections } from '@postmill-ai/backend/services/auth/permissions/permission.exception.class';
 import { AIModelProvider } from '@postmill-ai/nestjs-libraries/ai/ai-model.provider';
 import { BudgetExceeded, GuardrailViolation } from '@postmill-ai/nestjs-libraries/ai/governance/errors';
@@ -150,6 +151,9 @@ export class CopilotController {
 
   @Post('/agent')
   @CheckPolicies([AuthorizationActions.Create, Sections.MCP])
+  // The agent's tools run in `access.mode: 'user'`, which grants writes
+  // (schedulePost, deletePost, …) — so the caller must hold posts:create.
+  @RequirePermission('posts', 'create')
   async agent(
     @Req() req: Request,
     @Res() res: Response,
