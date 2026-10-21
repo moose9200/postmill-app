@@ -4,7 +4,7 @@ Postmill ships a pluggable, multi-provider AI layer. Every AI surface resolves i
 
 > For the end-user view, see [AI Tools](../user-guide/ai-tools.md).
 
-> Verified against v1.2.0
+> Verified against v1.3.0
 
 ---
 
@@ -117,14 +117,14 @@ Tenants may configure multiple providers (`enabled` per row); one row per org is
 
 Media generation is a separate, pluggable per-org system in `libraries/nestjs-libraries/src/media/`:
 
-- **`MediaProviderAdapter`** interface — each adapter declares `identifier`, `name`, a capability matrix (`image`/`video`/`audio`/`avatar`/`tts`/`stt`/`upscale`/`bgRemove`/`inpaint`), and implements generation per media type.
-- **Registered adapters** — `fal`, `openai`, `elevenlabs`, `heygen`, `runway`, `black-forest-labs`, `vertex`, `replicate`, `stability-ai`, `tavus`, `d-id`, `hedra`, `minimax`, `deepgram`, `luma`, `ltx`, `suno`, `qwen`, `wan`, `higgsfield`, `genviral`, `reelfarm`, `sora`, `google-ai`, `recraft`, `ideogram`, `leonardo`, `togetherai`, `siliconflow`, `groq`, `openrouter`, `fireworks`, `deepinfra`, `gateway`, `bedrock`, `azure`.
+- **`MediaProviderAdapter`** interface — each adapter declares `identifier`, `name`, a capability matrix (`image`/`video`/`audio`/`avatar`/`tts`/`stt`/`upscale`/`bgRemove`/`inpaint`/`outpaint`), and implements generation per media type.
+- **Registered adapters** — `fal`, `openai`, `elevenlabs`, `heygen`, `runway`, `black-forest-labs`, `vertex`, `replicate`, `stability-ai`, `tavus`, `did`, `hedra`, `minimax`, `deepgram`, `luma`, `ltx`, `suno`, `qwen`, `wan`, `higgsfield`, `genviral`, `reelfarm`, `google`, `recraft`, `ideogram`, `leonardo`, `togetherai`, `siliconflow`, `groq`, `openrouter`, `fireworks`, `deepinfra`, `gateway`, `bedrock`, `azure`, `xai`.
 - **Delivery semantics** — images are synchronous; video/audio/avatar are asynchronous, tracked in `AIMediaJob` with webhook-preferred completion and a `pollJob` fallback.
 - **`MediaProviderConfig`** — per-org config row with encrypted credentials and a storage binding (`storageProviderId`, `storageRootFolderId`).
 - **API** — `/settings/media` routes are gated with `@RequirePermission('media-config', 'manage')`.
 - **Auto-config** — OpenAI and MiniMax credentials are live-linked between AI provider config and `MediaProviderConfig`.
 
-`AiMediaService` (`libraries/nestjs-libraries/src/ai/governance/media.service.ts`) is the internal wrapper that routes image/video/TTS/STT/upscale/bg-remove/inpaint operations through the media provider system. Media operations are credit-gated (`ai_images`, `ai_videos`). C2PA provenance signing is available for visual operations, and a cost ledger records per-job USD estimates in `AIMediaJob.costUsd`.
+`AiMediaService` (`libraries/nestjs-libraries/src/ai/governance/media.service.ts`) is the internal wrapper that routes image/video/TTS/STT/upscale/bg-remove/inpaint/outpaint operations through the media provider system. Media operations are credit-gated (`ai_images`, `ai_videos`). C2PA provenance signing is available for visual operations, and a cost ledger records per-job USD estimates in `AIMediaJob.costUsd`.
 
 ---
 

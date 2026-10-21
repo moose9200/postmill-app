@@ -197,4 +197,4 @@ You can import multiple posts at once via CSV. Each row is validated and created
 and per-row successes, warnings, and errors are reported. Failed rows do not block successful rows. See [Bulk Import](./bulk-import.md)
 for details.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

@@ -7,12 +7,12 @@ single place you browse, organise, and reuse everything you've generated or uplo
 
 ## Nav structure
 
-The `/media` sidebar groups 46 tools into three sections:
+The `/media` sidebar groups 45 tools into three sections:
 
 | Section | Contents |
 |---|---|
 | **Platform** | [Designer](./designer) (manual Konva canvas/timeline editor) and [AI Designer](./ai-designer) (chat-driven canvas assistant). |
-| **Providers** | 38 generation studios, one per provider — text-to-image/video/audio models, AI avatar video, music, and more. |
+| **Providers** | 37 generation studios, one per provider — text-to-image/video/audio models, AI avatar video, music, and more. |
 | **Content Pack** | 6 stock browsers — Stock Photos, Stock Videos, Vectors, Stickers, Stock Audio, Icons. |
 
 Provider studios that aren't configured yet stay visible but dimmed; clicking one opens its own
@@ -80,15 +80,15 @@ of riding the generic Studio Kit form:
 Genviral · Kling · Higgsfield · LTX Studio · Luma · MiniMax · Pika · Qwen · Together AI · Runway ·
 Suno · Wan · SiliconFlow · Groq · OpenRouter · Fireworks AI · DeepInfra · xAI Grok · Vercel AI
 Gateway · Amazon Bedrock · Azure OpenAI · Google AI Studio · Google Vertex · Black Forest Labs ·
-Stability AI · Recraft · Ideogram · Leonardo.ai · OpenAI · Sora · ElevenLabs · D-ID · Hedra · Tavus
+Stability AI · Recraft · Ideogram · Leonardo.ai · OpenAI · ElevenLabs · D-ID · Hedra · Tavus
 
 **Content Pack:** Stock Photos · Stock Videos · Vectors · Stickers · Stock Audio · Icons
 
 Most provider studios are configured under **Settings → Media** — see [Settings](../settings) for
 credential setup. Some studios reuse a key you may already hold elsewhere: the *universal-credential*
-studios (Qwen, Google AI) accept the same key configured at **Settings → AI**, and a few ride another
-provider's credential entirely (Sora uses your OpenAI key, Pika uses your fal key). Each studio's own
-page notes where its credential lives.
+studios (Qwen, Google AI) accept the same key configured at **Settings → AI**, and Pika rides another
+provider's credential entirely (your fal key). Each studio's own page notes where its credential
+lives.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

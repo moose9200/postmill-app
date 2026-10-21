@@ -22,9 +22,9 @@ Video jobs are submitted to the fal.ai queue and tracked in the **Render Queue**
 
 - The studio uses the **fal.ai** key and queue infrastructure; Pika itself is identified by the full fal endpoint id (e.g. `fal-ai/pika/v2.2/text-to-video`).
 - fal job ids are namespaced as `<model>::<request_id>` so the poll path can route back to the correct model endpoint.
-- Video completions rely on polling; there is no provider webhook.
+- When your backend has a public HTTPS URL, fal.ai calls back on completion; otherwise (and as a fallback) completions rely on the shared media-jobs poll cron.
 - The `model` field is lifted out of `input` by the shared Studio Kit backend; all other native fal/Pika parameters ride through unchanged.
 - **Pikaffects** do not require a prompt; the effect alone drives the transformation, with an optional prompt for extra guidance.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

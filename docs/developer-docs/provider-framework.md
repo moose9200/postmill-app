@@ -1,6 +1,6 @@
 # Provider framework
 
-> Verified against v1.2.0
+> Verified against v1.3.0
 
 Postmill integrates with external services across AI, media generation, social channels, short-links, VPN egress, storage, email, auth, content packs, chat comms, and payments. The **unified provider framework** replaces the previous collection of bespoke registries with a single `ProviderKernel` and a consistent package-per-provider model.
 

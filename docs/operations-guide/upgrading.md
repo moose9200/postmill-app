@@ -31,8 +31,8 @@ docker exec postmill-postgres pg_dump -U postmill-user postmill-db-local > pre_u
 # docker-compose.yaml or your deployment config
 services:
   postmill:
-    image: ghcr.io/postmill-ai/postmill-app:v1.2.0  # pin a specific tag, not :latest
-    # image: postmillai/postmill-app:v1.2.0         # the same image on Docker Hub
+    image: ghcr.io/postmill-ai/postmill-app:v1.3.0  # pin a specific tag, not :latest
+    # image: postmillai/postmill-app:v1.3.0         # the same image on Docker Hub
 ```
 
 Pinning specific tags gives you a known rollback target. Using `:latest` means every restart may
@@ -76,6 +76,29 @@ CHANGELOG carefully, take a backup, and follow the expand-contract path document
 
 Check the CHANGELOG for any new env vars required by the release. Add them to your `.env` file,
 Docker Compose environment, or deployment config, then redeploy if needed.
+
+## v1.3.0
+
+- **Migrations.** v1.3.0 adds three migrations. None are destructive and none need `ALLOW_DESTRUCTIVE_SCHEMA`.
+  - `20261015201234_design_template_folders` adds the `DesignTemplateFolder` table and a nullable `DesignTemplate.folderId`.
+  - `20261017225024_design_versions` adds the `DesignVersion` table.
+  - `20261020200424_drop_null_model_media_defaults` is a data-only, idempotent delete. It removes media model defaults that were stored without a model; those organizations fall back to an automatic pick.
+- **No new required env vars.** Optional tunables are listed in [Configuration](./configuration.md) and [Video rendering](./video-rendering.md): `VIDEO_RENDER_CAPTURE_PAGES`, `VIDEO_RENDER_FRAME_TIMEOUT_MS`, `BLANK_DESIGN_RETENTION_DAYS`, `DESIGN_VERSIONS_KEEP_AUTO`, `DESIGN_VERSIONS_KEEP_NAMED` and `AI_DESIGNER_SCENE_VIDEO_TIMEOUT_MS`.
+- **Rebuild the render image when using Podman renders.** The frame-capture code changed, so a stale `localhost/postmill-render:latest` keeps the old behaviour. Video renders can now run up to 180 s. Long renders capture with several Chromium pages, which uses more RAM; set `VIDEO_RENDER_CAPTURE_PAGES=1` for sequential capture. Containers no longer use swap, so size `VIDEO_RENDER_MEMORY` accordingly. The backend downloads remote clips before a render, so it needs temp-dir space and outbound HTTPS. See [Video rendering](./video-rendering.md).
+- **Reverse-proxy body size.** Design saves can send JSON bodies up to 50 MB. A proxy with a smaller body limit returns 413 on large designs. The bundled nginx allows 2 GB.
+- **Storage.**
+  - New cloud storage configurations mount automatically once their connection test passes.
+  - Moving a file to a folder on another provider copies its bytes.
+  - Cloudflare R2 and MediaLocker configurations need a **Public URL** to pass the connection test. Existing configurations without one keep serving their files but report a health error, so add the Public URL in **Settings → File Storage**.
+- **Member role.** The boot-time seeder grants the member role `media:update` and `media:delete`; no manual step is needed.
+- **Sora removed.** The Sora studio (`/media/sora`) is gone because OpenAI retired the API.
+- **Role checks tightened.** Routes that were only billing-gated now also check the member's role, so each role gets exactly what it is defined to allow:
+  - **Viewers** (read-only) can no longer use the Postmill agent, AI media generation, custom font upload/delete, or create autoposts or webhooks.
+  - **Members** can no longer create autoposts or webhooks, matching the update and delete routes they never had.
+  - Owners, admins and editors are unaffected.
+- **MCP `allowedScopes` is now a ceiling.** It limits the scopes a token can use instead of being required of every token, so read-only tokens keep working when write scopes are allowed.
+- **Bulk CSV import validates every row.** Rows for channels that need settings a CSV can't carry, such as a Pinterest board or a YouTube title, now fail at import instead of at publish. `media_url` is imported into the media library and attached.
+- **`tools/db/postmill-migrate.sh`** now runs `prisma migrate deploy` with the Prisma CLI bundled in the image, against the `postmill` container. It no longer runs `db push --accept-data-loss`.
 
 ## v1.2.0
 
@@ -207,4 +230,4 @@ If an upgrade causes issues:
 - [Backup & Retention](./backup-and-retention.md) — backup before upgrade
 - [Developer Docs: Database](../developer-docs/database.md) — schema management and safety
 
-> Verified against v1.2.0
+> Verified against v1.3.0

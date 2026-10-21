@@ -27,4 +27,4 @@ All three tabs follow the standard [Media Studios flow](./index.md): jobs appear
 - Source image and audio media fields are resolved server-side to provider-reachable URLs.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

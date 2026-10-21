@@ -1,6 +1,6 @@
 # Provider versions catalog
 
-> Verified against v1.2.0
+> Verified against v1.3.0
 
 This page lists every provider currently registered in the unified provider framework, grouped by domain. All current providers are at version `v1`.
 
@@ -11,7 +11,6 @@ The catalog is metadata-driven: each provider package exports `src/v1/metadata.t
 A few branded media studios ride another provider's adapter:
 
 - **Kling** and **Pika** studios use the `fal` (`fal.ai`) adapter.
-- **Sora** uses the `openai` adapter.
 
 The table below shows each provider's registered domains. A provider that appears in both `ai` and `media` can share a single org credential across both surfaces.
 
@@ -38,7 +37,7 @@ The table below shows each provider's registered domains. A provider that appear
 | Moonshot Kimi | `kimi` | ai | direct; low-reasoning, high-reasoning, workflow, vision |
 | Mistral AI | `mistral` | ai | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
 | NVIDIA Nemotron | `nvidia` | ai | direct; low-reasoning, high-reasoning, workflow |
-| OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-video, text-to-image, text-to-speech, text-to-video, video-caption |
+| OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-speech, video-caption |
 | OpenAI Compatible | `openai-compatible` | ai | hub; low-reasoning, high-reasoning, workflow, vision; bring-your-own-endpoint (Base URL is a required, visible setting) |
 | OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, text-to-image |
 | Perplexity | `perplexity` | ai | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
@@ -121,7 +120,7 @@ The table below shows each provider's registered domains. A provider that appear
 | LTX Studio | `ltx` | media | direct; image-to-video, text-to-video |
 | Luma | `luma` | media | direct; image-to-video, text-to-video |
 | MiniMax | `minimax` | ai, media | direct; low-reasoning, high-reasoning, workflow; image-slide, image-to-video, text-to-video |
-| OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-video, text-to-image, text-to-speech, text-to-video, video-caption |
+| OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-speech, video-caption |
 | OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, text-to-image |
 | Qwen | `qwen` | ai, media | direct; image-slide, image-to-video, text-to-image, text-to-video |
 | Recraft | `recraft` | media | direct; image-slide, text-to-image |

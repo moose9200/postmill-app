@@ -22,10 +22,10 @@ Video jobs submit to MiniMax and appear in the **Render Queue**. When a job comp
 
 ## Caveats
 
-- All three tabs produce **video**; generations are asynchronous and complete via polling.
+- All three tabs produce **video**; generations are asynchronous. When your backend has a public HTTPS URL, MiniMax calls back on completion; otherwise (and as a fallback) the media-jobs poll cron completes the job.
 - The **Subject Reference** tab's `subject_image` field is folded into MiniMax's `subject_reference` array by the adapter.
 - MiniMax returns a `task_id`, then a separate `file_id` once rendering succeeds; the adapter handles the extra retrieve step before the final download URL is available.
 - Native parameters such as `prompt_optimizer` ride straight through to the provider request body.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

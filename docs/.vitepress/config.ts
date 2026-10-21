@@ -98,7 +98,6 @@ export default defineConfig({
                 { text: 'Replicate', link: '/user-guide/media/replicate' },
                 { text: 'Runway', link: '/user-guide/media/runway' },
                 { text: 'SiliconFlow', link: '/user-guide/media/siliconflow' },
-                { text: 'Sora', link: '/user-guide/media/sora' },
                 { text: 'Stability AI', link: '/user-guide/media/stability-ai' },
                 { text: 'Suno', link: '/user-guide/media/suno' },
                 { text: 'Tavus', link: '/user-guide/media/tavus' },

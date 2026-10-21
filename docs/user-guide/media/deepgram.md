@@ -70,4 +70,4 @@ The result panel shows an editable transcript and a timecoded segment list. The 
 
 ---
 
-> Verified against v1.2.0
+> Verified against v1.3.0
