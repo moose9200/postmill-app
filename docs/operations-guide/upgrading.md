@@ -118,25 +118,17 @@ v1.0.0 ships with zero legacy support. Note these points when upgrading into it:
 
 ## Manual schema sync
 
-If you need an in-place schema sync outside the normal migration flow, use the helper script:
+From a source checkout, the helper script runs step 5's `prisma migrate deploy` inside the running
+container for you, using the Prisma CLI already installed in the image (no download):
 
 ```bash
-# Safe additive sync (refuses data loss)
+# Container name defaults to `postmill` (docker-compose.yaml); override with POSTMILL_CONTAINER
 ./tools/db/postmill-migrate.sh
-
-# Destructive — back up first!
-./tools/db/postmill-migrate.sh --accept-data-loss
 ```
 
-Or run directly in the container:
-
-```bash
-docker exec postmill npx --yes prisma@6.5.0 db push \
-  --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma
-```
-
-> **Always back up before `--accept-data-loss`.** See [Backup & Retention](./backup-and-retention.md)
-> and [Database schema safety](../developer-docs/database.md).
+> **Back up before applying a release that ships a destructive migration.** See
+> [Backup & Retention](./backup-and-retention.md) and
+> [Database schema safety](../developer-docs/database.md).
 
 ### Schema change rules
 

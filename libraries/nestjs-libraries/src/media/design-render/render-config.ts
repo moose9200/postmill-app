@@ -53,8 +53,9 @@ export const MAX_CAPTURE_PAGES = 8;
  * wins when set. When unset the default is `min(2, max(1, floor(cpus/2)))` —
  * parallel capture is re-enabled with a conservative cap after the stall
  * hardening: page setup (goto + initial preload) runs SEQUENTIALLY so N pages
- * no longer spike RSS at once, video preload is lazy under parallel capture
- * (fetched on demand per frame), wedged video seeks time out instead of
+ * no longer spike RSS at once, each page preloads its images AND videos
+ * eagerly during that setup (a hidden headless page cannot start a media
+ * pipeline, so per-frame lazy loading would park), wedged video seeks time out instead of
  * hanging a stride, each frame's evaluate+screenshot runs under a per-frame
  * watchdog (see getFrameTimeoutMs), and a browser disconnect / target crash
  * fails the capture fast instead of burning the whole render budget.

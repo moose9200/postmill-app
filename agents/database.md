@@ -19,7 +19,7 @@ against the production DB at boot, so every schema change must be backward-compa
 | `pnpm run prisma-generate` | Regenerate the Prisma client. Runs automatically via `postinstall`; run it again after every schema edit. |
 | `pnpm run prisma-migrate-dev` | `migrate dev` — authors a new migration from your schema edit and applies it to the local dev DB. **It does not git-commit; commit the generated `migrations/<ts>_<name>/migration.sql` yourself.** |
 | `pnpm run prisma-schema-diff` | Prints the SQL diff between `$DATABASE_URL` and `schema.prisma` (review before committing). |
-| `pnpm run prisma-schema-check` | Pipes that diff through the destructive guard `tools/db/schema-destructive-guard.mjs`. |
+| `pnpm run prisma-schema-check` | Pipes that diff through the destructive guard `tools/db/schema-destructive-guard.mjs` (via `tools/db/schema-check.sh`); `-- --file x.sql` guards a saved diff instead. |
 | `pnpm run prisma-migrate-deploy` | `migrate deploy` — applies committed migrations. |
 | `pnpm run prisma-migrate-deploy-safe` | `node tools/db/migrate-deploy-safe.mjs` — see below. |
 | `pnpm run prisma-migrate-resolve` | `migrate resolve` — mark a failed/rolled-back migration in `_prisma_migrations`. |
@@ -67,7 +67,7 @@ Runs against a service container `postgres:17-alpine` (`postmill-local`/`postmil
 ## migrate-deploy-safe vs postmill-migrate.sh
 
 - **`tools/db/migrate-deploy-safe.mjs`** (`pnpm run prisma-migrate-deploy-safe`; used by `pm2-run` and CI): `migrate deploy` plus one recovery — on a DB created by the old `db push` workflow (tables present, no `_prisma_migrations` history) a bare deploy aborts with **P3005 "database schema is not empty"**; the wrapper detects P3005, baselines `0_init` via `migrate resolve --applied 0_init`, and re-deploys. One-time, idempotent. Sharp edge: the baseline marks `0_init` applied **without verifying the live DB matches it** — valid only because `0_init` is generated from the current schema and any db-push DB was pushed from that same schema. For a DB pushed from an *older* schema, use `pnpm run prisma-reset` instead.
-- **`tools/db/postmill-migrate.sh`**: manual, in-place `prisma db push` **inside the running Docker container** (`POSTMILL_CONTAINER`, default `postmill-app`). Refuses data loss unless passed `--accept-data-loss` (back up first). It pushes whatever schema is baked into the running image; the permanent path is edit → commit → tag → CI image → redeploy. Not part of the normal dev workflow.
+- **`tools/db/postmill-migrate.sh`**: operator helper that runs `prisma migrate deploy` **inside the running Docker container** (`POSTMILL_CONTAINER`, default `postmill` — the compose `container_name`) via the image's own `node_modules/.bin/prisma` (the runtime image has no pnpm). It applies the migrations baked into the running image; the container applies none on boot. No P3005 baseline recovery (that is `migrate-deploy-safe`). Not part of the normal dev workflow.
 
 ## Data backfills (blob → row, one-time)
 

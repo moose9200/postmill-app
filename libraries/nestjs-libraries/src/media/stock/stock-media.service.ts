@@ -251,7 +251,18 @@ export class StockMediaService {
       const video = (await res.json()) as any;
       if (!video || !video.id) return [];
 
-      return this.searchVideosFree(video.url?.split('/').pop() || '', 1).then((r) => r.results);
+      // Pexels video page URLs look like
+      // `https://www.pexels.com/video/aerial-view-of-a-forest-1448735/` — the
+      // trailing slash must go before taking the last segment, and the numeric
+      // id suffix is dropped so the slug reads as a search query.
+      const slug =
+        video.url
+          ?.replace(/\/+$/, '')
+          .split('/')
+          .pop()
+          ?.replace(/-\d+$/, '')
+          .replace(/-/g, ' ') || '';
+      return this.searchVideosFree(slug, 1).then((r) => r.results);
     } catch (err) {
       // Related items are a nice-to-have — a network blip must not 500 the modal.
       this._logger.warn(`Pexels related-videos lookup failed: ${(err as Error).message}`);

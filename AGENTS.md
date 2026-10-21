@@ -164,7 +164,7 @@ Flags: `DEV_DISABLE_AI`, `DEV_DISABLE_MCP`, `DEV_DISABLE_MEDIA`, `DEV_DISABLE_SH
 `DEV_DISABLE_EMAIL`, `DEV_DISABLE_VIDEO`, `DEV_DISABLE_AGENT`, `DEV_DISABLE_CRON`,
 `DEV_DISABLE_SENTRY`, `DEV_DISABLE_OPENTELEMETRY`, `DEV_DISABLE_COMMS`.
 
-The backend dev script sets `--max-old-space-size=2048`. Frontend dev variants: `pnpm run
+The backend dev script sets `--max-old-space-size=6144`. Frontend dev variants: `pnpm run
 dev:frontend` (Turbopack), `pnpm run dev:webpack` (fallback), `pnpm run analyze` (bundle report).
 
 ## Golden rules

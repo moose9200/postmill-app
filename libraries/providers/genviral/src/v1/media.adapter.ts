@@ -27,7 +27,7 @@ import {
 //   GET  /studio/videos/{id}     → { ok, data: { status, output_url } }   status: processing|succeeded|failed
 //   GET  /studio/models          → catalog for the dynamic model dropdown
 // `model_id` is required and chosen from the live catalog (routed to underlying providers — fal /
-// Sora / Seedance, etc.). No completion webhook → relies on the media-jobs-poll cron (like Runway).
+// Seedance, etc.). No completion webhook → relies on the media-jobs-poll cron (like Runway).
 //
 // Built source-grounded WITHOUT a live key: the `/studio/models` response shape is mapped
 // defensively (id/name variants) and the model combobox accepts a typed id, so an unexpected
