@@ -56,6 +56,7 @@ import { ApplyOpsDto } from '@postmill-ai/nestjs-libraries/dtos/design/apply-ops
 import { RenderProgressDto } from '@postmill-ai/nestjs-libraries/dtos/design/render-progress.dto';
 import { reportRenderProgress, renderPayloadKey } from '@postmill-ai/nestjs-libraries/media/design-render/render-progress';
 import { resolveRenderAsset, isSafeRenderAssetJobId, safeRenderAssetFileName } from '@postmill-ai/nestjs-libraries/media/design-render/render-assets';
+import { parseByteRange } from '@postmill-ai/nestjs-libraries/media/design-render/render-asset-files';
 import type { DesignerDoc } from '@postmill-ai/nestjs-libraries/media/design-render/design-render.types';
 import { DesignerDocService } from '@postmill-ai/nestjs-libraries/media/designer-doc/designer-doc.service';
 import type { DesignerDocOp } from '@postmill-ai/nestjs-libraries/media/designer-doc/designer-doc-ops.schema';
@@ -708,14 +709,13 @@ export class DesignRenderFrameController {
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'no-store');
 
-    const match = range?.match(/^bytes=(\d+)-(\d*)$/);
-    if (match) {
-      const start = Number(match[1]);
-      const end = match[2] ? Math.min(Number(match[2]), asset.size - 1) : asset.size - 1;
-      if (start >= asset.size || end < start) {
-        res.status(416).setHeader('Content-Range', `bytes */${asset.size}`).end();
-        return;
-      }
+    const byteRange = parseByteRange(range, asset.size);
+    if (byteRange.kind === 'unsatisfiable') {
+      res.status(416).setHeader('Content-Range', `bytes */${asset.size}`).end();
+      return;
+    }
+    if (byteRange.kind === 'partial') {
+      const { start, end } = byteRange;
       res.status(206);
       res.setHeader('Content-Range', `bytes ${start}-${end}/${asset.size}`);
       res.setHeader('Content-Length', end - start + 1);

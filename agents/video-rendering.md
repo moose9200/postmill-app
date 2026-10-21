@@ -281,6 +281,24 @@ client already uploads. The flow reuses the `design` pipeline end-to-end:
      names the preloader wrote, and supports single byte-ranges (Chromium seeks
      issue range requests). The frame page CSP keeps `https:` for legacy remote
      URLs and adds `'self'` for these same-origin assets (dev backends serve http).
+   - Render assets never cross the load balancer: the capture page loads from the
+     public `NEXT_PUBLIC_BACKEND_URL`, so on a multi-replica deployment an HTTP
+     render-asset request could land on a replica that never downloaded the files
+     (404 → failed render). `ChromiumFrameCaptureService.setupFramePage` therefore
+     enables Puppeteer request interception on EVERY route-mode capture page
+     (including the fresh page a wedged-frame retry builds) BEFORE navigating, and
+     `interceptRenderAssetRequest` answers this job's
+     `/media/designs/render-asset/:jobId/:file` requests straight from the LOCAL
+     assets dir (`RenderRouteOptions.assetsDir`, default
+     `renderWorkDir(jobId)/assets`; the Podman worker passes `/work/assets`). Malformed
+     job ids/file names 404 without touching the network; another job's asset and
+     a file missing locally `continue()` to the token-gated HTTP route, which stays
+     the fallback; every other request continues unchanged. Single byte-ranges get
+     206/416 via the shared `parseByteRange` (`render-asset-files.ts`, also used by
+     the route), and a range response is clamped to
+     `RENDER_ASSET_MAX_RESPONSE_BYTES` (8 MB) because `Fetch.fulfillRequest` ships
+     the body base64 in one CDP message — Chromium requests the next range.
+     `render-asset-files.ts` stays Redis/Nest-free (the worker imports it).
    - Fonts on the frame page: `buildFramePage` (`design-render/frame-page.ts`) injects
      catalog `<link>`s + org `@font-face` rules (`fontLinksForOutput`) AND explicit
      `document.fonts.load()` specs (`fontPreloadsForOutput`), awaited before
@@ -382,8 +400,9 @@ pipeline. `NEXT_PUBLIC_BACKEND_URL` / `FRONTEND_URL` feed `baseUrl()`.
   entry points are job-id-only by necessity but must re-scope immediately.
 - Merge clips are resolved from storage **host-side** (`resolveClipsToFiles`) — storage
   credentials never enter the render container. Design-render remote visual media is
-  likewise pre-downloaded host-side (`render-assets.ts`) and served to the container
-  through the token-gated `render-asset` route — never hand the container a remote
+  likewise pre-downloaded host-side (`render-assets.ts`) into the mounted workdir and
+  served to the in-container Chromium by request interception from `/work/assets`
+  (token-gated `render-asset` route as fallback) — never hand the container a remote
   clip URL to stream.
 - `VIDEO_RENDER_NETWORK=host` weakens container network isolation; treat as a security
   decision, not a convenience flag.
