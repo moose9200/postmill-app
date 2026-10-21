@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-21
+
+### Added
+
+- **Designer video mode** (timeline editor):
+  - **Timeline:** filmstrip thumbnails, snapping, markers, cursor-anchored zoom, resizable height, track lock and hide, and caption and sticker tracks.
+  - **Multi-track editing:** clips that would overlap are moved or rejected, and you can drag a clip below the last track to create a new one.
+  - **Editing power tools:** multi-select, ripple delete, a clip clipboard and multi-move.
+  - **Transitions:** fade (through black), dissolve, wipe, zoom and blur.
+  - **Animation:** a keyframe editor with property dots, copy/paste and a timeline lane; speed ramping; keyframable clip volume with pitch preservation.
+  - **Looks and blending:** a looks preset gallery and native blend modes.
+  - **Animation presets:** a real typewriter text reveal, and presets for shape, image and sticker clips.
+  - **Captions:** caption editing, transcribe-all, and SRT/VTT import and export.
+  - **Text and fonts:** a text section and custom fonts in the clip inspector.
+  - **Export:** 720p/1080p/4K and TikTok/Reels/Shorts/YouTube presets, plus loudness normalization (on by default).
+  - Renders of up to **180 seconds** (was 60), with parallel frame capture and real progress reporting.
+  - Video templates (mode badge, Video category, animated previews), video output variants that reflow the composition to the new format, and CTA lockups that land on the timeline.
+- **Designer image mode:**
+  - **Pages and history:** multi-page designs, and version history with named snapshots and an automatic snapshot before every restore.
+  - **Templates:** the gallery is organized by category, with custom template folders and paging.
+  - **Saving:** untitled designs autosave on first edit.
+  - **Fonts and color:** custom font upload (multi-weight, also used by server renders), and a full color picker with alpha.
+  - **Effects and text:** noise effect, grain and paper background textures, underline and strikethrough.
+  - **AI image expansion (outpainting):** **Expand Image (AI)…** through Replicate `flux-fill-pro`, served by the new `POST /media/outpaint`.
+- **Provider picker in the Designer's generate dialogs** (image, video, music, voiceover, avatar) with embeddable compact studios. This adds `GET /media/generation-providers?operation=` and an optional `provider` on `POST /media/text-to-speech`.
+- **AI Designer video sessions:**
+  - The start screen asks for Image or Video before the format lists.
+  - Video sessions produce video-ready designs and, when the organization has a video provider, a real generated scene video per variant.
+  - AI revise works on video designs, including regenerating media.
+  - Voiceover can be recorded in the browser.
+- **Setup wizard:** a beginner-friendly LLM step that explains API keys, links to each provider's key page, flags providers with a free tier, and shows the provider's actual validation error.
+- **Storage:** cloud storage configurations are mounted automatically when created, and moving a file to a different storage provider copies its bytes across.
+- Design previews are rendered server-side, and blank untitled designs older than 24 hours are pruned. `POST /media/designs/maintenance/regen-previews` repairs missing previews.
+
+### Changed
+
+- RBAC: the **member** system role now includes `media:update` and `media:delete`, so members can autosave and maintain the designs and files they create. The boot-time role seeder applies this to existing deployments; no migration is needed.
+- **The Sora studio was removed** because OpenAI retired the Sora video API. There are now 45 media tools: Designer, AI Designer, 37 provider studios and 6 stock browsers.
+- Replicate lists only models that can actually run. Kling text-to-video now uses `kling-v2.5-turbo-pro`, and video-to-video now uses `wan-2.7-videoedit`.
+- Storage: the connection test for Cloudflare R2 and MediaLocker now requires a **Public URL**, so stored files get absolute, downloadable URLs. Existing configurations without one keep serving their files but report a health error until a Public URL is added.
+- Video renders: the per-render time budget now scales with frame count and resolution instead of a flat timeout. Timed-out render containers are killed, and render containers no longer use swap. Podman deployments must rebuild the render image.
+- `DELETE /files/folders/:id` returns a readable **400** for a non-empty folder (it was 500). `?force=true` deletes it anyway, unfiling its files and re-parenting its child folders.
+- Design and design-template routes accept JSON bodies up to 50 MB; the old 100 KB limit rejected large designs. `GET /media/design-templates` accepts optional `page` and `limit`.
+- The migration `20261020200424_drop_null_model_media_defaults` deletes media model defaults that were stored without a model and could never resolve. Those organizations fall back to an automatic pick. It is a data-only change and is idempotent.
+- Two additive migrations add the `DesignTemplateFolder` and `DesignVersion` tables and a nullable `DesignTemplate.folderId`.
+
+### Fixed
+
+- **Video rendering:**
+  - Fixed a render outage caused by a payload race, plus problems with audio-mix and mux filtergraphs, cross-origin clip loading and render workdir permissions.
+  - Remote clips are downloaded before rendering, and pre-downloaded clips are remuxed for faststart.
+  - Clips with no audio stream are skipped in the mix.
+  - Hidden-page media pipelines and wedged video elements now fail fast.
+  - Timeouts scale with the pixel area.
+  - Slideshow frames fit the canvas, and `webp-animated` output files get a real `.webp` extension.
+- **Designer, video mode:**
+  - Fixed preview repaint, trim, undo and the inspector, which silently rejected edits when a clip's timing was out of range.
+  - Dead clips are flagged instead of playing black.
+  - Media drops no longer shrink the timeline.
+  - Generated images and audio now land on the timeline.
+  - Pen and paint tools work.
+  - Top-menu items that do nothing in video mode are now disabled.
+- **Designer, image mode:**
+  - Fixed effect and adjustment caches, shape transform bake, ellipse hit regions, canvas geometry clamps and design names lost on autosave.
+  - Fixed an autosave re-entrancy stack overflow; autosave failures now show their reason, and schema traps no longer block saves.
+  - Popovers no longer overflow the viewport.
+  - Navigation is more responsive.
+- **Media providers:**
+  - Fixed remove-background, image-edit inputs (data URIs, relative uploads, providers that require public URLs), Replicate (community models, object outputs, a double-decrypted API key, the video catalog and source fields), OpenRouter timeouts and error attribution, and the music, voiceover and slideshow TTS paths.
+  - Generation errors show their real reason.
+- **Files:** move failures show the real reason; template folders can be deleted and moved on touch devices.
+- Free stock search degrades gracefully on network failures instead of returning 500. Sentry triage removed noise from slide requires, upload 400s and aborted requests.
+
 ## [1.2.0] - 2026-10-14
 
 ### Added

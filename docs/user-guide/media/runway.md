@@ -17,7 +17,7 @@ See [Settings](../settings) for provider setup.
 
 ## Generation flow
 
-The studio follows the standard Studio Kit flow: pick inputs, click **Generate**, track progress in the **Render Queue**, and open the finished asset in the [Designer](./index.md) or the composer. See [Media Studios overview](./index.md) for details.
+The studio follows the standard Studio Kit flow: pick inputs, click **Generate**, track progress in the **Render Queue**, and open the finished asset in the [Designer](./designer) or the composer. See [Media Studios overview](./index.md) for details.
 
 ## Caveats
 
@@ -27,4 +27,4 @@ The studio follows the standard Studio Kit flow: pick inputs, click **Generate**
 - A small number of native Runway parameters pass through automatically beyond the visible form.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

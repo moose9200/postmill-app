@@ -11,8 +11,8 @@ This studio uses **universal-credential reuse**: it reads the Together AI key yo
 | Tab | Operation | Output | Key fields |
 |---|---|---|---|
 | **Text → Image** | Image | Still image | Model, prompt, width, height, steps, number of images, seed. |
-| **Text → Video** | Video | Video clip | Model (live catalog or typed id), prompt, negative prompt, aspect ratio, duration, generate-audio toggle, seed. |
-| **Image → Video** | Video | Video clip | Model (live catalog or typed id), source image, prompt, aspect ratio, duration. |
+| **Text → Video** | Video | Video clip | Model (typed id), prompt, negative prompt, aspect ratio, duration, generate-audio toggle, seed. |
+| **Image → Video** | Video | Video clip | Model (typed id), source image, prompt, aspect ratio, duration. |
 | **Text → Speech** | Audio | Voiceover | Model, text, voice, response format (MP3/WAV). |
 
 The image and TTS tabs use Together's OpenAI-compatible endpoints. The video tabs use Together's native `/v1/videos` async API.
@@ -24,7 +24,7 @@ Image and TTS generations are **synchronous** and appear immediately. Video gene
 ## Caveats
 
 - Video has **no webhook**; completion relies on the `media-jobs-poll` cron.
-- The model dropdown is populated live from Together's `/v1/models` catalog for image models, with curated fallbacks for video and audio. Because Together does not reliably tag every modality, the combobox also lets you type a model id directly.
+- The model dropdown is populated live from Together's `/v1/models` catalog for image models, with a curated fallback list for Text → Speech. Because Together does not reliably tag every modality, the combobox also lets you type a model id directly — the video tabs have no curated list, so you type the video model id there.
 - The source image for **Image → Video** is resolved server-side to a provider-reachable URL before submission.
 
 ## Related docs
@@ -34,4 +34,4 @@ Image and TTS generations are **synchronous** and appear immediately. Video gene
 - [Settings](../settings)
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

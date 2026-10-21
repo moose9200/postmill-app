@@ -120,4 +120,4 @@ Postmill is organized into these sections, accessible from the left sidebar:
 - Set up campaigns to organize posts into themed folders: [Campaigns](./campaigns.md).
 - Explore the full composer capabilities: [Composer](./composer.md).
 
-> Verified against v1.2.0
+> Verified against v1.3.0

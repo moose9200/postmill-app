@@ -24,7 +24,7 @@ Luma video generation is async. After submission, the job appears in the **Rende
 ## Caveats
 
 - **Video-only:** this provider does not generate still images or audio.
-- **No webhook:** completion relies on the shared media-jobs poll cron, so queue updates happen on the polling interval.
+- **Webhook with poll fallback:** when your backend has a public HTTPS URL, Luma calls back on completion; otherwise (and as a fallback) completions rely on the shared media-jobs poll cron, so the queue updates on its polling interval.
 - **Keyframe handling:** `start_image_url` and `end_image_url` are folded into Luma's nested `keyframes` structure by the adapter.
 - **Loop option:** the loop toggle produces a seamlessly looping clip when enabled.
 
@@ -35,4 +35,4 @@ Luma video generation is async. After submission, the job appears in the **Rende
 - [Settings](../settings) — configuring the Luma media provider.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

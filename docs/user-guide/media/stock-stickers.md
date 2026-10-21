@@ -41,4 +41,4 @@ when an MP4 fallback is available.
 
 ---
 
-> Verified against v1.2.0
+> Verified against v1.3.0

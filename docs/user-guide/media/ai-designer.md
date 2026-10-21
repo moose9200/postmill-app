@@ -40,9 +40,12 @@ and falls back to stock imagery where generation was planned.
 
 Before chatting, you configure the brief:
 
-- **Channels / formats** — pick one or more channel presets (e.g. Instagram Post, LinkedIn) or add
-  a custom width × height. At least one is required.
-- **Custom sizes** — arbitrary width/height pairs, in addition to or instead of channel presets.
+- **Output type** — **Image** (the default) or **Video**. A session produces one or the other,
+  never a mix; switching clears the format selection below.
+- **Channels / Image** or **Channels / Video** — pick one or more channel presets for the chosen
+  output type (e.g. Instagram Post, LinkedIn). At least one format is required.
+- **Custom sizes** — for image sessions, arbitrary width/height pairs in addition to or instead of
+  channel presets.
 - **Save to folder** — an optional destination folder in `/files`.
 - **Brand profile** — apply an existing brand's voice/visual guidelines.
 - **Style** — a style preset, or **Let AI decide**.
@@ -66,6 +69,16 @@ Once started, you get a chat interface showing:
 After delivery you can ask for revisions in the chat — for example, "change the background"
 regenerates the background imagery of an image-backed design.
 
+### Video sessions
+
+A video session composes each variant as a design first, then turns it into a timeline: text and
+shapes enter with staggered animations, and (when a video provider is configured as a media default)
+a real scene video is generated per variant (up to three per run) — animated from the composed scene, or from the plan's
+concept — and placed above the still, which stays as the poster frame. Without a video provider,
+the design falls back to animated stills (Ken Burns motion) and the delivery notes say so.
+Revisions work on video designs too: you can change clip text, styling, timing, and transitions, or
+ask to regenerate the video or change its subject.
+
 Sessions are resumable — the session id persists in the URL (`?session=`) so a page refresh
 reconnects and re-hydrates the message history instead of losing the conversation.
 
@@ -73,10 +86,11 @@ reconnects and re-hydrates the message history instead of losing the conversatio
 
 Finished designs are saved as real `Design` records (with rendered preview files) and can be
 opened directly in the [Designer](./designer) for manual refinement, just like any other design.
+Video designs open on the Designer's video timeline and export through its video render.
 
 Intermediate files a run creates (generated assets, imported references) and design preview
 thumbnails are kept out of the [Media Library](../media-library) listing. Deleting a session removes
 its intermediates, except any a delivered design still uses.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

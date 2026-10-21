@@ -20,9 +20,9 @@ Every organisation is seeded with five system roles. They cannot be edited or de
 | Role | Permissions |
 |------|-------------|
 | **Owner** | `manage` on every resource, including billing and organisation deletion. The creator of the organisation is the owner. |
-| **Admin** | All actions on all resources **except** `billing:manage` and `organization:delete`. |
+| **Admin** | All actions on all resources **except** `billing:manage`, `organization:delete`, and `organization:manage`. |
 | **Editor** | Full CRUD on **posts**, **media**, **channels**, and **comments**; read access to **analytics** and **brands**. |
-| **Member** | Create, read, and update **posts**; create and read **media**; read **analytics**, **comments**, and **brands**. |
+| **Member** | Create, read, and update **posts** (no delete); create, read, update, and delete **media**; read **analytics**, **comments**, and **brands**. |
 | **Viewer** | Read-only access to every resource. |
 
 ## Custom roles
@@ -67,4 +67,4 @@ Role creates/updates/deletes and member role assignments are written to the orga
 
 > See also [Settings](./settings.md) for the settings layout, [Subscription & Billing](./subscription-and-billing.md) for team-member limits, and [Operations Guide → Security](../operations-guide/security.md) for access-control invariants.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

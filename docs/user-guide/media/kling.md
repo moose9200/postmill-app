@@ -34,4 +34,4 @@ Video jobs are submitted to the fal.ai queue and appear in the **Render Queue** 
 - [Settings](../settings) — configuring the fal.ai media provider used by Kling.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

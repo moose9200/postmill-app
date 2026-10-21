@@ -16,7 +16,7 @@ See [Settings](../settings) for provider setup.
 
 ## Generation flow
 
-The studio follows the standard Studio Kit flow: fill the form, click **Generate**, track the job in the **Render Queue**, and open the finished image in the [Designer](./index.md) or the composer. See [Media Studios overview](./index.md) for details.
+The studio follows the standard Studio Kit flow: fill the form, click **Generate**, track the job in the **Render Queue**, and open the finished image in the [Designer](./designer) or the composer. See [Media Studios overview](./index.md) for details.
 
 Image generation is synchronous, so results usually appear immediately.
 
@@ -27,4 +27,4 @@ Image generation is synchronous, so results usually appear immediately.
 - Extra native Recraft parameters (for example `substyle` or `response_format`) ride through automatically when supplied by the descriptor defaults; the visible form covers the common cases.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

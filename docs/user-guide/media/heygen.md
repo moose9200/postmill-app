@@ -10,8 +10,14 @@ pipeline. Configure your HeyGen API key at **Settings → Media** (no environmen
 |---|---|
 | **Storyboard** | Multi-scene avatar video. Each scene picks an avatar, a voice, a script, and an optional background (a solid color, or an image/video from `/files`). Scenes can be reordered, and every scene needs an avatar, voice, and script before you can generate. |
 | **Talking Photo** | Upload a portrait from `/files`; HeyGen mints a `talking_photo_id` and animates it speaking a script you provide, with a chosen voice and output dimension (16:9, 9:16, or 1:1). |
-| **Translate** | Submits a source video for AI dubbing into a target language, picked from HeyGen's live list of supported languages. The source must be a HeyGen-reachable URL. One `AIMediaJob` is created per target language. |
+| **Translate** | Submits a source video from `/files` for AI dubbing into one or more target languages, picked from HeyGen's live list of supported languages. The source must be a HeyGen-reachable URL. One `AIMediaJob` is created per target language. |
 | **Voiceover** | Text-to-speech only — generates a voiced audio clip (no avatar) from a script and voice, saved into your audio files. |
+
+## In the Designer
+
+The Designer's **Generate Avatar Video** dialog can use HeyGen as its provider. It embeds a compact
+Talking Photo flow — portrait, HeyGen voice, and dimension — while the dialog's own script box
+supplies the script; the finished clip lands on the video timeline.
 
 ## Render queue
 
@@ -38,4 +44,4 @@ See [Media Studios](./index) for the render-queue/hand-off flow shared across st
 - [Settings](../settings) — configuring the HeyGen media provider and its storage destination.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0

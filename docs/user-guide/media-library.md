@@ -36,7 +36,9 @@ Each folder has a `parentId`, enabling unlimited nesting.
 - Folders with children show expand/collapse arrows. The collapsed state persists per session.
 - Each folder shows a count of its direct media files.
 - Right-click any folder for a context menu with **Rename**, **New Subfolder**, and **Delete**.
-- A non-empty folder cannot be deleted; move or delete its contents first.
+- Deleting a non-empty folder asks you to confirm **Delete folder and move contents to All Files?** —
+  only the folder is removed: its files become unfiled (they appear under **All Files**) and its
+  subfolders move to the root level.
 - Click the **+** button in the folder header to create a new folder at the root level.
 
 ## Uploading files
@@ -85,6 +87,11 @@ to move it. The target
 folder highlights in blue. A success notification confirms the move, and both the file grid and
 folder counts refresh.
 
+When the target folder lives on a different storage provider (for example, moving a file from
+local storage into a mounted S3 bucket), the file's bytes are copied to the destination provider
+— subject to its quota — and removed from the source. Moves within the same provider only change
+the folder. If a move fails, the notification shows the reason.
+
 ## Bulk actions
 
 When one or more files are selected (checked), a bulk toolbar appears above the grid:
@@ -125,11 +132,12 @@ Permanent deletion is only available from the trash view.
 
 Root folders in `/files` map to configured storage providers. Each `StorageProviderConfig` record
 represents a storage backend (S3, R2, B2, IDrive e2, MediaLocker, or local disk). When a provider is mounted, it
-appears as a root-level folder. Different folders can route to different storage backends — for
+appears as a root-level folder; a newly added provider is mounted automatically once its connection
+test passes. Different folders can route to different storage backends — for
 example, you might keep active campaign assets on fast local storage and archive older campaigns to
 cloud object storage.
 
 Configure storage providers in **Settings → File Storage**. See
 [Storage Setup](../operations-guide/storage.md) for provider configuration and quota management.
 
-> Verified against v1.2.0
+> Verified against v1.3.0

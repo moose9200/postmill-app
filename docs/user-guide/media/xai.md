@@ -29,4 +29,4 @@ xAI image generation is synchronous. The studio posts to the OpenAI-compatible `
 - [Settings](../settings) — configuring AI and media providers.
 
 ---
-> Verified against v1.2.0
+> Verified against v1.3.0
