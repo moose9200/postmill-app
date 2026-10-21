@@ -22,6 +22,7 @@ import {
   RENDER_THUMBNAIL_NAME,
   renderOutputName,
 } from '@postmill-ai/nestjs-libraries/media/design-render/render-job-spec';
+import { RENDER_ASSETS_DIR } from '@postmill-ai/nestjs-libraries/media/design-render/render-asset-files';
 /**
  * The container has no Redis access, so progress goes over HTTP to the host:
  * POST /media/designs/render-progress/:jobId (token-gated like render-frame),
@@ -69,6 +70,10 @@ async function main(): Promise<void> {
     const progress = createProgressReporter(spec);
     const result = await encoder.encode(spec.composition, {
       ...spec.options,
+      // The host pre-downloaded remote media into <workdir>/assets (mounted at
+      // /work/assets); the capture pages serve it from here by request
+      // interception, never over HTTP from a possibly different replica.
+      assetsDir: path.join(workDir, RENDER_ASSETS_DIR),
       onProgress: progress ? (p) => progress.report(p.frame, p.total) : undefined,
     });
     // Flush the last queued report before the container exits.
