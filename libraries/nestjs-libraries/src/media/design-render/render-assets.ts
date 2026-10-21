@@ -15,6 +15,10 @@
 // see only same-origin media: the in-process page and the in-container page
 // (which already reaches the host over the pod bridge for render-frame via
 // spec.baseUrl) resolve the root-relative URLs against the backend base URL.
+// The capture pages answer those requests from the LOCAL assets dir by request
+// interception (interceptRenderAssetRequest in chromium-frame-capture.service.ts),
+// so a multi-replica load balancer never routes them to a replica without the
+// files; the HTTP route below remains the fallback.
 //
 // Token gate: the same derived HMAC job token as render-frame/render-progress
 // (mediaJobWebhookToken) — per-job, org-bound, unguessable without the instance
@@ -45,13 +49,20 @@ import { verifyMediaJobWebhookToken } from '../media-job-token';
 import { renderPayloadKey } from './render-progress';
 import { renderWorkDir } from './render-job-spec';
 import { collectCompositionMediaUrls } from './chromium-frame-capture.service';
+import {
+  RENDER_ASSETS_DIR,
+  RENDER_ASSET_MANIFEST,
+  isSafeRenderAssetJobId,
+  mimeByExt,
+  safeRenderAssetFileName,
+  statLocalRenderAsset,
+} from './render-asset-files';
+
+export { RENDER_ASSETS_DIR, isSafeRenderAssetJobId, safeRenderAssetFileName };
 
 // Lockstep with the merge op's caps (video-merge.ts MAX_CLIP_SIZE / MAX_TOTAL_SIZE).
 export const RENDER_ASSET_MAX_BYTES = 500 * 1024 * 1024;
 export const RENDER_ASSETS_MAX_TOTAL_BYTES = 1024 * 1024 * 1024;
-
-export const RENDER_ASSETS_DIR = 'assets';
-const RENDER_ASSET_MANIFEST = 'manifest.json';
 
 const logger = new Logger('RenderAssets');
 
@@ -173,25 +184,6 @@ function extForAsset(url: string, contentType: string): string {
   return match?.[1]?.toLowerCase() || 'bin';
 }
 
-const EXT_TO_MIME: Record<string, string> = {
-  mp4: 'video/mp4',
-  m4v: 'video/mp4',
-  mov: 'video/quicktime',
-  webm: 'video/webm',
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  webp: 'image/webp',
-  gif: 'image/gif',
-  svg: 'image/svg+xml',
-  avif: 'image/avif',
-};
-
-function mimeByExt(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase() || '';
-  return EXT_TO_MIME[ext] || 'application/octet-stream';
-}
-
 /** Swap downloaded URLs for their local render-asset paths in a composition copy. */
 export function rewriteCompositionMedia(
   composition: any,
@@ -299,27 +291,6 @@ export type RenderAssetResolution =
   | { status: 'ok'; filePath: string; contentType: string; size: number }
   | { status: 'forbidden' | 'not-found' };
 
-// Only the names preloadRenderMedia writes (asset-<i>.<ext>).
-const SAFE_ASSET_FILE_NAME = /^asset-(\d+)\.([a-z0-9]{1,16})$/;
-
-/**
- * Validate a render-asset file name and REBUILD it from the strict regex
- * captures, so the string used in path construction is provably free of path
- * separators and parent refs (CodeQL js/path-injection needs the sanitization
- * to dominate the path expression). Null for anything else — the manifest,
- * traversal attempts, dotfiles.
- */
-export function safeRenderAssetFileName(fileName: string): string | null {
-  const match = SAFE_ASSET_FILE_NAME.exec(fileName);
-  if (!match) return null;
-  return `asset-${match[1]}.${match[2]}`;
-}
-
-/** Render job ids are Prisma cuids; the route param feeds a filesystem path, so pin the alphabet. */
-export function isSafeRenderAssetJobId(jobId: string): boolean {
-  return /^[a-z0-9]{20,40}$/i.test(jobId);
-}
-
 /**
  * Token-gated resolution behind GET /media/designs/render-asset/:jobId/:file.
  * The org id comes from the render payload (which survives the render by
@@ -351,30 +322,7 @@ export async function resolveRenderAsset(
     return { status: 'forbidden' };
   }
 
-  const assetsDir = path.resolve(renderWorkDir(jobId), RENDER_ASSETS_DIR);
-  const filePath = path.resolve(assetsDir, safeName);
-  // Belt and braces: the rebuilt name cannot escape, but verify containment.
-  if (!filePath.startsWith(assetsDir + path.sep)) return { status: 'not-found' };
-  let stat: fs.Stats;
-  try {
-    stat = fs.statSync(filePath);
-  } catch {
-    return { status: 'not-found' };
-  }
-  if (!stat.isFile()) return { status: 'not-found' };
-
-  let contentType = '';
-  try {
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(assetsDir, RENDER_ASSET_MANIFEST), 'utf8'),
-    );
-    if (typeof manifest?.[safeName] === 'string') {
-      contentType = manifest[safeName];
-    }
-  } catch {
-    /* fall back to the extension guess */
-  }
-  if (!contentType) contentType = mimeByExt(safeName);
-
-  return { status: 'ok', filePath, contentType, size: stat.size };
+  const asset = statLocalRenderAsset(path.join(renderWorkDir(jobId), RENDER_ASSETS_DIR), safeName);
+  if (!asset) return { status: 'not-found' };
+  return { status: 'ok', ...asset };
 }

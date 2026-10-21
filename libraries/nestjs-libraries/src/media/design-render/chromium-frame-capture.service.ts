@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, HTTPRequest, Page } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FRAME_RENDERER_SCRIPT, escapeForScriptTag } from './frame-renderer-script';
@@ -7,6 +7,15 @@ import { buildFramePage, fontLinksForOutput, fontPreloadsForOutput } from './fra
 import { isSafePublicHttpsUrl } from '@postmill-ai/nestjs-libraries/dtos/webhooks/webhook.url.validator';
 import { getCapturePageCount, getFrameTimeoutMs } from './render-config';
 import type { VideoOutput } from './design-render.types';
+import { renderWorkDir } from './render-job-spec';
+import {
+  RENDER_ASSETS_DIR,
+  isSafeRenderAssetJobId,
+  parseByteRange,
+  parseRenderAssetUrl,
+  safeRenderAssetFileName,
+  statLocalRenderAsset,
+} from './render-asset-files';
 
 export interface FrameCaptureProgress {
   frame: number;
@@ -17,6 +26,12 @@ export interface RenderRouteOptions {
   jobId: string;
   orgId: string;
   token: string;
+  /**
+   * Local dir holding the job's pre-downloaded render assets (render-assets.ts).
+   * Defaults to `renderWorkDir(jobId)/assets` (the in-process path); the Podman
+   * worker passes `/work/assets` (the mounted workdir).
+   */
+  assetsDir?: string;
 }
 
 const PNG_DATA_URL_PREFIX = 'data:image/png;base64,';
@@ -78,6 +93,90 @@ export async function assertCompositionMediaSafe(output: VideoOutput): Promise<v
   for (const src of collectCompositionMediaUrls(output)) {
     if (!(await isRenderMediaUrlAllowed(src))) {
       throw new Error(`Unsafe media URL blocked in render composition: ${src}`);
+    }
+  }
+}
+
+/**
+ * Largest body one intercepted render-asset response carries.
+ * `Fetch.fulfillRequest` ships the body base64-encoded in a single CDP message
+ * (puppeteer's websocket caps a message at 256 MB), so a whole 500 MB clip
+ * cannot be fulfilled in one go. A range response is clamped to this size
+ * instead — a shorter 206 is valid HTTP and Chromium's media loader simply
+ * requests the next range.
+ */
+export const RENDER_ASSET_MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Request-interception handler for a capture page. Requests for this job's
+ * pre-downloaded render assets (`/media/designs/render-asset/:jobId/:file`)
+ * are answered straight from the LOCAL assets dir instead of going over HTTP:
+ * the page loads from the public (load-balanced) backend URL, and on a
+ * multi-replica deployment that request could land on a replica that never
+ * downloaded the files (404 → failed render). Everything else continues
+ * unchanged.
+ *
+ * - malformed job id / file name (traversal, the manifest) → 404, no network;
+ * - another job's asset → continue: only the token-gated HTTP route may serve it;
+ * - asset missing locally → continue: the HTTP route stays the fallback.
+ */
+export async function interceptRenderAssetRequest(
+  request: HTTPRequest,
+  jobId: string,
+  assetsDir: string,
+): Promise<void> {
+  if (request.isInterceptResolutionHandled()) return;
+  try {
+    const ref = parseRenderAssetUrl(request.url());
+    if (!ref) return await request.continue();
+
+    const safeName = safeRenderAssetFileName(ref.fileName);
+    if (!safeName || !isSafeRenderAssetJobId(ref.jobId)) {
+      return await request.respond({ status: 404, contentType: 'text/plain', body: 'Render asset not found' });
+    }
+    if (ref.jobId !== jobId) return await request.continue();
+
+    const asset = statLocalRenderAsset(assetsDir, safeName);
+    if (!asset) return await request.continue();
+
+    const headers: Record<string, string> = {
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'no-store',
+    };
+    const headerMap = request.headers();
+    const byteRange = parseByteRange(headerMap['range'] ?? headerMap['Range'], asset.size);
+    if (byteRange.kind === 'unsatisfiable') {
+      return await request.respond({
+        status: 416,
+        headers: { ...headers, 'Content-Range': `bytes */${asset.size}` },
+        body: '',
+      });
+    }
+
+    let start = 0;
+    let end = asset.size - 1;
+    let status = 200;
+    if (byteRange.kind === 'partial') {
+      start = byteRange.start;
+      end = Math.min(byteRange.end, start + RENDER_ASSET_MAX_RESPONSE_BYTES - 1);
+      status = 206;
+      headers['Content-Range'] = `bytes ${start}-${end}/${asset.size}`;
+    }
+    const length = Math.max(0, end - start + 1);
+    const body = Buffer.alloc(length);
+    const handle = await fs.promises.open(asset.filePath, 'r');
+    try {
+      await handle.read(body, 0, length, start);
+    } finally {
+      await handle.close();
+    }
+    headers['Content-Length'] = String(length);
+    return await request.respond({ status, headers, contentType: asset.contentType, body });
+  } catch {
+    // Never strand a request: if anything above failed before resolving it,
+    // fall back to the network (the HTTP route).
+    if (!request.isInterceptResolutionHandled()) {
+      await request.continue().catch(() => {});
     }
   }
 }
@@ -270,6 +369,16 @@ export class ChromiumFrameCaptureService {
       'http://localhost:3000';
 
     if (routeOptions) {
+      // Serve this job's pre-downloaded assets from the local dir (see
+      // interceptRenderAssetRequest) — registered on EVERY capture page,
+      // including the fresh pages resetPage builds, before the first request.
+      const assetsDir =
+        routeOptions.assetsDir ?? path.join(renderWorkDir(routeOptions.jobId), RENDER_ASSETS_DIR);
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        void interceptRenderAssetRequest(request, routeOptions.jobId, assetsDir);
+      });
+
       // scale/fps ride as query params: the route serves the composition from
       // the render payload, so the overrides are applied there — the stored
       // document itself is never mutated. N pages navigate to the SAME URL; the
