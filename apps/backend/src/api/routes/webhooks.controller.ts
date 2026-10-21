@@ -33,6 +33,7 @@ export class WebhookController {
 
   @Post('/')
   @CheckPolicies([AuthorizationActions.Create, Sections.WEBHOOKS])
+  @RequirePermission('webhooks', 'create')
   async createAWebhook(
     @GetOrgFromRequest() org: Organization,
     @Body() body: WebhooksDto
@@ -51,6 +52,7 @@ export class WebhookController {
 
   @Post('/test-ping/:id')
   @CheckPolicies([AuthorizationActions.Create, Sections.WEBHOOKS])
+  @RequirePermission('webhooks', 'create')
   async testPing(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,

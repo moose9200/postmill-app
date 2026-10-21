@@ -357,8 +357,9 @@ describe('AiDesignerGateway _authenticate', () => {
     });
   });
 
-  it('bypasses CSRF when NOT_SECURED is set', async () => {
+  it('bypasses CSRF when NOT_SECURED is set in development', async () => {
     vi.stubEnv('NOT_SECURED', 'true');
+    vi.stubEnv('NODE_ENV', 'development');
     const gw = makeGateway({ authContext, roles, permissions }) as any;
     const client = fakeClient('10.0.0.9', {
       headers: { cookie: 'auth=valid-jwt' },
@@ -368,6 +369,25 @@ describe('AiDesignerGateway _authenticate', () => {
 
     expect(result?.ctx.userId).toBe('u1');
     expect(client.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('still enforces CSRF when NOT_SECURED is set outside development', async () => {
+    vi.stubEnv('NOT_SECURED', 'true');
+    vi.stubEnv('NODE_ENV', 'production');
+    const gw = makeGateway({ authContext, roles, permissions }) as any;
+    const client = fakeClient('10.0.0.9', {
+      headers: { cookie: 'auth=valid-jwt' },
+    });
+
+    const result = await gw._authenticate(client);
+
+    expect(result).toBeNull();
+    expect(authContext.resolve).not.toHaveBeenCalled();
+    expect(client.emit).toHaveBeenCalledWith('error', {
+      code: 'csrf_failed',
+      message: expect.any(String),
+    });
+    expect(client.disconnect).toHaveBeenCalled();
   });
 
   it('disconnects with auth_failed on bad JWT', async () => {
