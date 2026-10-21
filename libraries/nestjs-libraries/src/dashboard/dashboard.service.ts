@@ -231,7 +231,7 @@ export class DashboardService {
       this._postsService.getPublishedCountSince(orgId, sevenDaysAgo),
       this._postsService.getDraftCount(orgId),
       this._postsService.getUpcomingPosts(orgId, 5),
-      this._socialCommentsService.getInboxUnreadCount(orgId, user?.id),
+      this._socialCommentsService.getInboxUnreadCount(orgId),
       this._aiMediaService.getMediaProviderSummary(orgId),
     ]);
 
@@ -556,7 +556,7 @@ export class DashboardService {
     if (allowed('unread-comments')) {
       try {
         const { unreadCount = 0 } =
-          (await this._socialCommentsService.getInboxUnreadCount(orgId, userId)) || {};
+          (await this._socialCommentsService.getInboxUnreadCount(orgId)) || {};
         if (unreadCount > 0) {
           items.push({
             id: 'unread-comments',
@@ -669,32 +669,47 @@ export class DashboardService {
     return { items };
   }
 
+  /**
+   * The org's own AI budget (`Organization.aiBudgetMonthlyCap` /
+   * `aiBudgetAlertThresholdPct`, set from the org AI settings UI and enforced
+   * by BudgetService) drives the alert. The global `AISystemSettings` cap is
+   * only a fallback for orgs that set no monthly cap of their own.
+   */
   private async _aiBudgetAlert(
     orgId: string,
     _planUsage?: PlanUsageSnapshot
   ): Promise<AttentionItem | null> {
-    const settings = await this._aiSettingsManager.getSettings();
-    let budgetSettings: { monthlyCap?: number; alertThresholdPct?: number } | undefined;
-    if (settings?.budgetSettings) {
-      try {
-        budgetSettings = JSON.parse(settings.budgetSettings);
-      } catch (err) {
-        this._logger.warn(
-          `Invalid budgetSettings JSON for org ${orgId}: ${(err as Error).message}`
-        );
-        budgetSettings = undefined;
+    const orgBudget = await this._aiSettingsService.getOrgBudget(orgId);
+
+    let monthlyCap = orgBudget?.monthlyCap ?? undefined;
+    let threshold = orgBudget?.alertThresholdPct ?? undefined;
+
+    if (!monthlyCap) {
+      const settings = await this._aiSettingsManager.getSettings();
+      let budgetSettings: { monthlyCap?: number; alertThresholdPct?: number } | undefined;
+      if (settings?.budgetSettings) {
+        try {
+          budgetSettings = JSON.parse(settings.budgetSettings);
+        } catch (err) {
+          this._logger.warn(
+            `Invalid budgetSettings JSON for org ${orgId}: ${(err as Error).message}`
+          );
+          budgetSettings = undefined;
+        }
       }
+      monthlyCap = budgetSettings?.monthlyCap;
+      threshold = threshold ?? budgetSettings?.alertThresholdPct;
     }
 
-    if (!budgetSettings?.monthlyCap) {
+    if (!monthlyCap) {
       return null;
     }
 
-    const threshold = budgetSettings.alertThresholdPct ?? 0.8;
+    threshold = threshold ?? 0.8;
     const startOfMonth = dayjs.utc().startOf('month').toDate();
     const spend = await this._aiSettingsService.getSpendSummary(orgId, startOfMonth);
     const total = spend.reduce((sum, row: any) => sum + (row._sum?.costUsd ?? 0), 0);
-    const pct = total / budgetSettings.monthlyCap;
+    const pct = total / monthlyCap;
 
     if (pct < threshold) {
       return null;

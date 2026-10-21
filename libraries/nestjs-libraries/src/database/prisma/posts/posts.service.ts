@@ -9,6 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { PostValidationException } from '@postmill-ai/nestjs-libraries/errors/post-validation.exception';
+import { isSafePublicHttpsUrl } from '@postmill-ai/nestjs-libraries/dtos/webhooks/webhook.url.validator';
 import { PostsRepository } from '@postmill-ai/nestjs-libraries/database/prisma/posts/posts.repository';
 import { CreatePostDto } from '@postmill-ai/nestjs-libraries/dtos/posts/create.post.dto';
 import { sanitizeProviderSettings } from '@postmill-ai/nestjs-libraries/dtos/posts/providers-settings/sanitize.settings';
@@ -1885,6 +1886,13 @@ export class PostsService {
    * Bulk-create posts from an array of simplified row DTOs. Each row is
    * validated independently; errors/warnings are returned per row without
    * failing the whole batch.
+   *
+   * Every channel post goes through `validateAndCreatePost` — the same
+   * per-provider validation (settings DTO, media checkValidity, length) the
+   * composer and public API use — so an invalid post is reported here instead
+   * of failing at publish time. A row's `mediaUrl` is downloaded (SSRF-safe)
+   * into the org's media library once and attached to every channel post; a
+   * media failure fails the whole row before any post is created.
    */
   async bulkCreate(
     orgId: string,
@@ -1919,6 +1927,16 @@ export class PostsService {
         continue;
       }
 
+      let image: Array<{ id: string; path: string }> = [];
+      if (row.mediaUrl?.trim()) {
+        try {
+          image = [await this._importBulkMedia(orgId, row.mediaUrl.trim())];
+        } catch (err: any) {
+          results.push({ index: i, success: false, error: this._errorText(err) });
+          continue;
+        }
+      }
+
       try {
         for (const channelId of row.channels) {
           const integration = activeIntegrations.find(
@@ -1930,7 +1948,7 @@ export class PostsService {
           }
 
           try {
-            const created = await this.createPost(orgId, {
+            const created = await this.validateAndCreatePost(orgId, {
               type: 'schedule',
               date: row.scheduleAt,
               order: '',
@@ -1941,12 +1959,12 @@ export class PostsService {
                 {
                   group: `bulk-${Date.now()}-${i}`,
                   integration: { id: integration.id },
-                  settings: { __type: integration.providerIdentifier as any } as any,
+                  settings: { __type: integration.providerIdentifier },
                   value: [{
                     id: '',
                     content: row.content,
                     delay: 0,
-                    image: [],
+                    image,
                   }],
                 },
               ],
@@ -1956,7 +1974,7 @@ export class PostsService {
               postIds.push(created[0].postId);
             }
           } catch (err: any) {
-            rowWarnings.push(`Failed to create post for "${channelId}": ${err.message}`);
+            rowWarnings.push(`Failed to create post for "${channelId}": ${this._errorText(err)}`);
           }
         }
       } catch (err: any) {
@@ -1973,6 +1991,48 @@ export class PostsService {
     }
 
     return { rows: results };
+  }
+
+  /**
+   * Download a bulk-import `media_url` into the org's media library via the
+   * shared `FileService.importFromUrl` path (safeFetch, 512 MB cap, MIME
+   * allow-list, storage quota). Posts take images/video only, so an imported
+   * audio file is removed again and rejected.
+   */
+  private async _importBulkMedia(
+    orgId: string,
+    mediaUrl: string,
+  ): Promise<{ id: string; path: string }> {
+    if (!(await isSafePublicHttpsUrl(mediaUrl))) {
+      throw new BadRequestException('media_url must be a public https:// URL');
+    }
+    let file: { id: string; path: string; type?: string | null };
+    try {
+      file = await this._fileService.importFromUrl(orgId, {
+        url: mediaUrl,
+        name: new URL(mediaUrl).pathname.split('/').pop() || 'bulk-import-media',
+        source: 'bulk-import',
+      });
+    } catch (err) {
+      throw new BadRequestException(
+        `Could not import media_url: ${this._errorText(err)}`,
+      );
+    }
+    if (file.type !== 'image' && file.type !== 'video') {
+      await this._fileService.deleteFile(orgId, file.id).catch(() => undefined);
+      throw new BadRequestException('media_url must point to an image or video');
+    }
+    return { id: file.id, path: file.path };
+  }
+
+  /** Human-readable message from an HttpException / PostValidationException / Error. */
+  private _errorText(err: any): string {
+    const res = typeof err?.getResponse === 'function' ? err.getResponse() : undefined;
+    if (typeof res === 'string') return res;
+    if (Array.isArray(res?.message)) return res.message.join('; ');
+    if (typeof res?.message === 'string') return res.message;
+    if (typeof res?.error === 'string') return res.error;
+    return err?.message || 'Unknown error';
   }
 
   getTotalCount(orgId: string) {
