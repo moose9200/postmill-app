@@ -291,6 +291,27 @@ describe('StockMediaService', () => {
     });
   });
 
+  describe('getRelatedVideos derives the search query from the Pexels video URL', () => {
+    it('strips the trailing slash and numeric id so the slug becomes the query', async () => {
+      process.env.PEXELS_API_KEY = 'secret-key';
+      mockSafeFetch
+        .mockResolvedValueOnce(
+          jsonResponse({
+            id: 1448735,
+            url: 'https://www.pexels.com/video/aerial-view-of-a-forest-1448735/',
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ videos: [], total_results: 0 }));
+      const { service } = makeService();
+
+      await service.getRelatedVideos('1448735');
+
+      const searchUrl = new URL(mockSafeFetch.mock.calls[1][0]);
+      expect(searchUrl.pathname).toBe('/videos/search');
+      expect(searchUrl.searchParams.get('query')).toBe('aerial view of a forest');
+    });
+  });
+
   describe('C3 — brand/adult safety on the Unsplash photo search', () => {
     it('sends content_filter=high on every photo search', async () => {
       process.env.UNSPLASH_ACCESS_KEY = 'secret-key';

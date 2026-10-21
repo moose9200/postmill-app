@@ -18,8 +18,6 @@ instead of silently falling back.
 - **Search** — debounced text search. An empty query shows Pexels' popular videos.
 - **Orientation** — `landscape`, `portrait`, or `square`.
 - **Size** — `small`, `medium`, or `large`.
-- **Color** — the same swatch palette used by Stock Photos. The swatch is shown, but the video
-  search currently does not apply it, so results are not color-filtered.
 
 Results are shown in an aspect-video grid, 15 clips per page, with infinite scroll. Each card
 includes a duration badge.

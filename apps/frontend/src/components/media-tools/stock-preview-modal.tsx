@@ -414,7 +414,7 @@ export const StockPreviewModal: FC<StockPreviewModalProps> = ({ item: initialIte
         <div>
           <div className="text-[14px] font-[600] text-textColor mb-[12px]">{t('related', 'Related')}</div>
           <div className="flex gap-[10px] overflow-x-auto pb-[8px]">
-            {(related.results || related).slice(0, 8).map((rel: any) => (
+            {related.slice(0, 8).map((rel: any) => (
               <button
                 key={rel.id}
                 type="button"

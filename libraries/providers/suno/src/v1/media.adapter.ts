@@ -150,7 +150,7 @@ export class SunoAdapter extends BearerTokenMediaAdapter {
   // `data.response.sunoData[].audioUrl` path are grounded in the sunoapi.org docs, not a live
   // response — smoke-test both against a real key (and confirm 2 clips are returned).
   async pollJob(taskId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches openai/Sora), not a thrown
+    // Missing key is a config error → terminal failed (matches the openai adapter), not a thrown
     // error the lifecycle would retry to the 24h timeout.
     let headers: Record<string, string>;
     try {

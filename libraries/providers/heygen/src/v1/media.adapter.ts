@@ -162,7 +162,7 @@ export class HeyGenAdapter implements MediaProviderAdapter {
   // single pollJob can route to the right one. A bare id (no `:`) is an avatar-video job —
   // this preserves the generic media-provider path (governance/grid), which stores the raw id.
   async pollJob(jobId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches the openai/Sora convention),
+    // Missing key is a config error → terminal failed (matches the openai adapter convention),
     // not a thrown error the lifecycle would retry to the 24h timeout.
     if (!resolveApiKey(options)) return { status: 'failed', error: 'HeyGen API key is required' };
 

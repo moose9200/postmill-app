@@ -39,12 +39,12 @@ The table below shows each provider's registered domains. A provider that appear
 | NVIDIA Nemotron | `nvidia` | ai | direct; low-reasoning, high-reasoning, workflow |
 | OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-speech, video-caption |
 | OpenAI Compatible | `openai-compatible` | ai | hub; low-reasoning, high-reasoning, workflow, vision; bring-your-own-endpoint (Base URL is a required, visible setting) |
-| OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
+| OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, text-to-image |
 | Perplexity | `perplexity` | ai | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point |
 | Qwen | `qwen` | ai, media | direct; image-slide, image-to-video, text-to-image, text-to-video |
 | SiliconFlow | `siliconflow` | ai, media | hub; image-slide, image-to-image, image-to-video, text-to-image, text-to-speech, text-to-video |
 | Together AI | `togetherai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, image-to-video, text-to-image, text-to-speech, text-to-video |
-| Vercel AI | `gateway` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, image-to-video, text-to-image, text-to-video |
+| Vercel AI | `gateway` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, image-to-video, text-to-image, text-to-video |
 | Vultr Inference | `vultr` | ai, storage | action |
 | xAI Grok | `xai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 | Z.AI GLM | `zai` | ai | direct; low-reasoning, high-reasoning, workflow, vision |
@@ -112,7 +112,7 @@ The table below shows each provider's registered domains. A provider that appear
 | Google Vertex | `vertex` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-video |
 | Groq | `groq` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, text-to-speech |
 | Hedra | `hedra` | media | action; image-to-video, text-to-video, video-avatar |
-| HeyGen | `heygen` | media | action; image-to-video, text-to-video, video-avatar |
+| HeyGen | `heygen` | media | direct; image-to-video, text-to-video, video-avatar |
 | Higgsfield | `higgsfield` | media | direct; image-slide, image-to-video, text-to-image |
 | Ideogram | `ideogram` | media | action; image-slide, image-to-image, text-to-image |
 | Kling | `fal` | media | direct; image-slide, image-to-video, text-to-video |
@@ -121,7 +121,7 @@ The table below shows each provider's registered domains. A provider that appear
 | Luma | `luma` | media | direct; image-to-video, text-to-video |
 | MiniMax | `minimax` | ai, media | direct; low-reasoning, high-reasoning, workflow; image-slide, image-to-video, text-to-video |
 | OpenAI | `openai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, text-to-image, text-to-speech, video-caption |
-| OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
+| OpenRouter | `openrouter` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, text-to-image |
 | Qwen | `qwen` | ai, media | direct; image-slide, image-to-video, text-to-image, text-to-video |
 | Recraft | `recraft` | media | direct; image-slide, text-to-image |
 | Reel.Farm | `reelfarm` | media | action; image-to-video, text-to-video |
@@ -132,7 +132,7 @@ The table below shows each provider's registered domains. A provider that appear
 | Suno | `suno` | media | direct; text-to-music |
 | Tavus | `tavus` | media | action; image-to-video, text-to-video, video-avatar |
 | Together AI | `togetherai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, image-to-video, text-to-image, text-to-speech, text-to-video |
-| Vercel AI | `gateway` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, image-to-video, text-to-image, text-to-video |
+| Vercel AI | `gateway` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-to-image, image-to-video, text-to-image, text-to-video |
 | Wan | `wan` | media | direct; image-slide, image-to-video, text-to-image, text-to-video |
 | xAI Grok | `xai` | ai, media | hub; low-reasoning, high-reasoning, workflow, vision; image-focal-point, image-slide, image-to-image, text-to-image |
 

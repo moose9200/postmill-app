@@ -3,8 +3,8 @@ import type { StudioDescriptor } from '@postmill-ai/frontend/components/media-to
 // Wan (Tongyi Wanxiang) on Alibaba Cloud Model Studio (DashScope, intl host). Field names are the
 // native DashScope params: `negative_prompt`/`img_url` ride into `input`, everything else (size,
 // resolution, duration, n, prompt_extend, watermark) into `parameters` — see wan.adapter.ts. Model
-// lists are curated (DashScope has no clean per-modality catalog for the task API); the combobox
-// also accepts any typed model id, so newer Wan ids work without a code change.
+// lists are curated (DashScope has no clean per-modality catalog for the task API) and the model
+// fields are plain selects, so a newer Wan id must be added to these lists to be offered.
 
 const T2I_MODELS = [
   { value: 'wan2.2-t2i-flash', label: 'Wan 2.2 T2I Flash (fast)' },

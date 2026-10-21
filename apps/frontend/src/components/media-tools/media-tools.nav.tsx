@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * The single enumeration of every tool under /media — 2 Platform tools,
- * 38 provider studios and 6 stock browsers.
+ * 37 provider studios and 6 stock browsers.
  *
  * Both the media rail (`app/(app)/(site)/media/layout.tsx`) and the /media index
  * read from here. `SORTED_MEDIA_TABS` is sorted once at module scope on purpose:

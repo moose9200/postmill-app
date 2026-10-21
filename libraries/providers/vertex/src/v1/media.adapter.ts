@@ -286,7 +286,7 @@ export class VertexMediaAdapter implements MediaProviderAdapter {
     }
     if (video?.gcsUri) {
       // 5.14 — the lifecycle's safeFetch cannot download a gs:// URL. Fetch the object with the
-      // minted access token and inline it as a data URL (the Sora/Gemini pattern).
+      // minted access token and inline it as a data URL (the openai / google-ai adapters' pattern).
       const fileRes = await this._fetch(gcsMediaUrl(video.gcsUri), { headers: this._headers(creds) });
       // 2.2 — classify the download leg: a 429/5xx is transient (THROW to retry the paid render),
       // but a permanent 4xx (expired/deleted object) is terminal — return failed rather than
