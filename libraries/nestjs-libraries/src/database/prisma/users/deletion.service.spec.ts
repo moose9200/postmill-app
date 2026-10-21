@@ -98,4 +98,56 @@ describe('DeletionService', () => {
     expect(userDelete).toHaveBeenCalledWith({ where: { id: 'u-1' } });
     expect(result).toEqual({ id: 'u-1' });
   });
+  describe('deleteUser clears every RESTRICT FK to User before user.delete', () => {
+    // Records `model.method` in call order so we can prove ordering.
+    function run() {
+      const calls: Array<{ op: string; args: any }> = [];
+      const tx = new Proxy(
+        {},
+        {
+          get: (_t, model: string) =>
+            new Proxy(
+              {},
+              {
+                get: (_m, method: string) =>
+                  vi.fn(async (args: any) => {
+                    calls.push({ op: `${model}.${method}`, args });
+                    return { count: 0 };
+                  }),
+              }
+            ),
+        }
+      );
+      const prisma = {
+        userOrganization: {
+          findMany: vi.fn().mockResolvedValue([{ organizationId: 'org-shared' }]),
+          count: vi.fn().mockResolvedValue(1),
+        },
+        $transaction: vi.fn(async (cb: any) => cb(tx)),
+      } as any;
+      const service = new DeletionService(prisma, { create: vi.fn() } as any);
+      return { calls, done: service.deleteUser('u-1') };
+    }
+
+    it.each([
+      ['designVersion', { createdById: 'u-1' }],
+      ['federationGrant', { userId: 'u-1' }],
+      ['design', { createdById: 'u-1' }],
+      ['comments', { userId: 'u-1' }],
+      ['postCommentRead', { userId: 'u-1' }],
+      ['oAuthAuthorization', { userId: 'u-1' }],
+      ['apiKey', { userId: 'u-1' }],
+      ['aiDesignerSession', { userId: 'u-1' }],
+      ['userOrganization', { userId: 'u-1' }],
+    ])('%s.deleteMany is scoped to the user and runs before user.delete', async (model, where) => {
+      const { calls, done } = run();
+      await done;
+      const idx = calls.findIndex(
+        (c) => c.op === `${model}.deleteMany` && JSON.stringify(c.args) === JSON.stringify({ where })
+      );
+      const userDeleteIdx = calls.findIndex((c) => c.op === 'user.delete');
+      expect(idx).toBeGreaterThanOrEqual(0);
+      expect(userDeleteIdx).toBeGreaterThan(idx);
+    });
+  });
 });
