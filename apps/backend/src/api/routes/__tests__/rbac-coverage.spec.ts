@@ -5,11 +5,10 @@ import { PATH_METADATA, METHOD_METADATA } from '@nestjs/common/constants';
 import fs from 'fs';
 import path from 'path';
 
-import { CHECK_POLICIES_KEY } from '@postmill-ai/backend/services/auth/permissions/permissions.ability';
 import { REQUIRE_PERMISSION_KEY } from '@postmill-ai/backend/services/auth/rbac/require-permission.decorator';
 
-// Org-resource controllers whose mutating routes MUST carry @RequirePermission or
-// @CheckPolicies. Kept as static imports so Nest/reflect-metadata is deterministic.
+// Org-resource controllers whose mutating routes MUST carry @RequirePermission
+// (RBAC) — @CheckPolicies alone is the billing gate and does not count. Kept as static imports so Nest/reflect-metadata is deterministic.
 import { IntegrationsController } from '../integrations.controller';
 import { CampaignsController } from '../campaigns.controller';
 import { SocialCommentsController } from '../social-comments.controller';
@@ -176,7 +175,7 @@ const ORG_RESOURCE_CONTROLLERS: Array<{ name: string; ctor: any }> = [
 
 // Specific handlers that are intentionally NOT RBAC-gated, keyed `Controller.method`.
 // Every entry must carry a justification. New org-resource mutations must default to
-// @RequirePermission/@CheckPolicies; add here only when the route is genuinely public,
+// @RequirePermission; add here only when the route is genuinely public,
 // super-admin-only, an external handshake, or transient/no-persistence.
 const INTENTIONALLY_UNGATED = new Set<string>([
   // Stateless external onboarding handshake — registers a Moltbook agent with the
@@ -231,6 +230,8 @@ const INTENTIONALLY_UNGATED = new Set<string>([
 
   // Transient post validation — parses and checks posts, persists nothing.
   'PostsController.validatePosts',
+  // Same validation plus per-channel warnings for the composer — persists nothing.
+  'PostsController.preflightCheck',
 
   // Org setup completion is a one-time onboarding step for the caller's own organization.
   'SetupController.completeSetup',
@@ -267,6 +268,12 @@ const INTENTIONALLY_UNGATED = new Set<string>([
 
   // Stateless AI guardrail check — returns moderation result, persists nothing.
   'AiModerateController.moderate',
+
+  // CopilotKit composer/sidebar LLM proxy (billing-, budget- and throttle-gated):
+  // server-side it only streams model output; any write the UI performs off the
+  // back of it goes through the normal RBAC-gated REST routes. (`/copilot/agent`,
+  // whose server-side tools DO write, carries @RequirePermission('posts','create').)
+  'CopilotController.chatAgent',
 ]);
 
 const MUTATING = new Set<number>([
@@ -301,12 +308,13 @@ interface MutatingHandler {
   exempt: boolean;
 }
 
+// RBAC gating means @RequirePermission metadata (enforced by OrgRbacGuard → 403).
+// @CheckPolicies is the orthogonal BILLING gate (PoliciesGuard → 402) and does NOT
+// restrict by role — a viewer on a paid plan passes it — so it does not count here.
 function isGated(ctor: any, handler: any): boolean {
   const classRequire = Reflect.getMetadata(REQUIRE_PERMISSION_KEY, ctor);
-  const classCheck = Reflect.getMetadata(CHECK_POLICIES_KEY, ctor);
   const methodRequire = Reflect.getMetadata(REQUIRE_PERMISSION_KEY, handler);
-  const methodCheck = Reflect.getMetadata(CHECK_POLICIES_KEY, handler);
-  return !!(classRequire || classCheck || methodRequire || methodCheck);
+  return !!(classRequire || methodRequire);
 }
 
 function collectMutatingHandlers(): MutatingHandler[] {
@@ -360,7 +368,7 @@ describe('RBAC coverage — every org-resource mutation is gated or explicitly a
     ).toEqual([]);
   });
 
-  it('every mutating handler carries @RequirePermission/@CheckPolicies OR is on the intentional allowlist', () => {
+  it('every mutating handler carries @RequirePermission (RBAC, not just @CheckPolicies billing) OR is on the intentional allowlist', () => {
     const offenders = handlers
       .filter((h) => !h.gated && !h.exempt)
       .map((h) => `${h.controller}.${h.method}`);
@@ -368,7 +376,7 @@ describe('RBAC coverage — every org-resource mutation is gated or explicitly a
     expect(
       offenders,
       `Ungated mutating route(s) found. Add @RequirePermission(resource, action) ` +
-        `or @CheckPolicies(...), or if genuinely intentionally ungated, add to ` +
+        `(@CheckPolicies is the billing gate, not RBAC), or if genuinely intentionally ungated, add to ` +
         `INTENTIONALLY_UNGATED with a justification:\n` +
         offenders.join('\n')
     ).toEqual([]);

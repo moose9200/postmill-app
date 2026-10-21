@@ -1785,6 +1785,7 @@ paths:
         - SocialComments
   /posts/inbox/bulk-read:
     post:
+      description: Org-wide "mark handled" — inbox status is shared by the whole team, not per user. Sets status to `handled` for the listed comments in the caller's organization, but only for comments still in `needs_reply`; comments already `ignored` or `handled` keep their status. Returns `{ count }` of comments updated.
       operationId: SocialCommentsController_bulkMarkRead
       parameters: []
       requestBody:
@@ -1800,6 +1801,7 @@ paths:
             application/json:
               schema:
                 type: object
+      summary: Mark inbox comments handled (org-wide)
       tags:
         - SocialComments
   /posts/inbox/unread-count:

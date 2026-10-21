@@ -419,7 +419,6 @@ Set any of these to `true` or `1` to disable the corresponding subsystem during 
 | `PIXABAY_API_KEY` | — | Pixabay API key for vectors/illustrations |
 | `GIPHY_API_KEY` | — | GIPHY API key for stickers |
 | `JAMENDO_CLIENT_ID` | — | Jamendo API client ID for stock audio |
-| `JAMENDO_CLIENT_SECRET` | — | Jamendo API client secret |
 
 Iconify (SVG icons) does not require an API key.
 

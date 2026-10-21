@@ -17,8 +17,9 @@ local compute; without bounds a backlog can starve the host.
   CLI. The full render (Chromium frame-capture + FFmpeg encode, or the FFmpeg merge) happens
   inside the container; storage/clip resolution stays on the host (no storage creds in the
   container). Remote (`https:`) clips and images in a design are downloaded host-side before
-  capture and served to the renderer from the backend, so the renderer never streams media from
-  a remote CDN.
+  capture into the render's work directory, and the renderer reads them straight from local disk
+  (Chromium request interception — `/work/assets` inside the container), so it never streams
+  media from a remote CDN and multiple backend replicas need no shared storage.
 - **Aggregate resource pool.** All render containers join one Podman **pod** whose cgroup carries
   `--cpus VIDEO_RENDER_CPUS` / `--memory VIDEO_RENDER_MEMORY`. Those are the **total** across all
   containers — a lone render may use the whole pool; three share it. (e.g. `4` CPU / `8g` =
@@ -55,7 +56,7 @@ local compute; without bounds a backlog can starve the host.
   rootless needs `--cgroup-manager systemd` + cgroup delegation. If the pod can't be created and
   `VIDEO_RENDER_SPLIT_FALLBACK=true` (default), the service degrades to per-container even-split
   caps (`CPUS/CONCURRENCY`, `MEMORY/CONCURRENCY` each) and logs a warning.
-- The design-render container reaches the backend's `render-frame` route and fetches assets over
+- The design-render container reaches the backend's `render-frame` route over
   `VIDEO_RENDER_NETWORK` (default `bridge`). `host` is opt-in and defeats the isolation: the
   container's Chromium could then reach localhost, internal services, and cloud metadata. The pod
   owns networking, so per-container network can't differ; the merge worker shares it but doesn't

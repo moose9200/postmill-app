@@ -146,7 +146,7 @@ export class FalAdapter implements MediaProviderAdapter {
   }
 
   async pollJob(jobId: string, options?: MediaCredentialOptions): Promise<MediaPollResult> {
-    // Missing key is a config error → terminal failed (matches openai/Sora), not a thrown
+    // Missing key is a config error → terminal failed (matches the openai adapter), not a thrown
     // error the lifecycle would retry to the 24h timeout.
     if (!resolveApiKey(options)) return { status: 'failed', error: 'fal.ai API key is required' };
 

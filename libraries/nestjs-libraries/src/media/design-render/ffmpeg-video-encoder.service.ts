@@ -83,6 +83,12 @@ export interface VideoEncodeOptions {
   orgId?: string;
   renderToken?: string;
   /**
+   * Local dir of the job's pre-downloaded render assets, served to the capture
+   * pages by request interception. Defaults to `renderWorkDir(jobId)/assets`;
+   * the Podman worker passes the mounted `/work/assets`. Never serialized.
+   */
+  assetsDir?: string;
+  /**
    * Frame-capture progress hook (global completed count). In-process renders wire
    * this to the Redis progress channel; the container worker wires it to the
    * render-progress HTTP route. Never serialized into a job spec.
@@ -138,6 +144,7 @@ export class FfmpegVideoEncoderService {
               jobId: options.jobId,
               orgId: options.orgId,
               token: options.renderToken,
+              assetsDir: options.assetsDir,
             }
           : undefined;
       await this._frameCapture.captureFrames(output, fps, tmpDir, (p) => {

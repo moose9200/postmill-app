@@ -52,7 +52,7 @@ export interface ProviderMetadata {
    * Provider kind:
    * - `direct` — single-brand provider with its own models (OpenAI, Anthropic, …).
    * - `hub` — aggregator that exposes many third-party models (OpenRouter, Together, …).
-   * - `action` — no model list; the provider is action-only (HeyGen, Suno, Deepgram, …).
+   * - `action` — no model list; the provider is action-only (Deepgram, D-ID, Hedra, …).
    */
   kind: 'direct' | 'hub' | 'action';
 

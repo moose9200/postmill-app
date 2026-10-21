@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { ChromiumFrameCaptureService, FrameCaptureProgress } from './chromium-frame-capture.service';
+import {
+  ChromiumFrameCaptureService,
+  FrameCaptureProgress,
+  RENDER_ASSET_MAX_RESPONSE_BYTES,
+  interceptRenderAssetRequest,
+} from './chromium-frame-capture.service';
 
 // Puppeteer is mocked: the fake browser hands out instrumented pages that record
 // which frames each one rendered; frames land on disk as real PNGs (a tiny valid
@@ -21,6 +26,7 @@ interface FakePage {
   evaluate: ReturnType<typeof vi.fn>;
   goto: ReturnType<typeof vi.fn>;
   bringToFront: ReturnType<typeof vi.fn>;
+  setRequestInterception: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
   off: ReturnType<typeof vi.fn>;
   close: ReturnType<typeof vi.fn>;
@@ -43,6 +49,7 @@ function makeFakePage(index: number): FakePage {
     waitForFunction: vi.fn(async () => {}),
     goto: vi.fn(async () => {}),
     bringToFront: vi.fn(async () => {}),
+    setRequestInterception: vi.fn(async () => {}),
     on: vi.fn(),
     off: vi.fn(),
     close: vi.fn(async () => {}),
@@ -251,6 +258,41 @@ describe('ChromiumFrameCaptureService parallel capture', () => {
     expect(capturedFrames()).toHaveLength(360);
   });
 
+  it('enables render-asset interception on EVERY route-mode capture page, including a reset page', async () => {
+    process.env.VIDEO_RENDER_CAPTURE_PAGES = '2';
+    process.env.VIDEO_RENDER_FRAME_TIMEOUT_MS = '50';
+    customizePage = (page) => {
+      if (page.index === 1) {
+        const original = page.evaluate.getMockImplementation();
+        page.evaluate.mockImplementation(async (fn: unknown, arg?: unknown) => {
+          if (typeof arg === 'number') return new Promise(() => {});
+          return original?.(fn, arg);
+        });
+      }
+    };
+
+    await service.captureFrames(output(12000), 30, frameDir, undefined, {
+      jobId: 'cjobid000000000000000001',
+      orgId: 'org-1',
+      token: 'tok',
+    });
+
+    expect(pages).toHaveLength(3);
+    for (const page of pages) {
+      expect(page.setRequestInterception).toHaveBeenCalledWith(true);
+      expect(page.on).toHaveBeenCalledWith('request', expect.any(Function));
+      // Interception is on BEFORE the page's first request (the navigation).
+      expect(page.setRequestInterception.mock.invocationCallOrder[0]).toBeLessThan(
+        page.goto.mock.invocationCallOrder[0],
+      );
+    }
+  });
+
+  it('leaves interception off in direct (no route) mode', async () => {
+    await service.captureFrames(output(1000), 30, frameDir);
+    expect(pages[0].setRequestInterception).not.toHaveBeenCalled();
+  });
+
   it('aborts when a frame wedges AGAIN on the fresh page (not a one-off)', async () => {
     process.env.VIDEO_RENDER_CAPTURE_PAGES = '2';
     process.env.VIDEO_RENDER_FRAME_TIMEOUT_MS = '50';
@@ -327,5 +369,138 @@ describe('ChromiumFrameCaptureService parallel capture', () => {
     crashPage(new Error('boom'));
 
     await assertion;
+  });
+});
+
+describe('interceptRenderAssetRequest', () => {
+  const JOB = 'cjobid000000000000000001';
+  const BASE = 'https://api.example.com/media/designs/render-asset';
+  let assetsDir: string;
+  const content = Buffer.from(Array.from({ length: 64 }, (_, i) => i));
+
+  beforeEach(() => {
+    assetsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'intercept-spec-'));
+    fs.writeFileSync(path.join(assetsDir, 'asset-0.mp4'), content);
+    fs.writeFileSync(path.join(assetsDir, 'manifest.json'), JSON.stringify({ 'asset-0.mp4': 'video/mp4' }));
+  });
+  afterEach(() => {
+    fs.rmSync(assetsDir, { recursive: true, force: true });
+  });
+
+  function fakeRequest(url: string, headers: Record<string, string> = {}) {
+    let handled = false;
+    const request = {
+      url: () => url,
+      headers: () => headers,
+      isInterceptResolutionHandled: () => handled,
+      continue: vi.fn(async () => {
+        handled = true;
+      }),
+      respond: vi.fn(async (_r: any) => {
+        handled = true;
+      }),
+    };
+    return request;
+  }
+
+  it('responds to a valid asset request from the LOCAL dir (no network)', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-0.mp4?token=t`);
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    expect(req.continue).not.toHaveBeenCalled();
+    const res = req.respond.mock.calls[0][0];
+    expect(res.status).toBe(200);
+    expect(res.contentType).toBe('video/mp4');
+    expect(res.headers['Accept-Ranges']).toBe('bytes');
+    expect(Buffer.compare(res.body, content)).toBe(0);
+  });
+
+  it('answers a single byte-range with 206 + Content-Range', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-0.mp4?token=t`, { range: 'bytes=10-19' });
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    const res = req.respond.mock.calls[0][0];
+    expect(res.status).toBe(206);
+    expect(res.headers['Content-Range']).toBe('bytes 10-19/64');
+    expect(res.headers['Content-Length']).toBe('10');
+    expect(Buffer.compare(res.body, content.subarray(10, 20))).toBe(0);
+  });
+
+  it('answers an open-ended range to EOF', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-0.mp4`, { range: 'bytes=60-' });
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    const res = req.respond.mock.calls[0][0];
+    expect(res.status).toBe(206);
+    expect(res.headers['Content-Range']).toBe('bytes 60-63/64');
+    expect(Buffer.compare(res.body, content.subarray(60))).toBe(0);
+  });
+
+  it('clamps a huge range to RENDER_ASSET_MAX_RESPONSE_BYTES (CDP message cap)', async () => {
+    const big = path.join(assetsDir, 'asset-1.mp4');
+    fs.writeFileSync(big, Buffer.alloc(RENDER_ASSET_MAX_RESPONSE_BYTES + 100));
+    const req = fakeRequest(`${BASE}/${JOB}/asset-1.mp4`, { range: 'bytes=0-' });
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    const res = req.respond.mock.calls[0][0];
+    expect(res.status).toBe(206);
+    expect(res.body.length).toBe(RENDER_ASSET_MAX_RESPONSE_BYTES);
+    expect(res.headers['Content-Range']).toBe(
+      `bytes 0-${RENDER_ASSET_MAX_RESPONSE_BYTES - 1}/${RENDER_ASSET_MAX_RESPONSE_BYTES + 100}`,
+    );
+  });
+
+  it('416s an unsatisfiable range', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-0.mp4`, { range: 'bytes=64-' });
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    const res = req.respond.mock.calls[0][0];
+    expect(res.status).toBe(416);
+    expect(res.headers['Content-Range']).toBe('bytes */64');
+  });
+
+  it('404s unsafe file names / job ids without touching the network (path traversal, manifest)', async () => {
+    for (const url of [
+      `${BASE}/${JOB}/..%2F..%2Fetc%2Fpasswd`,
+      `${BASE}/${JOB}/manifest.json`,
+      `${BASE}/${JOB}/.asset-0.mp4`,
+      `${BASE}/..%2F..%2Ftmp/asset-0.mp4`,
+      `${BASE}/short/asset-0.mp4`,
+    ]) {
+      const req = fakeRequest(url);
+      await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+      expect(req.continue).not.toHaveBeenCalled();
+      expect(req.respond.mock.calls[0][0].status).toBe(404);
+    }
+  });
+
+  it("continues another job's asset to the token-gated HTTP route (never served locally)", async () => {
+    const req = fakeRequest(`${BASE}/cotherjob0000000000000002/asset-0.mp4?token=t`);
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    expect(req.respond).not.toHaveBeenCalled();
+    expect(req.continue).toHaveBeenCalled();
+  });
+
+  it('falls back to the HTTP route when the asset is not on local disk', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-7.mp4?token=t`);
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    expect(req.respond).not.toHaveBeenCalled();
+    expect(req.continue).toHaveBeenCalled();
+  });
+
+  it('continues every non-asset request unchanged', async () => {
+    for (const url of [
+      'https://api.example.com/media/designs/render-frame/cjob?token=t',
+      'https://fonts.googleapis.com/css2?family=Inter',
+      'data:image/png;base64,AAAA',
+    ]) {
+      const req = fakeRequest(url);
+      await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+      expect(req.respond).not.toHaveBeenCalled();
+      expect(req.continue).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('does nothing for a request another handler already resolved', async () => {
+    const req = fakeRequest(`${BASE}/${JOB}/asset-0.mp4`);
+    req.isInterceptResolutionHandled = () => true;
+    await interceptRenderAssetRequest(req as any, JOB, assetsDir);
+    expect(req.respond).not.toHaveBeenCalled();
+    expect(req.continue).not.toHaveBeenCalled();
   });
 });

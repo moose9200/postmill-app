@@ -230,6 +230,38 @@ describe('SocialCommentsRepository', () => {
     });
   });
 
+  describe('bulkMarkRead', () => {
+    it('only flips comments still in needs_reply — never overwrites ignored/handled', async () => {
+      mockSocialComment.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await repository.bulkMarkRead(['c1', 'c2', 'c3'], 'org1');
+
+      expect(mockSocialComment.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['c1', 'c2', 'c3'] }, organizationId: 'org1', status: 'needs_reply' },
+        data: { status: 'handled' },
+      });
+      expect(result).toEqual({ count: 2 });
+    });
+
+    it('is a no-op for an empty id list', async () => {
+      await expect(repository.bulkMarkRead([], 'org1')).resolves.toEqual({ count: 0 });
+      expect(mockSocialComment.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getInboxUnreadCount', () => {
+    it('is org-wide: counts non-own, non-deleted, not-handled comments for the org only', async () => {
+      mockSocialComment.count.mockResolvedValue(7);
+
+      await expect(repository.getInboxUnreadCount('org1')).resolves.toBe(7);
+      expect(mockSocialComment.count).toHaveBeenCalledWith({
+        where: { organizationId: 'org1', deletedAt: null, isOwn: false, status: { not: 'handled' } },
+      });
+      // The unused per-user parameter is gone from the signature.
+      expect(repository.getInboxUnreadCount.length).toBe(1);
+    });
+  });
+
   describe('assignComment', () => {
     it('assigns the comment scoped to the organization', async () => {
       mockSocialComment.update.mockResolvedValue({ id: 'c1', assigneeId: 'u2' });

@@ -61,7 +61,7 @@ export class DeepgramAdapter implements MediaProviderAdapter {
 
     // 6.1c — build the query with URLSearchParams so a `model` containing `&callback=…` (etc.)
     // can't inject extra Deepgram params (matches speechToTextWords).
-    const params = new URLSearchParams({ model: options?.model || 'whisper' });
+    const params = new URLSearchParams({ model: options?.model || 'nova-2' });
     const res = await this._fetch(`https://api.deepgram.com/v1/listen?${params.toString()}`, {
       method: 'POST',
       headers: {
@@ -82,7 +82,7 @@ export class DeepgramAdapter implements MediaProviderAdapter {
     const apiKey = resolveApiKey(options);
     if (!apiKey) throw new Error('Deepgram API key is required');
 
-    const params = new URLSearchParams({ model: options?.model || 'whisper' });
+    const params = new URLSearchParams({ model: options?.model || 'nova-2' });
     // Opt-in caption niceties — callers (the Deepgram studio) pass these via input;
     // the existing timeline path passes none, so its request is unchanged.
     if (options?.input?.smartFormat) {

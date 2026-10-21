@@ -52,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Design and design-template routes accept JSON bodies up to 50 MB; the old 100 KB limit rejected large designs. `GET /media/design-templates` accepts optional `page` and `limit`.
 - The migration `20261020200424_drop_null_model_media_defaults` deletes media model defaults that were stored without a model and could never resolve. Those organizations fall back to an automatic pick. It is a data-only change and is idempotent.
 - Two additive migrations add the `DesignTemplateFolder` and `DesignVersion` tables and a nullable `DesignTemplate.folderId`.
+- Bulk CSV import validates every row with the same per-channel checks as the composer, and imports `media_url` into the media library and attaches it. A row whose URL is not public https, can't be downloaded, or isn't an image or video fails with a clear error. Rows for channels that need settings a CSV can't carry (Pinterest board, YouTube title) now fail at import instead of at publish.
+- `POST /posts/inbox/bulk-read` only marks comments that still need a reply as handled; ignored and handled comments keep their status. The unread count is org-wide.
+- MCP: `allowedScopes` is now a ceiling on the scopes a token can use, instead of a list every token must hold. Only `mcp:read` is required.
+- `tools/db/postmill-migrate.sh` runs `prisma migrate deploy` with the image's bundled Prisma CLI against the `postmill` container. It used to run `db push --accept-data-loss` through pnpm, which the runtime image doesn't have. `pnpm run prisma-schema-check -- --file <sql>` now checks that file.
+- `.env.example` documents the optional render, retention and AI Designer tunables and the separate LinkedIn Page app credentials. It now shows `VIDEO_RENDER_NETWORK="bridge"` (the code default) and drops the unused `JAMENDO_CLIENT_SECRET`.
 
 ### Fixed
 
@@ -79,6 +84,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generation errors show their real reason.
 - **Files:** move failures show the real reason; template folders can be deleted and moved on touch devices.
 - Free stock search degrades gracefully on network failures instead of returning 500. Sentry triage removed noise from slide requires, upload 400s and aborted requests.
+- **Video renders on multi-replica deployments:** pre-downloaded clips are served to the renderer from local disk through request interception, so a load balancer can no longer route an asset fetch to a replica without the files.
+- **Account deletion:** `DELETE /users/me` no longer fails with 500 for users who saved a version of a teammate's design or granted a Postmill ID sign-in.
+- **AI Designer Expand Image (AI)** resolves Replicate again. A catalog regeneration had dropped its `image-outpaint` category, and the generator now keeps it.
+- **Dashboard:** the AI budget attention item uses the organization's own budget cap and alert threshold, falling back to the global cap only when the org has none.
+- **Media:**
+  - Deepgram transcription defaults to `nova-2`.
+  - Stock Videos no longer shows a color filter that Pexels can't apply.
+  - Related videos search by the clip's title instead of showing popular clips.
+  - The Files panel's **Download** button downloads, and **Open file** opens a new tab.
+- **Copy:** the AI provider settings description says **Make Primary**, and the unused Sora translation strings are removed.
+
+### Security
+
+- **Role checks on billing-only routes:**
+  - Webhook create and test-ping now require `webhooks:create`.
+  - Other mutating routes now require the matching role permission: autopost create, AI media generation, custom fonts and the Postmill agent. Previously they had only the billing gate, so a read-only viewer could use them.
+  - An RBAC coverage test now fails any mutating route without a role check.
+- **AI Designer WebSocket:** the handshake CSRF check is skipped only when `NOT_SECURED` is set *and* `NODE_ENV=development`. Before, `NOT_SECURED` alone disabled it in any environment.
 
 ## [1.2.0] - 2026-10-14
 

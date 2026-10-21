@@ -74,6 +74,7 @@ function buildService(overrides: {
   const aiSettingsService = {
     getMediaJobsWithCounts: vi.fn().mockResolvedValue({ jobs: [], counts: { pending: 0, processing: 0, failed7d: 0 } }),
     getSpendSummary: vi.fn().mockResolvedValue([]),
+    getOrgBudget: vi.fn().mockResolvedValue(null),
   } as any;
 
   const campaignsService = {
@@ -579,6 +580,66 @@ describe('DashboardService _aiBudgetAlert via getAttention', () => {
     aiSettingsManager.getSettings = vi.fn().mockResolvedValue({
       budgetSettings: JSON.stringify({}),
     });
+
+    const result = await service.getAttention('org-1', 'user-1', ['budget']);
+
+    expect(result.items).toHaveLength(0);
+  });
+
+  it('uses the org monthly cap + threshold over the global cap', async () => {
+    const { service, aiSettingsManager, aiSettingsService } = buildService();
+    // Global cap is large: 60 / 1000 = 6% would never alert.
+    aiSettingsManager.getSettings = vi.fn().mockResolvedValue({
+      budgetSettings: JSON.stringify({ monthlyCap: 1000, alertThresholdPct: 0.8 }),
+    });
+    aiSettingsService.getOrgBudget = vi
+      .fn()
+      .mockResolvedValue({ monthlyCap: 100, dailyCap: null, alertThresholdPct: 0.5 });
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 60 } }]);
+
+    const result = await service.getAttention('org-1', 'user-1', ['budget']);
+
+    expect(aiSettingsService.getOrgBudget).toHaveBeenCalledWith('org-1');
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].severity).toBe('warning');
+    expect(result.items[0].title).toBe('60% of AI budget used');
+  });
+
+  it('org cap with no org threshold alerts at the 0.8 default', async () => {
+    const { service, aiSettingsService } = buildService();
+    aiSettingsService.getOrgBudget = vi
+      .fn()
+      .mockResolvedValue({ monthlyCap: 100, dailyCap: null, alertThresholdPct: null });
+
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 79 } }]);
+    expect((await service.getAttention('org-1', 'user-1', ['budget'])).items).toHaveLength(0);
+
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 81 } }]);
+    const result = await service.getAttention('org-1', 'user-1', ['budget']);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].title).toBe('81% of AI budget used');
+  });
+
+  it('an org with a threshold but no cap falls back to the global cap', async () => {
+    const { service, aiSettingsManager, aiSettingsService } = buildService();
+    aiSettingsManager.getSettings = vi.fn().mockResolvedValue({
+      budgetSettings: JSON.stringify({ monthlyCap: 100, alertThresholdPct: 0.9 }),
+    });
+    aiSettingsService.getOrgBudget = vi
+      .fn()
+      .mockResolvedValue({ monthlyCap: null, dailyCap: null, alertThresholdPct: null });
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 85 } }]);
+
+    // 85% of the global cap is below the global 0.9 threshold.
+    expect((await service.getAttention('org-1', 'user-1', ['budget'])).items).toHaveLength(0);
+  });
+
+  it('no org cap and no global cap → no alert', async () => {
+    const { service, aiSettingsService } = buildService();
+    aiSettingsService.getOrgBudget = vi
+      .fn()
+      .mockResolvedValue({ monthlyCap: null, dailyCap: null, alertThresholdPct: 0.5 });
+    aiSettingsService.getSpendSummary = vi.fn().mockResolvedValue([{ _sum: { costUsd: 9999 } }]);
 
     const result = await service.getAttention('org-1', 'user-1', ['budget']);
 
