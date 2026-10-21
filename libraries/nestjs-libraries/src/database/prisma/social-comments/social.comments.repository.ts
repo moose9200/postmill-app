@@ -104,15 +104,21 @@ export class SocialCommentsRepository {
     return { comments: items, nextCursor };
   }
 
+  /**
+   * Org-wide "mark handled" for the inbox. Only comments still awaiting a
+   * reply (`needs_reply`) are flipped — a comment a teammate already marked
+   * `ignored` (or `handled`) keeps its status.
+   */
   async bulkMarkRead(commentIds: string[], organizationId: string) {
     if (!commentIds.length) return { count: 0 };
     return this._socialComment.model.socialComment.updateMany({
-      where: { id: { in: commentIds }, organizationId },
+      where: { id: { in: commentIds }, organizationId, status: 'needs_reply' },
       data: { status: 'handled' },
     });
   }
 
-  async getInboxUnreadCount(orgId: string, userId: string): Promise<number> {
+  /** Org-wide count of inbound comments not yet handled (inbox status is shared, not per-user). */
+  async getInboxUnreadCount(orgId: string): Promise<number> {
     return this._socialComment.model.socialComment.count({
       where: {
         organizationId: orgId,

@@ -862,8 +862,8 @@ Return valid JSON matching the requested schema.`,
     return this._socialCommentsRepository.bulkMarkRead(commentIds, orgId);
   }
 
-  async getInboxUnreadCount(orgId: string, userId: string) {
-    const count = await this._socialCommentsRepository.getInboxUnreadCount(orgId, userId);
+  async getInboxUnreadCount(orgId: string) {
+    const count = await this._socialCommentsRepository.getInboxUnreadCount(orgId);
     return { unreadCount: count };
   }
 
