@@ -13,6 +13,7 @@ import { UpdateCommentStatusDto } from '@postmill-ai/nestjs-libraries/dtos/socia
 import { AssignCommentDto } from '@postmill-ai/nestjs-libraries/dtos/social-comments/assign-comment.dto';
 import { Organization, User } from '@prisma/client';
 import { RequirePermission } from '@postmill-ai/backend/services/auth/rbac/require-permission.decorator';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('/posts')
 export class SocialCommentsController {
@@ -28,8 +29,19 @@ export class SocialCommentsController {
     return this._socialCommentsService.getInbox(org.id, user.id, filters);
   }
 
+  /**
+   * Org-wide "mark handled": inbox status is shared by the whole team, so this
+   * sets `status = handled` for the listed comments in the caller's org. Only
+   * comments still in `needs_reply` change; `ignored`/`handled` ones are left
+   * as they are. Returns `{ count }` of comments actually updated.
+   */
   @Post('/inbox/bulk-read')
   @RequirePermission('comments', 'update')
+  @ApiOperation({
+    summary: 'Mark inbox comments handled (org-wide)',
+    description:
+      'Org-wide "mark handled" — inbox status is shared by the whole team, not per user. Sets status to `handled` for the listed comments in the caller\'s organization, but only for comments still in `needs_reply`; comments already `ignored` or `handled` keep their status. Returns `{ count }` of comments updated.',
+  })
   async bulkMarkRead(
     @GetOrgFromRequest() org: Organization,
     @Body() body: BulkMarkReadDto,
@@ -40,9 +52,8 @@ export class SocialCommentsController {
   @Get('/inbox/unread-count')
   async getInboxUnreadCount(
     @GetOrgFromRequest() org: Organization,
-    @GetUserFromRequest() user: User,
   ) {
-    return this._socialCommentsService.getInboxUnreadCount(org.id, user.id);
+    return this._socialCommentsService.getInboxUnreadCount(org.id);
   }
 
   @Post('/inbox/sync')

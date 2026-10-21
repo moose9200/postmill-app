@@ -230,4 +230,26 @@ describe('SocialCommentsController', () => {
       expect(result).toEqual({ unreadCount: 5 });
     });
   });
+
+  describe('POST /inbox/bulk-read', () => {
+    it('marks the given comments handled for the org', async () => {
+      (service.bulkMarkRead as any).mockResolvedValue({ count: 2 });
+
+      const result = await controller.bulkMarkRead(mockOrg, { commentIds: ['c1', 'c2'] } as any);
+
+      expect(service.bulkMarkRead).toHaveBeenCalledWith(['c1', 'c2'], 'org-1');
+      expect(result).toEqual({ count: 2 });
+    });
+  });
+
+  describe('GET /inbox/unread-count', () => {
+    it('returns the org-wide count without threading a user id', async () => {
+      (service.getInboxUnreadCount as any).mockResolvedValue({ unreadCount: 3 });
+
+      const result = await (controller.getInboxUnreadCount as any)(mockOrg, mockUser);
+
+      expect(service.getInboxUnreadCount).toHaveBeenCalledWith('org-1');
+      expect(result).toEqual({ unreadCount: 3 });
+    });
+  });
 });

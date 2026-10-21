@@ -66,6 +66,15 @@ vi.mock('@postmill-ai/helpers/utils/read.or.fetch', () => ({
   readOrFetch: vi.fn(),
 }));
 
+// No DNS in unit tests: treat any https:// URL that is not a loopback literal
+// as public (the real check is covered by webhook.url.validator.spec).
+vi.mock('@postmill-ai/nestjs-libraries/dtos/webhooks/webhook.url.validator', () => ({
+  isSafePublicHttpsUrl: vi.fn(
+    async (u: unknown) =>
+      typeof u === 'string' && u.startsWith('https://') && !u.includes('127.0.0.1'),
+  ),
+}));
+
 import { PostsService } from './posts.service';
 import { AnalyticsRepository } from '@postmill-ai/nestjs-libraries/database/prisma/analytics/analytics.repository';
 import { hasExtension } from '@postmill-ai/helpers/utils/has.extension';
@@ -679,13 +688,18 @@ function makePostsService(overrides: Record<string, any> = {}) {
     getSubscriptionByOrganizationId: vi.fn().mockResolvedValue(null),
     ...overrides.subscriptionService,
   };
+  const fileService = {
+    importFromUrl: vi.fn(),
+    deleteFile: vi.fn().mockResolvedValue(undefined),
+    ...overrides.fileService,
+  };
 
   const service = new PostsService(
     postRepository as any, // _postRepository
     {} as any, // _analyticsRepository
     integrationManager as any, // _integrationManager
     integrationService as any, // _integrationService
-    {} as any, // _fileService
+    fileService as any, // _fileService
     shortLinkService as any, // _shortLinkService
     {} as any, // _openaiService
     {} as any, // _refreshIntegrationService
@@ -696,7 +710,7 @@ function makePostsService(overrides: Record<string, any> = {}) {
     subscriptionService as any, // _subscriptionService
   );
 
-  return { service, postRepository, integrationService, shortLinkService, campaignsRepository, subscriptionService };
+  return { service, postRepository, integrationService, fileService, shortLinkService, campaignsRepository, subscriptionService };
 }
 
 describe('0.5 — strip decrypted integration secrets from HTTP reads', () => {
@@ -856,6 +870,150 @@ describe('1.5 — bulkCreate enforces remaining POSTS_PER_MONTH budget', () => {
         ],
       } as any),
     ).rejects.toMatchObject({ status: 402 });
+  });
+});
+
+describe('bulkCreate — per-provider validation + media_url import', () => {
+  const FUTURE = '2999-01-01T00:00:00.000Z';
+  const okValidation = [
+    { identifier: 'x', name: 'My X', valid: true, settingsError: '', errors: true, emptyContent: false, tooLong: false },
+  ];
+
+  function setup(fileService: Record<string, any> = {}) {
+    const ctx = makePostsService({
+      integrationService: {
+        getIntegrationsList: vi
+          .fn()
+          .mockResolvedValue([{ id: 'int-1', providerIdentifier: 'x', disabled: false, deletedAt: null }]),
+      },
+      fileService,
+    });
+    const mapSpy = vi.spyOn(ctx.service, 'mapTypeToPost').mockImplementation(async (b: any) => b);
+    const validateSpy = vi.spyOn(ctx.service, 'validatePosts').mockResolvedValue(okValidation as any);
+    const createSpy = vi
+      .spyOn(ctx.service, 'createPost')
+      .mockResolvedValue([{ postId: 'post-1', integration: 'int-1' }]);
+    return { ...ctx, mapSpy, validateSpy, createSpy };
+  }
+
+  beforeEach(() => {
+    vi.mocked(isInngestEnabled).mockReturnValue(true);
+    vi.clearAllMocks();
+  });
+
+  it('runs provider validation and reports a validation failure as the row result (no post created)', async () => {
+    const { service, validateSpy, createSpy } = setup();
+    validateSpy.mockResolvedValue([
+      { ...okValidation[0], tooLong: true },
+    ] as any);
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [{ content: 'hello', channels: ['int-1'], scheduleAt: FUTURE }],
+    } as any);
+
+    expect(validateSpy).toHaveBeenCalled();
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(rows[0].success).toBe(false);
+    expect(rows[0].warnings?.[0]).toContain('post is too long');
+  });
+
+  it('creates a valid row through the validated path', async () => {
+    const { service, createSpy } = setup();
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [{ content: 'hello', channels: ['int-1'], scheduleAt: FUTURE }],
+    } as any);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(rows[0]).toMatchObject({ success: true, postId: 'post-1' });
+  });
+
+  it('imports media_url into the org media library and attaches it to the post', async () => {
+    const importFromUrl = vi
+      .fn()
+      .mockResolvedValue({ id: 'file-1', path: 'https://cdn.example/uploads/a.png', type: 'image' });
+    const { service, createSpy } = setup({ importFromUrl });
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [
+        {
+          content: 'hello',
+          channels: ['int-1'],
+          scheduleAt: FUTURE,
+          mediaUrl: 'https://images.example.com/a.png',
+        },
+      ],
+    } as any);
+
+    expect(importFromUrl).toHaveBeenCalledWith(
+      'org-1',
+      expect.objectContaining({ url: 'https://images.example.com/a.png' }),
+    );
+    const body = createSpy.mock.calls[0][1] as any;
+    expect(body.posts[0].value[0].image).toEqual([
+      { id: 'file-1', path: 'https://cdn.example/uploads/a.png' },
+    ]);
+    expect(rows[0].success).toBe(true);
+  });
+
+  it('fails the row (no fetch, no post) for a non-https or private media_url', async () => {
+    const importFromUrl = vi.fn();
+    const { service, createSpy } = setup({ importFromUrl });
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [
+        { content: 'a', channels: ['int-1'], scheduleAt: FUTURE, mediaUrl: 'http://example.com/a.png' },
+        { content: 'b', channels: ['int-1'], scheduleAt: FUTURE, mediaUrl: 'https://127.0.0.1/a.png' },
+      ],
+    } as any);
+
+    expect(importFromUrl).not.toHaveBeenCalled();
+    expect(createSpy).not.toHaveBeenCalled();
+    for (const r of rows) {
+      expect(r.success).toBe(false);
+      expect(r.error).toMatch(/media_url/);
+    }
+  });
+
+  it('fails the row with the download error when the media import fails', async () => {
+    const { HttpException } = await import('@nestjs/common');
+    const importFromUrl = vi
+      .fn()
+      .mockRejectedValue(new HttpException('File type not allowed: text/html', 415));
+    const { service, createSpy } = setup({ importFromUrl });
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [{ content: 'a', channels: ['int-1'], scheduleAt: FUTURE, mediaUrl: 'https://example.com/page' }],
+    } as any);
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(rows[0].success).toBe(false);
+    expect(rows[0].error).toContain('File type not allowed: text/html');
+  });
+
+  it('rejects an audio media_url (removing the imported file) — posts take images/video only', async () => {
+    const importFromUrl = vi
+      .fn()
+      .mockResolvedValue({ id: 'file-2', path: 'https://cdn.example/a.mp3', type: 'audio' });
+    const deleteFile = vi.fn().mockResolvedValue(undefined);
+    const { service, createSpy } = setup({ importFromUrl, deleteFile });
+
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [{ content: 'a', channels: ['int-1'], scheduleAt: FUTURE, mediaUrl: 'https://example.com/a.mp3' }],
+    } as any);
+
+    expect(deleteFile).toHaveBeenCalledWith('org-1', 'file-2');
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(rows[0].success).toBe(false);
+    expect(rows[0].error).toMatch(/image or video/);
+  });
+
+  it('still rejects a past schedule date before any media is fetched', async () => {
+    const importFromUrl = vi.fn();
+    const { service } = setup({ importFromUrl });
+    const { rows } = await service.bulkCreate('org-1', {
+      rows: [{ content: 'a', channels: ['int-1'], scheduleAt: '2000-01-01T00:00:00.000Z', mediaUrl: 'https://example.com/a.png' }],
+    } as any);
+    expect(importFromUrl).not.toHaveBeenCalled();
+    expect(rows[0]).toMatchObject({ success: false, error: 'Cannot schedule a post in the past' });
   });
 });
 

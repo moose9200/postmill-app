@@ -54,6 +54,9 @@ Each comment card displays:
 
 Click **Mark handled** on a comment card to mark it handled and clear it from the unread queue. The
 underlying `POST /posts/inbox/bulk-read` endpoint accepts up to 1,000 comment IDs per request.
+Inbox status is shared by the whole organisation, so marking a comment handled clears it for every
+teammate. Only comments still in **needs reply** are changed — a comment someone already set to
+**ignored** keeps that status.
 
 ### Quick Replies
 
