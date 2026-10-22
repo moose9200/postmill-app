@@ -138,11 +138,11 @@ describe('replicate media adapter (async predictions)', () => {
     await expect(
       adapter.generateVideo('animate this', {
         apiKey: 'replicate-key',
-        model: 'google/veo-3', // text-to-video only — no declared source field
+        model: 'google/veo-3.1', // text-to-video only — no declared source field
         sourceUrl: 'https://cdn.example.com/frame.png',
       }),
     ).rejects.toThrow(
-      'Replicate model google/veo-3 does not declare an image-to-video or video-to-video source input',
+      'Replicate model google/veo-3.1 does not declare an image-to-video or video-to-video source input',
     );
     await expect(
       adapter.generateVideo('animate this', {
@@ -235,7 +235,8 @@ describe('replicate media adapter (async predictions)', () => {
     const body = JSON.parse(r.body);
     expect(body.version).toBeUndefined();
     expect(body.input).toEqual({
-      video: 'https://cdn.example.com/with-bg.mp4',
+      input_video: 'https://cdn.example.com/with-bg.mp4',
+      output_type: 'green-screen',
     });
   });
 
