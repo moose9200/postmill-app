@@ -176,6 +176,31 @@ export const useMenuItem = () => {
       ),
       path: '/campaigns',
     },
+    {
+      name: t('build_log', 'Build log'),
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="6" cy="6" r="2.5" />
+          <circle cx="6" cy="18" r="2.5" />
+          <circle cx="18" cy="12" r="2.5" />
+          <path d="M6 8.5v7M8.3 7.2l7.4 3.6" />
+        </svg>
+      ),
+      path: '/build-log',
+      hide:
+        permissions.isResolved &&
+        !permissions.hasPermission('autopost', 'read'),
+    },
   ] satisfies MenuItemInterface[] as MenuItemInterface[];
 
   const secondMenu = [

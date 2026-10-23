@@ -1,0 +1,5 @@
+import { RouteNotFound } from '@postmill-ai/frontend/components/errors/route-not-found';
+
+export default function BuildLogNotFound() {
+  return <RouteNotFound />;
+}

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Build log:** a new `/build-log` page turns your build activity into platform-native drafts. Connect GitHub repos (public, or private with a token stored encrypted) to pull in commits, merged PRs, releases and the newest CHANGELOG.md sections, and add daily notes by hand. Select items and channels, and the org's AI provider writes a LinkedIn founder story, an X post or short thread, a Reddit discussion post (title + suggested subreddit) or an Instagram carousel script. It uses only facts from the selected items and marks gaps as `[TODO]`. Drafts land in the calendar in the next free slot with a new `BUILD LOG` creation-method badge and filter. Nothing is published until you schedule it.
+
 ### Fixed
 
 - **Designer canvas:** AI-generated videos stored at extensionless `/uploads/…/<hash>` URLs now play on the canvas instead of rendering as a static first frame — clips carry an explicit `mediaType` hint (set by every timeline landing path that knows the type) which the canvas overlay, pixel-ops bake gate and server frame renderer prefer over the URL extension sniff.

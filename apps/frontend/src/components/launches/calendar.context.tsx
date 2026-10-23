@@ -135,7 +135,7 @@ export const CalendarContext = createContext({
   setPlatformFilter: (ids: string[]) => {
     /** empty **/
   },
-  // Creation-method filter (WEB/API/AUTOPOST/MCP/CLI/UNKNOWN).
+  // Creation-method filter (WEB/API/AUTOPOST/MCP/CLI/BUILD_LOG/UNKNOWN).
   creationMethodFilter: [] as string[],
   setCreationMethodFilter: (ids: string[]) => {
     /** empty **/

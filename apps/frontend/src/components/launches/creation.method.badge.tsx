@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import clsx from 'clsx';
 
-type CreationMethod = 'UNKNOWN' | 'WEB' | 'API' | 'MCP' | 'AUTOPOST' | 'CLI';
+type CreationMethod = 'UNKNOWN' | 'WEB' | 'API' | 'MCP' | 'AUTOPOST' | 'CLI' | 'BUILD_LOG';
 
 interface Props {
   creationMethod?: CreationMethod | string | null;
@@ -11,7 +11,11 @@ interface Props {
 }
 
 const tooltipFor = (m: string) =>
-  m === 'AUTOPOST' ? 'Auto-posted by system' : `Created via ${m}`;
+  m === 'AUTOPOST'
+    ? 'Auto-posted by system'
+    : m === 'BUILD_LOG'
+    ? 'Drafted from your build log'
+    : `Created via ${m}`;
 
 export const CreationMethodBadge: FC<Props> = ({
   creationMethod,
@@ -38,13 +42,14 @@ export const CreationMethodBadge: FC<Props> = ({
         creationMethod === 'MCP' && 'bg-[#1d9bf0]',
         creationMethod === 'AUTOPOST' && 'bg-[#d97706]',
         creationMethod === 'CLI' && 'bg-[#0f766e]',
+        creationMethod === 'BUILD_LOG' && 'bg-btnPrimary',
         className
       )}
       style={ringColor ? { boxShadow: `0 0 0 2px ${ringColor}` } : undefined}
       data-tooltip-id="tooltip"
       data-tooltip-content={tooltipFor(creationMethod)}
     >
-      {creationMethod}
+      {creationMethod === 'BUILD_LOG' ? 'BUILD LOG' : creationMethod}
     </div>
   );
 };

@@ -374,6 +374,7 @@ export const Filters = () => {
     { value: 'AUTOPOST', label: t('autopost', 'Autopost') },
     { value: 'MCP', label: t('mcp', 'MCP') },
     { value: 'CLI', label: t('cli', 'CLI') },
+    { value: 'BUILD_LOG', label: t('build_log', 'Build log') },
     { value: 'UNKNOWN', label: t('unknown', 'Unknown') },
   ];
 

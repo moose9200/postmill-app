@@ -738,6 +738,7 @@ export const PostDetailModal: FC<PostDetailModalProps> = ({
     API: t('creation_method_api', 'API'),
     AUTOPOST: t('creation_method_autopost', 'auto-post'),
     CLI: t('creation_method_cli', 'CLI'),
+    BUILD_LOG: t('creation_method_build_log', 'build log'),
   };
   const creationMethodLabel =
     creationMethodLabels[activePost?.creationMethod || ''] || null;
