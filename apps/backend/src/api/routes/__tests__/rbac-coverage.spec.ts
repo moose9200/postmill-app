@@ -17,6 +17,7 @@ import { RolesController } from '../roles.controller';
 import { PublicAnalyticsV1Controller } from '../../../public-api/routes/v1/public.analytics.v1.controller';
 import { AnnouncementsController } from '../announcements.controller';
 import { AutopostController } from '../autopost.controller';
+import { BuildLogController } from '../build-log.controller';
 import { BillingController } from '../billing.controller';
 import { BrandsController } from '../brands.controller';
 import { ChannelConfigPerTenantController } from '../channel-config.per-tenant.controller';
@@ -138,6 +139,7 @@ const ORG_RESOURCE_CONTROLLERS: Array<{ name: string; ctor: any }> = [
   { name: 'PublicAnalyticsV1Controller', ctor: PublicAnalyticsV1Controller },
   { name: 'AnnouncementsController', ctor: AnnouncementsController },
   { name: 'AutopostController', ctor: AutopostController },
+  { name: 'BuildLogController', ctor: BuildLogController },
   { name: 'BillingController', ctor: BillingController },
   { name: 'BrandsController', ctor: BrandsController },
   { name: 'ChannelConfigPerTenantController', ctor: ChannelConfigPerTenantController },

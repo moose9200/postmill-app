@@ -4760,6 +4760,118 @@ paths:
                 type: object
       tags:
         - Autopost
+  /build-log/sources:
+    get:
+      operationId: BuildLogController_getSources
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags:
+        - Build Log
+    post:
+      operationId: BuildLogController_addSource
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildSourceDto"
+      responses:
+        "201":
+          description: ""
+      tags:
+        - Build Log
+  /build-log/sources/{id}:
+    delete:
+      operationId: BuildLogController_deleteSource
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+      tags:
+        - Build Log
+  /build-log/sync:
+    post:
+      operationId: BuildLogController_sync
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags:
+        - Build Log
+  /build-log/activities:
+    get:
+      operationId: BuildLogController_getActivities
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+      tags:
+        - Build Log
+  /build-log/channels:
+    get:
+      operationId: BuildLogController_getSupportedChannels
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      tags:
+        - Build Log
+  /build-log/notes:
+    post:
+      operationId: BuildLogController_addNote
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildNoteDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+      tags:
+        - Build Log
+  /build-log/generate:
+    post:
+      operationId: BuildLogController_generate
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDraftsDto"
+      responses:
+        "201":
+          description: ""
+      tags:
+        - Build Log
   /sets:
     get:
       operationId: SetsController_getSets
@@ -11601,6 +11713,43 @@ components:
         - addPicture
         - generateContent
         - integrations
+    BuildSourceDto:
+      type: object
+      properties:
+        repo:
+          type: string
+        token:
+          type: string
+          maxLength: 255
+      required:
+        - repo
+    BuildNoteDto:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 3
+          maxLength: 5000
+      required:
+        - text
+    GenerateDraftsDto:
+      type: object
+      properties:
+        activityIds:
+          minItems: 1
+          maxItems: 30
+          type: array
+          items:
+            type: string
+        integrationIds:
+          minItems: 1
+          maxItems: 20
+          type: array
+          items:
+            type: string
+      required:
+        - activityIds
+        - integrationIds
     SetsDto:
       type: object
       properties:

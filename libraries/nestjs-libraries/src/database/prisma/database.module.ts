@@ -56,6 +56,8 @@ import { SignatureRepository } from '@postmill-ai/nestjs-libraries/database/pris
 import { SignatureService } from '@postmill-ai/nestjs-libraries/database/prisma/signatures/signature.service';
 import { AutopostRepository } from '@postmill-ai/nestjs-libraries/database/prisma/autopost/autopost.repository';
 import { AutopostService } from '@postmill-ai/nestjs-libraries/database/prisma/autopost/autopost.service';
+import { BuildLogRepository } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.repository';
+import { BuildLogService } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.service';
 import { SetsService } from '@postmill-ai/nestjs-libraries/database/prisma/sets/sets.service';
 import { SetsRepository } from '@postmill-ai/nestjs-libraries/database/prisma/sets/sets.repository';
 import { RefreshIntegrationService } from '@postmill-ai/nestjs-libraries/integrations/refresh.integration.service';
@@ -169,6 +171,8 @@ import { AnalyticsShareService } from '@postmill-ai/nestjs-libraries/analytics/a
     SignatureRepository,
     AutopostRepository,
     AutopostService,
+    BuildLogRepository,
+    BuildLogService,
     SignatureService,
     FileService,
     FileRepository,

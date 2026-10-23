@@ -23,6 +23,8 @@ model Organization {
   isTrailing          Boolean              @default(false)
   shortlink           ShortLinkPreference  @default(ASK)
   autoPost            AutoPost[]
+  buildSources        BuildSource[]
+  buildActivities     BuildActivity[]
   Comments            Comments[]
   credits             Credits[]
   errors              Errors[]
@@ -739,6 +741,38 @@ model AutoPost {
 
   @@index([deletedAt])
   @@index([organizationId])
+}
+
+// Build Log: a GitHub repo whose activity feeds the AI content agent.
+model BuildSource {
+  id             String       @id @default(cuid())
+  organizationId String
+  repo           String       // "owner/name"
+  token          String?      // GitHub PAT, EncryptionService ciphertext; null = public repo
+  lastSyncedAt   DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, repo])
+}
+
+// One unit of build progress: commit | pull_request | release | changelog | note.
+model BuildActivity {
+  id             String       @id @default(cuid())
+  organizationId String
+  kind           String
+  externalId     String       // dedupe key, e.g. "owner/name:commit:<sha>"
+  title          String
+  body           String?
+  url            String?
+  occurredAt     DateTime
+  usedAt         DateTime?    // set once turned into drafts
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, occurredAt])
 }
 
 model Sets {
@@ -1644,6 +1678,7 @@ enum CreationMethod {
   API
   AUTOPOST
   CLI
+  BUILD_LOG
 }
 
 enum ShortLinkPreference {

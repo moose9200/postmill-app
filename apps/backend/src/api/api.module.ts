@@ -40,6 +40,7 @@ import { ShortLinkService } from '@postmill-ai/nestjs-libraries/short-linking/sh
 import { WebhookController } from '@postmill-ai/backend/api/routes/webhooks.controller';
 import { SignatureController } from '@postmill-ai/backend/api/routes/signature.controller';
 import { AutopostController } from '@postmill-ai/backend/api/routes/autopost.controller';
+import { BuildLogController } from '@postmill-ai/backend/api/routes/build-log.controller';
 import { SetsController } from '@postmill-ai/backend/api/routes/sets.controller';
 import { MonitorController } from '@postmill-ai/backend/api/routes/monitor.controller';
 import { NoAuthIntegrationsController } from '@postmill-ai/backend/api/routes/no.auth.integrations.controller';
@@ -127,6 +128,7 @@ export const authenticatedController = [
   WebhookController,
   SignatureController,
   AutopostController,
+  BuildLogController,
   SetsController,
   OAuthAppController,
   ApprovedAppsController,
