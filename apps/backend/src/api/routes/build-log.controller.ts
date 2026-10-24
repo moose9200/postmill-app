@@ -34,6 +34,7 @@ export class BuildLogController {
   constructor(private _buildLogService: BuildLogService) {}
 
   @Get('/sources')
+  @RequirePermission('autopost', 'read')
   getSources(@GetOrgFromRequest() org: Organization) {
     return this._buildLogService.getSources(org.id);
   }
@@ -63,6 +64,7 @@ export class BuildLogController {
   }
 
   @Get('/activities')
+  @RequirePermission('autopost', 'read')
   getActivities(@GetOrgFromRequest() org: Organization) {
     return this._buildLogService.getActivities(org.id);
   }

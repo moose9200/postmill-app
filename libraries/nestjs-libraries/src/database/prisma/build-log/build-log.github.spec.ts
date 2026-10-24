@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   fetchGithubActivity,
+  githubGet,
   parseChangelog,
   REPO_PATTERN,
 } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.github';
@@ -116,5 +117,45 @@ describe('fetchGithubActivity', () => {
     await expect(fetchGithubActivity(at(401) as any, 'acme/app', since)).rejects.toThrow(/rejected the token/);
     await expect(fetchGithubActivity(at(403) as any, 'acme/app', since)).rejects.toThrow(/rate limit or access denied/);
     await expect(fetchGithubActivity(at(502) as any, 'acme/app', since)).rejects.toThrow(/GitHub returned 502/);
+  });
+});
+
+describe('githubGet raw reads', () => {
+  const MAX = 512 * 1024;
+  const raw = 'application/vnd.github.raw+json';
+
+  it('stops reading a raw file at 512 KB instead of buffering all of it', async () => {
+    let pulled = 0;
+    const chunk = new TextEncoder().encode('x'.repeat(64 * 1024));
+    const body = new ReadableStream<Uint8Array>({
+      pull(c) {
+        pulled += chunk.byteLength;
+        if (pulled > 50 * 1024 * 1024) c.close(); else c.enqueue(chunk);
+      },
+    });
+    const out = (await githubGet(async () => new Response(body), 'acme/app', '/contents/CHANGELOG.md', undefined, raw)) as string;
+    expect(out.length).toBe(MAX);
+    expect(pulled).toBeLessThan(2 * MAX);
+  });
+
+  it('skips a raw file whose declared size is over the cap', async () => {
+    const res = new Response('ok', { headers: { 'content-length': String(MAX + 1) } });
+    expect(await githubGet(async () => res, 'acme/app', '/contents/CHANGELOG.md', undefined, raw)).toBe('');
+  });
+
+  it('caps activity titles at 300 characters', async () => {
+    const long = 'T'.repeat(1000);
+    const f = vi.fn(async (url: string) =>
+      url.includes('/pulls')
+        ? json([{ number: 1, title: long, body: null, merged_at: '2026-10-21T00:00:00Z', html_url: 'u' }])
+        : url.includes('/commits')
+        ? json([{ sha: 's', html_url: 'u', commit: { message: long, author: { date: '2026-10-21T00:00:00Z' } } }])
+        : url.includes('/releases')
+        ? json([{ id: 1, name: long, published_at: '2026-10-21T00:00:00Z', html_url: 'u', draft: false }])
+        : new Response('', { status: 404 })
+    );
+    const out = await fetchGithubActivity(f as any, 'acme/app', new Date('2026-10-01T00:00:00Z'));
+    expect(out).toHaveLength(3);
+    for (const a of out) expect(a.title.length).toBeLessThanOrEqual(300);
   });
 });

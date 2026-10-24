@@ -51,12 +51,18 @@ export const toHtml = (text: string) =>
     .map((p) => `<p>${escapeHtml(p.trim()).replace(/\n/g, '<br>')}</p>`)
     .join('');
 
+// Activity text must not be able to close (or reopen) the <build_activity> fence.
+const unfence = (s: string) => s.replace(/<\s*\/?\s*build_activity/gi, '[build activity]');
+
+// Each source costs 4 GitHub calls per sync; keep one sync request bounded.
+export const MAX_BUILD_SOURCES = 20;
+
 export const formatActivities = (activities: BuildActivity[]) =>
   activities
     .map((a) =>
       [
-        `- [${a.kind}] ${a.title} (${dayjs(a.occurredAt).format('YYYY-MM-DD')})`,
-        a.body ? `  ${a.body.slice(0, PROMPT_ACTIVITY_MAX).replace(/\n/g, '\n  ')}` : '',
+        `- [${a.kind}] ${unfence(a.title)} (${dayjs(a.occurredAt).format('YYYY-MM-DD')})`,
+        a.body ? `  ${unfence(a.body.slice(0, PROMPT_ACTIVITY_MAX)).replace(/\n/g, '\n  ')}` : '',
         a.url ? `  ${a.url}` : '',
       ]
         .filter(Boolean)
@@ -114,6 +120,10 @@ export class BuildLogService {
   async addSource(orgId: string, body: BuildSourceDto) {
     // GitHub names are case-insensitive; one casing keeps sources and dedupe ids unique.
     const repo = body.repo.toLowerCase();
+    const existing = await this._buildLogRepository.getSources(orgId);
+    if (existing.length >= MAX_BUILD_SOURCES && !existing.some((s) => s.repo === repo)) {
+      throw new BadRequestException(`You can track up to ${MAX_BUILD_SOURCES} repos.`);
+    }
     // Reject typos and unreachable private repos now, not on every later sync.
     await githubGet(safeFetch, repo, '', body.token);
     const { token, ...source } = await this._buildLogRepository.upsertSource(

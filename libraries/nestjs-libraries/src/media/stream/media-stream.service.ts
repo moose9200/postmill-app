@@ -51,8 +51,11 @@ export class MediaStreamService {
       return res.status(r.status).type('text/plain').send('Upstream error');
     }
 
-    const type = r.headers.get('content-type') ?? 'application/octet-stream';
-    res.setHeader('Content-Type', type);
+    // Unauthenticated proxy of an arbitrary URL: never reflect the upstream type, or an
+    // HTML response would run on this origin. Serve it inert as video.
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
 
     const contentRange = r.headers.get('content-range');
     if (contentRange) res.setHeader('Content-Range', contentRange);

@@ -21,9 +21,12 @@ export const REPO_PATTERN = /^[A-Za-z0-9-]+\/(?!\.\.?$)[A-Za-z0-9_.-]+$/;
 // Caps keep one sync (and the prompt built from it) bounded. Each sync reads the newest
 // 50 commits / 30 closed PRs / 10 releases: more than that between two syncs is skipped.
 const BODY_MAX = 4000;
+const TITLE_MAX = 300;
+// Raw CHANGELOG.md is read only up to this size; GitHub serves raw files up to 100 MB.
+const RAW_MAX_BYTES = 512 * 1024;
 const CHANGELOG_SECTIONS = 3;
 
-const firstLine = (s: string) => s.split('\n')[0].trim();
+const firstLine = (s: string) => s.split('\n')[0].trim().slice(0, TITLE_MAX);
 const rest = (s: string) => s.split('\n').slice(1).join('\n').trim();
 
 // Keep-a-Changelog: one activity per "## " section, newest first. The body hash is in the
@@ -84,7 +87,30 @@ export async function githubGet(
   if (!res.ok) {
     throw new BadRequestException(githubError(res.status, repo));
   }
-  return accept ? res.text() : res.json();
+  return accept ? readCapped(res, RAW_MAX_BYTES) : res.json();
+}
+
+// Read at most `max` bytes of a body, then stop: never buffer an arbitrarily large file.
+async function readCapped(res: Response, max: number): Promise<string> {
+  if (Number(res.headers.get('content-length')) > max) {
+    await res.body?.cancel();
+    return '';
+  }
+  if (!res.body) return (await res.text()).slice(0, max);
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    size += value.byteLength;
+    if (size >= max) {
+      await reader.cancel();
+      break;
+    }
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks).subarray(0, max));
 }
 
 export async function fetchGithubActivity(
@@ -124,7 +150,7 @@ export async function fetchGithubActivity(
     out.push({
       kind: 'pull_request',
       externalId: `${repo}:pr:${p.number}`,
-      title: `#${p.number} ${p.title}`,
+      title: `#${p.number} ${p.title}`.slice(0, TITLE_MAX),
       body: (p.body || '').slice(0, BODY_MAX) || undefined,
       url: p.html_url,
       occurredAt: new Date(p.merged_at),
@@ -136,7 +162,7 @@ export async function fetchGithubActivity(
     out.push({
       kind: 'release',
       externalId: `${repo}:release:${r.id}`,
-      title: `Release ${r.name || r.tag_name}`,
+      title: `Release ${r.name || r.tag_name}`.slice(0, TITLE_MAX),
       body: (r.body || '').slice(0, BODY_MAX) || undefined,
       url: r.html_url,
       occurredAt: new Date(r.published_at),

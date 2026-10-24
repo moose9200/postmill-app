@@ -118,4 +118,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
 # apps/backend/dist/apps/backend/src/main.js, NOT at a repo-root dist/. (The root
 # dist/ is excluded from the build context by .dockerignore and holds only out-tsc.)
 # This is the same path .github/workflows/boot-guard.yml executes.
-ENTRYPOINT ["bash", "/app/docker/entrypoint.sh"]
+# volume-entrypoint.sh only acts when started as root (see the script); otherwise it
+# execs entrypoint.sh unchanged.
+ENTRYPOINT ["bash", "/app/docker/volume-entrypoint.sh"]
