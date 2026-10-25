@@ -58,6 +58,9 @@ const SURFACE_DEFAULTS: Record<AIScope, SurfaceDefaults> = {
 
 export interface ReasoningOptions {
   reasoning?: boolean;
+  // Output-token cap. Unset ⇒ the provider's model maximum, which credit-metered
+  // gateways (OpenRouter) reject with 402 when the balance can't cover it.
+  maxTokens?: number;
 }
 
 export interface ResolvedConfig {
@@ -544,6 +547,7 @@ export class AIModelProvider {
             if (orgId) span.setAttribute('ai.organizationId', orgId);
             const model = config.adapter.createLangchainModel(config.creds, config.modelId, {
               temperature: config.defaultSurface?.temperature,
+              maxTokens: options?.maxTokens,
             });
             return this._wrapLangchainModelWithBudget(model, span, scope, orgId, config.providerId, config.modelId);
           },

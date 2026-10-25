@@ -208,12 +208,19 @@ const Sources: FC<{ onSync: () => void }> = ({ onSync }) => {
       )}
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(add)} className="flex flex-col gap-[12px]">
-          <Input label={t('build_log_repo', 'Repository')} name="repo" placeholder="owner/name" />
+          {/* text + password reads as a login form to Chrome, which then fills
+              the saved email/password here; "off" alone is ignored for passwords. */}
+          <Input
+            label={t('build_log_repo', 'Repository')}
+            name="repo"
+            placeholder="owner/name"
+            autoComplete="off"
+          />
           <Input
             label={t('build_log_token', 'Token (private repos only)')}
             name="token"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             placeholder="github_pat_…"
           />
           <Button type="submit" loading={saving}>

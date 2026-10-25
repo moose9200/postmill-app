@@ -50,7 +50,8 @@ vi.mock('@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.githu
   githubGet: githubGetMock,
 }));
 
-import { BuildLogService, toHtml, formatActivities, MAX_BUILD_SOURCES } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.service';
+import { ProviderUpstreamError } from '@postmill-ai/provider-kernel';
+import { BuildLogService, toHtml, formatActivities, MAX_BUILD_SOURCES, DRAFT_MAX_TOKENS } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.service';
 import { BuildLogRepository } from '@postmill-ai/nestjs-libraries/database/prisma/build-log/build-log.repository';
 import { IntegrationService } from '@postmill-ai/nestjs-libraries/database/prisma/integrations/integration.service';
 import { PostsService } from '@postmill-ai/nestjs-libraries/database/prisma/posts/posts.service';
@@ -114,7 +115,8 @@ describe('BuildLogService', () => {
     );
 
     expect(res).toEqual({ date: '2026-10-24T09:30:00', drafts: 5, platforms: ['linkedin', 'x', 'reddit', 'instagram'] });
-    expect(ai.langchainModel).toHaveBeenCalledWith('generator', 'org-1');
+    // Capped: uncapped requests ask for the model's full window (65,536) and 402 on low credit.
+    expect(ai.langchainModel).toHaveBeenCalledWith('generator', 'org-1', { maxTokens: DRAFT_MAX_TOKENS });
     // Two LinkedIn channels share one draft → 4 calls, not 5.
     expect(fakeModel.withStructuredOutput).toHaveBeenCalledTimes(4);
 
@@ -146,6 +148,22 @@ describe('BuildLogService', () => {
     repo.getActivitiesByIds.mockResolvedValue([]);
     await expect(service.generateDrafts('org-1', { activityIds: ['zz'], integrationIds: ['x'] })).rejects.toThrow(/at least one activity/);
     expect(ai.langchainModel).not.toHaveBeenCalled();
+  });
+
+  it('turns a provider HTTP error from the LLM call into a ProviderUpstreamError, creating nothing', async () => {
+    // Shape of the OpenAI SDK APIError LangChain throws (live: OpenRouter 402 on low credit).
+    const apiError = Object.assign(new Error('402 This request requires more credits'), { status: 402 });
+    ai.langchainModel.mockResolvedValue({
+      withStructuredOutput: () => ({ invoke: vi.fn().mockRejectedValue(apiError) }),
+    });
+    const err = await service
+      .generateDrafts('org-1', { activityIds: ['a1'], integrationIds: ['x'] })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(ProviderUpstreamError);
+    expect(err.upstreamStatus).toBe(402);
+    expect(err.message).toMatch(/anthropic/i);
+    expect(posts.createPost).not.toHaveBeenCalled();
+    expect(repo.markUsed).not.toHaveBeenCalled();
   });
 
   it('returns 422 with the standard message when the org has no AI provider, creating nothing', async () => {

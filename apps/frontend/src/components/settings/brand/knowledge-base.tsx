@@ -428,7 +428,7 @@ export const KnowledgeBase = () => {
                 <label className="text-[12px] text-newTableText">{t('pg_connection_string', 'Connection string')}</label>
                 <input
                   type="password"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="bg-newBgColorInner border border-newTableBorder rounded-[8px] p-[8px] text-textColor text-[13px]"
                   value={pgUrl}
                   onChange={(e) => setPgUrl(e.target.value)}
@@ -462,7 +462,7 @@ export const KnowledgeBase = () => {
                 <label className="text-[12px] text-newTableText">{t('qdrant_api_key', 'API Key')}</label>
                 <input
                   type="password"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="bg-newBgColorInner border border-newTableBorder rounded-[8px] p-[8px] text-textColor text-[13px]"
                   value={qdrantApiKey}
                   onChange={(e) => setQdrantApiKey(e.target.value)}
@@ -499,7 +499,7 @@ export const KnowledgeBase = () => {
                 <label className="text-[12px] text-newTableText">{t('pinecone_api_key', 'API Key')}</label>
                 <input
                   type="password"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="bg-newBgColorInner border border-newTableBorder rounded-[8px] p-[8px] text-textColor text-[13px]"
                   value={pineconeApiKey}
                   onChange={(e) => setPineconeApiKey(e.target.value)}

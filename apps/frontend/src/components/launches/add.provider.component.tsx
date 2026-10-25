@@ -20,6 +20,26 @@ import clsx from 'clsx';
 import Image from 'next/image';
 import copy from 'copy-to-clipboard';
 import { capitalize } from 'lodash';
+
+type ChannelConfigRow = {
+  id: string;
+  identifier: string;
+  name: string;
+  enabled: boolean;
+  isConfigured: boolean;
+};
+
+// Usable credential sets per provider identifier (enabled + configured only).
+export const groupChannelConfigs = (rows?: ChannelConfigRow[]) => {
+  const map: Record<string, Array<{ id: string; name: string }>> = {};
+  for (const c of rows || []) {
+    if (c.enabled && c.isConfigured) {
+      (map[c.identifier] ||= []).push({ id: c.id, name: c.name });
+    }
+  }
+  return map;
+};
+
 export const useAddProvider = (
   update?: () => void,
   invite?: boolean,
@@ -457,22 +477,17 @@ export const AddProviderComponent: FC<{
   // The org's configured credential sets, grouped by provider. Used to bind a new
   // connection to a specific named set when a provider has more than one. Requires
   // channel-admin rights; non-admins get an empty map and the legacy (primary) flow.
-  const { data: channelConfigs } = useSWR<
-    Array<{ id: string; identifier: string; name: string; enabled: boolean; isConfigured: boolean }>
-  >('/channels/config', (url: string) =>
-    fetch(url)
-      .then((r) => (r.ok ? r.json() : []))
-      .catch(() => [])
+  const { data: channelConfigs, mutate: loadChannelConfigs } = useSWR<ChannelConfigRow[]>(
+    '/channels/config',
+    (url: string) =>
+      fetch(url)
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => [])
   );
-  const configsByIdentifier = useMemo(() => {
-    const map: Record<string, Array<{ id: string; name: string }>> = {};
-    for (const c of channelConfigs || []) {
-      if (c.enabled && c.isConfigured) {
-        (map[c.identifier] ||= []).push({ id: c.id, name: c.name });
-      }
-    }
-    return map;
-  }, [channelConfigs]);
+  const configsByIdentifier = useMemo(
+    () => groupChannelConfigs(channelConfigs),
+    [channelConfigs]
+  );
 
   const getSocialLink = useCallback(
     (
@@ -492,7 +507,12 @@ export const AddProviderComponent: FC<{
       async () => {
         // Resolve which named credential set to connect through. >1 set ⇒ prompt;
         // exactly one ⇒ bind it automatically; none ⇒ legacy primary-config flow.
-        const sets = configsByIdentifier[identifier] || [];
+        // A click before /channels/config resolves (seconds on a slow backend)
+        // used to see no sets and connect without ?config= → "not configured".
+        const byIdentifier = channelConfigs
+          ? configsByIdentifier
+          : groupChannelConfigs(await loadChannelConfigs());
+        const sets = byIdentifier[identifier] || [];
         let configId: string | undefined;
         if (!invite && sets.length > 1) {
           configId = await new Promise<string | undefined>((resolve) => {
@@ -801,7 +821,7 @@ export const AddProviderComponent: FC<{
         }
         await gotoIntegration();
       },
-    [onboarding, t, isMobile, fetch, toaster, modal, router, extensionId, configsByIdentifier, campaignId]
+    [onboarding, t, isMobile, fetch, toaster, modal, router, extensionId, configsByIdentifier, channelConfigs, loadChannelConfigs, campaignId]
   );
 
   const showSetupInstructions = useCallback(

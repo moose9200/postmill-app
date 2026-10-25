@@ -25,6 +25,7 @@ import { EncryptionService } from '@postmill-ai/nestjs-libraries/encryption/encr
 import { IntegrationService } from '@postmill-ai/nestjs-libraries/database/prisma/integrations/integration.service';
 import { PostsService } from '@postmill-ai/nestjs-libraries/database/prisma/posts/posts.service';
 import { AIModelProvider } from '@postmill-ai/nestjs-libraries/ai/ai-model.provider';
+import { upstreamErrorFromUnknown } from '@postmill-ai/provider-kernel';
 import { BrandsService } from '@postmill-ai/nestjs-libraries/brands/brands.service';
 import { safeFetch } from '@postmill-ai/nestjs-libraries/dtos/webhooks/safe.fetch';
 import { makeId } from '@postmill-ai/nestjs-libraries/services/make.is';
@@ -56,6 +57,8 @@ const unfence = (s: string) => s.replace(/<\s*\/?\s*build_activity/gi, '[build a
 
 // Each source costs 4 GitHub calls per sync; keep one sync request bounded.
 export const MAX_BUILD_SOURCES = 20;
+// Longest draft is a Reddit body; 2k tokens covers it plus the JSON wrapper.
+export const DRAFT_MAX_TOKENS = 2048;
 
 export const formatActivities = (activities: BuildActivity[]) =>
   activities
@@ -206,13 +209,19 @@ export class BuildLogService {
     }
 
     // No active org AI provider ⟹ AI is off; surface the standard message, not a 500.
-    if (!(await this._aiModelProvider.resolveConfigForScope('generator', orgId))) {
+    const aiConfig = await this._aiModelProvider.resolveConfigForScope('generator', orgId);
+    if (!aiConfig) {
       throw new HttpException(
         'AI is not configured for this organization. Go to Settings → AI to configure a provider.',
         HttpStatus.UNPROCESSABLE_ENTITY
       );
     }
-    const model = await this._aiModelProvider.langchainModel('generator', orgId);
+    // A draft is at most a few thousand characters; without a cap the request
+    // asks for the model's full output window (65,536 on OpenRouter) and fails
+    // 402 on a low credit balance.
+    const model = await this._aiModelProvider.langchainModel('generator', orgId, {
+      maxTokens: DRAFT_MAX_TOKENS,
+    });
     const voice = (await this._brandsService.getDefaultBrand(orgId))?.instructions;
     const text = formatActivities(activities);
 
@@ -222,7 +231,28 @@ export class BuildLogService {
     ];
     const drafts = Object.fromEntries(
       await Promise.all(
-        platforms.map(async (p) => [p, await writeDraft(model, p, text, voice)])
+        platforms.map(async (p) => {
+          try {
+            return [p, await writeDraft(model, p, text, voice)];
+          } catch (err) {
+            // invoke() runs outside AIModelProvider's error mapping, and the
+            // OpenAI SDK reports `status`, not `statusCode` — normalise so the
+            // global filter answers 502 naming the provider instead of a bare 500.
+            const e = err as { status?: unknown; message?: unknown };
+            throw (
+              (typeof e?.status === 'number' && typeof e.message === 'string'
+                ? upstreamErrorFromUnknown(
+                    {
+                      domain: 'ai',
+                      providerId: aiConfig.providerId,
+                      providerName: aiConfig.adapter?.name || aiConfig.providerId,
+                    },
+                    { statusCode: e.status, message: e.message }
+                  )
+                : null) ?? err
+            );
+          }
+        })
       )
     ) as Record<Platform, Draft>;
 
